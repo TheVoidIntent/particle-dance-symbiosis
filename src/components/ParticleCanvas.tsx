@@ -1,4 +1,3 @@
-
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { 
   Particle, 
@@ -22,8 +21,11 @@ type ParticleCanvasProps = {
     neutralParticles: number;
     highEnergyParticles: number;
     quantumParticles: number;
+    compositeParticles: number;
     totalInteractions: number;
     complexityIndex: number;
+    averageKnowledge: number;
+    maxComplexity: number;
   }) => void;
 };
 
@@ -45,23 +47,20 @@ export const ParticleCanvas = ({
   const frameCountRef = useRef<number>(0);
   const [isInitialized, setIsInitialized] = useState(false);
   
-  // Initialize intent field and dimensions
   useEffect(() => {
     if (!canvasRef.current) return;
     
     const canvas = canvasRef.current;
     const { width, height } = canvas.getBoundingClientRect();
     
-    // Set canvas dimensions
     canvas.width = width;
     canvas.height = height;
     dimensionsRef.current = { width, height };
     
-    // Initialize 3D intent field (simplified for performance)
-    const fieldResolution = 10; // Lower resolution for better performance
+    const fieldResolution = 10;
     const fieldWidth = Math.ceil(width / fieldResolution);
     const fieldHeight = Math.ceil(height / fieldResolution);
-    const fieldDepth = 10; // Using a smaller depth for performance
+    const fieldDepth = 10;
     
     const newField: number[][][] = [];
     
@@ -70,7 +69,6 @@ export const ParticleCanvas = ({
       for (let y = 0; y < fieldHeight; y++) {
         const row: number[] = [];
         for (let x = 0; x < fieldWidth; x++) {
-          // Initial random intent values between -1 and 1
           row.push(Math.random() * 2 - 1);
         }
         plane.push(row);
@@ -81,7 +79,6 @@ export const ParticleCanvas = ({
     intentFieldRef.current = newField;
     setIsInitialized(true);
     
-    // Handle window resize
     const handleResize = () => {
       if (!canvasRef.current) return;
       const canvas = canvasRef.current;
@@ -95,24 +92,21 @@ export const ParticleCanvas = ({
     return () => window.removeEventListener('resize', handleResize);
   }, []);
   
-  // Create particles based on intent field fluctuations
   useEffect(() => {
     if (!running || !isInitialized || intentFieldRef.current.length === 0) return;
     
     const createParticlesInterval = setInterval(() => {
       if (particlesRef.current.length >= maxParticles) return;
       
-      // Determine number of particles to create based on creation rate
       const numToCreate = Math.floor(Math.random() * particleCreationRate) + 1;
       const newParticles = [...particlesRef.current];
       
       for (let i = 0; i < numToCreate; i++) {
         if (newParticles.length >= maxParticles) break;
         
-        // Random position
         const x = Math.random() * dimensionsRef.current.width;
         const y = Math.random() * dimensionsRef.current.height;
-        const z = Math.random() * 10; // Using simplified z-dimension
+        const z = Math.random() * 10;
         
         const fieldX = Math.floor(x / (dimensionsRef.current.width / intentFieldRef.current[0][0].length));
         const fieldY = Math.floor(y / (dimensionsRef.current.height / intentFieldRef.current[0].length));
@@ -141,18 +135,16 @@ export const ParticleCanvas = ({
     return () => clearInterval(createParticlesInterval);
   }, [running, isInitialized, maxParticles, particleCreationRate]);
   
-  // Update intent field with fluctuations
   useEffect(() => {
     if (!running || !isInitialized || intentFieldRef.current.length === 0) return;
     
     const updateIntentInterval = setInterval(() => {
       intentFieldRef.current = updateIntentField(intentFieldRef.current, intentFluctuationRate);
-    }, 1000); // Update intent field every second
+    }, 1000);
     
     return () => clearInterval(updateIntentInterval);
   }, [running, isInitialized, intentFluctuationRate]);
   
-  // Animation loop for particle movement and interactions
   const updateParticles = useCallback(() => {
     const particles = particlesRef.current;
     const dimensions = dimensionsRef.current;
@@ -162,9 +154,7 @@ export const ParticleCanvas = ({
     
     const newParticles = [...particles];
     
-    // Update particle positions and handle interactions
     for (let i = 0; i < newParticles.length; i++) {
-      // Update particle position
       newParticles[i] = updateParticlePosition(
         newParticles[i], 
         dimensions, 
@@ -172,7 +162,6 @@ export const ParticleCanvas = ({
         viewMode
       );
       
-      // Interaction with other particles
       for (let j = i + 1; j < newParticles.length; j++) {
         const [updatedParticle1, updatedParticle2, interactionOccurred] = calculateParticleInteraction(
           newParticles[i],
@@ -192,18 +181,15 @@ export const ParticleCanvas = ({
     
     return newParticles;
   }, [viewMode, learningRate]);
-
-  // Animation loop with RAF
+  
   useEffect(() => {
     if (!running || !isInitialized) return;
     
     const animate = () => {
       frameCountRef.current += 1;
       
-      // Update particles
       particlesRef.current = updateParticles();
       
-      // Draw particles
       if (canvasRef.current) {
         const ctx = canvasRef.current.getContext('2d');
         if (ctx) {
@@ -211,7 +197,6 @@ export const ParticleCanvas = ({
         }
       }
       
-      // Update stats every 30 frames
       if (frameCountRef.current % 30 === 0) {
         const particles = particlesRef.current;
         const positiveParticles = particles.filter(p => p.charge === 'positive').length;
@@ -219,13 +204,23 @@ export const ParticleCanvas = ({
         const neutralParticles = particles.filter(p => p.charge === 'neutral').length;
         const highEnergyParticles = particles.filter(p => p.type === 'high-energy').length;
         const quantumParticles = particles.filter(p => p.type === 'quantum').length;
+        const compositeParticles = particles.filter(p => p.type === 'composite').length;
         
-        // Calculate complexity index (a sample metric)
         const totalKnowledge = particles.reduce((sum, p) => sum + p.knowledge, 0);
+        const averageKnowledge = particles.length > 0 ? totalKnowledge / particles.length : 0;
+        
+        const maxComplexity = particles.length > 0 
+          ? particles.reduce((max, p) => Math.max(max, p.complexity), 1) 
+          : 1;
+        
         const varietyFactor = (positiveParticles * negativeParticles * neutralParticles * 
-                             (highEnergyParticles + 1) * (quantumParticles + 1)) / 
+                             (highEnergyParticles + 1) * (quantumParticles + 1) *
+                             (compositeParticles + 1)) / 
                              Math.max(1, particles.length ** 2);
-        const complexityIndex = (totalKnowledge * varietyFactor) + (interactionsRef.current / 1000);
+        
+        const complexityIndex = (totalKnowledge * varietyFactor) + 
+                               (interactionsRef.current / 1000) + 
+                               (compositeParticles * maxComplexity);
         
         onStatsUpdate({
           positiveParticles,
@@ -233,8 +228,11 @@ export const ParticleCanvas = ({
           neutralParticles,
           highEnergyParticles,
           quantumParticles,
+          compositeParticles,
           totalInteractions: interactionsRef.current,
-          complexityIndex
+          complexityIndex,
+          averageKnowledge,
+          maxComplexity
         });
       }
       

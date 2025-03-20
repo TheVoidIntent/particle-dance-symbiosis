@@ -1,4 +1,3 @@
-
 import { Particle } from './particleUtils';
 
 /**
@@ -27,6 +26,8 @@ export function renderParticles(
       drawHighEnergyParticle(ctx, drawX, drawY, drawSize, particle);
     } else if (particle.type === 'quantum') {
       drawQuantumParticle(ctx, drawX, drawY, drawSize, particle);
+    } else if (particle.type === 'composite') {
+      drawCompositeParticle(ctx, drawX, drawY, drawSize, particle);
     }
   });
 }
@@ -136,5 +137,68 @@ function drawQuantumParticle(
     ctx.arc(x, y, size + particle.knowledge * 0.03, 0, Math.PI * 2);
     ctx.fillStyle = `rgba(255, 255, 255, ${Math.min(0.15, particle.knowledge * 0.005)})`;
     ctx.fill();
+  }
+}
+
+/**
+ * Draws a composite particle with a complex structure
+ */
+function drawCompositeParticle(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  size: number,
+  particle: Particle
+): void {
+  // Core glow
+  const coreSize = size * 0.6;
+  const outerSize = size * (1 + Math.min(0.5, particle.complexity * 0.05));
+  
+  // Outer aura representing complexity
+  const gradient = ctx.createRadialGradient(x, y, coreSize, x, y, outerSize);
+  gradient.addColorStop(0, particle.color);
+  gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+  
+  ctx.beginPath();
+  ctx.arc(x, y, outerSize, 0, Math.PI * 2);
+  ctx.fillStyle = gradient;
+  ctx.fill();
+  
+  // Inner core
+  ctx.beginPath();
+  ctx.arc(x, y, coreSize, 0, Math.PI * 2);
+  ctx.fillStyle = particle.color;
+  ctx.fill();
+  
+  // Orbiting sub-particles representing connections
+  const numOrbits = Math.min(5, Math.floor(particle.connections));
+  for (let i = 0; i < numOrbits; i++) {
+    const angle = (Math.PI * 2 * i / numOrbits) + (Date.now() * 0.001 * (i + 1) * 0.2);
+    const orbitDistance = size * (0.7 + i * 0.2);
+    const orbitX = x + Math.cos(angle) * orbitDistance;
+    const orbitY = y + Math.sin(angle) * orbitDistance;
+    const orbitSize = size * 0.2;
+    
+    ctx.beginPath();
+    ctx.arc(orbitX, orbitY, orbitSize, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(255, 255, 255, 0.6)`;
+    ctx.fill();
+  }
+  
+  // Knowledge effect
+  if (particle.knowledge > 5) {
+    ctx.beginPath();
+    ctx.arc(x, y, size + particle.knowledge * 0.02, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(255, 255, 255, ${Math.min(0.2, particle.knowledge * 0.005)})`;
+    ctx.fill();
+  }
+  
+  // Optional: draw complexity value
+  if (particle.complexity > 3) {
+    ctx.font = `${Math.floor(size * 0.8)}px Arial`;
+    ctx.fillStyle = 'white';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(Math.floor(particle.complexity).toString(), x, y);
   }
 }

@@ -1,5 +1,5 @@
 // Define the extended particle types and interfaces
-export type ParticleType = 'standard' | 'high-energy' | 'quantum';
+export type ParticleType = 'standard' | 'high-energy' | 'quantum' | 'composite';
 export type ParticleCharge = 'positive' | 'negative' | 'neutral';
 
 export interface Particle {
@@ -18,6 +18,8 @@ export interface Particle {
   type: ParticleType;
   energy: number;
   stability: number;
+  complexity: number; // New property to track particle complexity
+  connections: number; // New property to track how many connections a particle has made
 }
 
 // Create a new particle based on an intent field value
@@ -61,7 +63,7 @@ export function createParticleFromField(
     stability = 0.1 + Math.random() * 0.3; // Very unstable
   }
   
-  // Create particle object
+  // Create particle object with new complexity and connections properties
   return {
     id,
     x,
@@ -77,7 +79,9 @@ export function createParticleFromField(
     knowledge: 0,
     type,
     energy,
-    stability
+    stability,
+    complexity: 1, // Initial complexity is 1
+    connections: 0 // Initial connections is 0
   };
 }
 
@@ -165,6 +169,17 @@ export function updateParticlePosition(
     // Energy loss over time (based on stability)
     updatedParticle.energy *= (0.9999 + updatedParticle.stability * 0.0001);
     
+    // Add complexity-based behavior - higher complexity particles move more deliberately
+    if (particle.complexity > 3) {
+      // More complex particles have more intentional movement
+      const complexityFactor = Math.min(0.05, particle.complexity * 0.01);
+      // They gravitate toward areas of similar intent
+      if (Math.abs(particle.intent - fieldValue) < 0.3) {
+        updatedParticle.vx += fieldX > updatedParticle.x ? complexityFactor : -complexityFactor;
+        updatedParticle.vy += fieldY > updatedParticle.y ? complexityFactor : -complexityFactor;
+      }
+    }
+    
     // Limit velocity based on particle charge and type
     let maxSpeed: number;
     
@@ -196,6 +211,94 @@ export function updateParticlePosition(
   return updatedParticle;
 }
 
+// Try to form a composite particle from two interacting particles
+function tryFormCompositeParticle(
+  particle1: Particle,
+  particle2: Particle,
+  interactionStrength: number
+): [Particle, Particle, boolean] {
+  const updatedParticle1 = { ...particle1 };
+  const updatedParticle2 = { ...particle2 };
+  
+  // Conditions for forming a composite particle:
+  // 1. One must be positive, the other negative or neutral
+  // 2. Both must have sufficient knowledge
+  // 3. They must have sufficient energy
+  const oppositeCharges = 
+    (particle1.charge === 'positive' && (particle2.charge === 'negative' || particle2.charge === 'neutral')) ||
+    (particle2.charge === 'positive' && (particle1.charge === 'negative' || particle1.charge === 'neutral'));
+  
+  const sufficientKnowledge = 
+    particle1.knowledge > 5 && 
+    particle2.knowledge > 5;
+  
+  const sufficientEnergy = 
+    particle1.energy > 0.7 && 
+    particle2.energy > 0.7;
+    
+  const chanceToForm = Math.random();
+  
+  // Higher chance to form composite particle if conditions are met
+  if (oppositeCharges && sufficientKnowledge && sufficientEnergy && chanceToForm < 0.3) {
+    // Randomly select which particle becomes composite
+    if (Math.random() > 0.5) {
+      updatedParticle1.type = 'composite';
+      updatedParticle1.complexity = particle1.complexity + particle2.complexity;
+      updatedParticle1.connections += 1;
+      updatedParticle1.knowledge += particle2.knowledge * 0.5;
+      updatedParticle1.energy = (particle1.energy + particle2.energy) * 0.8; // Energy cost
+      
+      // Visual updates
+      updatedParticle1.size = Math.min(15, particle1.size * 1.2);
+      updatedParticle1.color = blendColors(particle1.color, particle2.color, 0.5);
+      
+      // "Consume" the second particle by reducing its energy
+      updatedParticle2.energy *= 0.3;
+      updatedParticle2.knowledge *= 0.3;
+      updatedParticle2.size *= 0.7;
+      
+      return [updatedParticle1, updatedParticle2, true];
+    } else {
+      updatedParticle2.type = 'composite';
+      updatedParticle2.complexity = particle1.complexity + particle2.complexity;
+      updatedParticle2.connections += 1;
+      updatedParticle2.knowledge += particle1.knowledge * 0.5;
+      updatedParticle2.energy = (particle1.energy + particle2.energy) * 0.8; // Energy cost
+      
+      // Visual updates
+      updatedParticle2.size = Math.min(15, particle2.size * 1.2);
+      updatedParticle2.color = blendColors(particle2.color, particle1.color, 0.5);
+      
+      // "Consume" the first particle by reducing its energy
+      updatedParticle1.energy *= 0.3;
+      updatedParticle1.knowledge *= 0.3;
+      updatedParticle1.size *= 0.7;
+      
+      return [updatedParticle1, updatedParticle2, true];
+    }
+  }
+  
+  return [updatedParticle1, updatedParticle2, false];
+}
+
+// Helper function to blend colors
+function blendColors(color1: string, color2: string, ratio: number): string {
+  const match1 = color1.match(/rgba\((\d+),\s*(\d+),\s*(\d+),\s*([\d.]+)\)/);
+  const match2 = color2.match(/rgba\((\d+),\s*(\d+),\s*(\d+),\s*([\d.]+)\)/);
+  
+  if (!match1 || !match2) return color1;
+  
+  const r1 = parseInt(match1[1]), g1 = parseInt(match1[2]), b1 = parseInt(match1[3]), a1 = parseFloat(match1[4]);
+  const r2 = parseInt(match2[1]), g2 = parseInt(match2[2]), b2 = parseInt(match2[3]), a2 = parseFloat(match2[4]);
+  
+  const r = Math.round(r1 * (1 - ratio) + r2 * ratio);
+  const g = Math.round(g1 * (1 - ratio) + g2 * ratio);
+  const b = Math.round(b1 * (1 - ratio) + b2 * ratio);
+  const a = a1 * (1 - ratio) + a2 * ratio;
+  
+  return `rgba(${r}, ${g}, ${b}, ${a})`;
+}
+
 // Calculate interaction between two particles
 export function calculateParticleInteraction(
   particle1: Particle,
@@ -216,6 +319,10 @@ export function calculateParticleInteraction(
   // Interaction range depends on particle types and sizes
   const baseInteractionRange = (particle1.size + particle2.size) * 4;
   
+  // Enhanced interaction range based on complexity
+  const complexityFactor1 = 1 + (particle1.complexity - 1) * 0.1;
+  const complexityFactor2 = 1 + (particle2.complexity - 1) * 0.1;
+  
   // High energy particles have larger interaction ranges
   const energyFactor1 = particle1.type === 'high-energy' ? 1.5 : 1;
   const energyFactor2 = particle2.type === 'high-energy' ? 1.5 : 1;
@@ -224,7 +331,14 @@ export function calculateParticleInteraction(
   const quantumFactor1 = particle1.type === 'quantum' ? (0.5 + Math.random()) : 1;
   const quantumFactor2 = particle2.type === 'quantum' ? (0.5 + Math.random()) : 1;
   
-  const interactionRange = baseInteractionRange * energyFactor1 * energyFactor2 * quantumFactor1 * quantumFactor2;
+  // Composite particles have expanded interaction ranges
+  const compositeFactor1 = particle1.type === 'composite' ? 1.5 + particle1.complexity * 0.1 : 1;
+  const compositeFactor2 = particle2.type === 'composite' ? 1.5 + particle2.complexity * 0.1 : 1;
+  
+  const interactionRange = baseInteractionRange * energyFactor1 * energyFactor2 * 
+                          quantumFactor1 * quantumFactor2 * 
+                          complexityFactor1 * complexityFactor2 *
+                          compositeFactor1 * compositeFactor2;
   
   if (distance < interactionRange) {
     interactionOccurred = true;
@@ -232,8 +346,55 @@ export function calculateParticleInteraction(
     // Base interaction strength influenced by learning rate
     const interactionStrength = learningRate / (distance + 0.1);
     
+    // Try to form a composite particle
+    const [compositeParticle1, compositeParticle2, compositeFormed] = 
+      tryFormCompositeParticle(particle1, particle2, interactionStrength);
+    
+    if (compositeFormed) {
+      return [compositeParticle1, compositeParticle2, true];
+    }
+    
+    // Enhanced knowledge exchange based on intent similarity
+    const intentSimilarity = 1 - Math.abs(particle1.intent - particle2.intent);
+    const knowledgeTransferMultiplier = 0.2 + intentSimilarity * 0.3;
+    
     // Type-specific interaction behaviors
-    if (particle1.type === 'quantum' || particle2.type === 'quantum') {
+    if (particle1.type === 'composite' || particle2.type === 'composite') {
+      // Composite particles have enhanced knowledge transfer
+      const compositeParticle = particle1.type === 'composite' ? particle1 : particle2;
+      const regularParticle = particle1.type === 'composite' ? particle2 : particle1;
+      
+      const compositeKnowledgeBoost = Math.min(0.5, compositeParticle.complexity * 0.05);
+      
+      if (particle1.type === 'composite') {
+        updatedParticle1.knowledge += particle2.knowledge * interactionStrength * 
+                                      knowledgeTransferMultiplier * (1 + compositeKnowledgeBoost);
+        updatedParticle2.knowledge += particle1.knowledge * interactionStrength * 
+                                      knowledgeTransferMultiplier * 0.3;
+        
+        // Update connections
+        updatedParticle1.connections += 0.1;
+        
+        // Composite particles can influence regular particles' movement
+        const gravitationalPull = interactionStrength * 0.02 * updatedParticle1.complexity;
+        updatedParticle2.vx += dx * gravitationalPull;
+        updatedParticle2.vy += dy * gravitationalPull;
+      } else {
+        updatedParticle2.knowledge += particle1.knowledge * interactionStrength * 
+                                      knowledgeTransferMultiplier * (1 + compositeKnowledgeBoost);
+        updatedParticle1.knowledge += particle2.knowledge * interactionStrength * 
+                                      knowledgeTransferMultiplier * 0.3;
+        
+        // Update connections
+        updatedParticle2.connections += 0.1;
+        
+        // Composite particles can influence regular particles' movement
+        const gravitationalPull = interactionStrength * 0.02 * updatedParticle2.complexity;
+        updatedParticle1.vx += dx * gravitationalPull;
+        updatedParticle1.vy += dy * gravitationalPull;
+      }
+    }
+    else if (particle1.type === 'quantum' || particle2.type === 'quantum') {
       // Quantum particles have unpredictable interactions
       const quantumEffect = Math.random() * 2 - 1; // Random effect between -1 and 1
       
@@ -254,7 +415,8 @@ export function calculateParticleInteraction(
         updatedParticle2.vx += dx * force;
         updatedParticle2.vy += dy * force;
       }
-    } else if (particle1.type === 'high-energy' || particle2.type === 'high-energy') {
+    } 
+    else if (particle1.type === 'high-energy' || particle2.type === 'high-energy') {
       // High-energy particles boost knowledge exchange
       const energyBoost = particle1.type === 'high-energy' ? particle1.energy : particle2.energy;
       
@@ -267,7 +429,14 @@ export function calculateParticleInteraction(
       updatedParticle1.vy += dy * force;
       updatedParticle2.vx -= dx * force;
       updatedParticle2.vy -= dy * force;
-    } else {
+      
+      // Add complexity enhancement for high-energy interactions
+      if (Math.random() > 0.8) { // 20% chance
+        updatedParticle1.complexity += 0.1;
+        updatedParticle2.complexity += 0.1;
+      }
+    } 
+    else {
       // Standard particle interactions based on charge combinations
       if (particle1.charge === 'positive' && particle2.charge === 'positive') {
         // Strong knowledge exchange for positive-positive
@@ -319,24 +488,12 @@ export function calculateParticleInteraction(
       }
     }
     
+    // Update connections counter
+    updatedParticle1.connections += 0.01;
+    updatedParticle2.connections += 0.01;
+    
     // Visual indication of interaction (color blending)
-    const colorBlend = (color1: string, color2: string, amount: number): string => {
-      // Simple RGBA color blending
-      const match1 = color1.match(/rgba\((\d+),\s*(\d+),\s*(\d+),\s*([\d.]+)\)/);
-      const match2 = color2.match(/rgba\((\d+),\s*(\d+),\s*(\d+),\s*([\d.]+)\)/);
-      
-      if (!match1 || !match2) return color1;
-      
-      const r1 = parseInt(match1[1]), g1 = parseInt(match1[2]), b1 = parseInt(match1[3]), a1 = parseFloat(match1[4]);
-      const r2 = parseInt(match2[1]), g2 = parseInt(match2[2]), b2 = parseInt(match2[3]), a2 = parseFloat(match2[4]);
-      
-      const r = Math.round(r1 * (1 - amount) + r2 * amount);
-      const g = Math.round(g1 * (1 - amount) + g2 * amount);
-      const b = Math.round(b1 * (1 - amount) + b2 * amount);
-      const a = a1 * (1 - amount) + a2 * amount;
-      
-      return `rgba(${r}, ${g}, ${b}, ${a})`;
-    };
+    const colorBlend = blendColors;
     
     const blendAmount = interactionStrength * 0.1;
     updatedParticle1.color = colorBlend(particle1.color, particle2.color, blendAmount);
@@ -345,6 +502,14 @@ export function calculateParticleInteraction(
     // Knowledge increases size slightly (with a cap)
     updatedParticle1.size = Math.min(10, particle1.size + particle1.knowledge * 0.0001);
     updatedParticle2.size = Math.min(10, particle2.size + particle2.knowledge * 0.0001);
+    
+    // Complexity can also affect size
+    if (updatedParticle1.complexity > 2) {
+      updatedParticle1.size = Math.min(15, updatedParticle1.size * (1 + (updatedParticle1.complexity - 2) * 0.02));
+    }
+    if (updatedParticle2.complexity > 2) {
+      updatedParticle2.size = Math.min(15, updatedParticle2.size * (1 + (updatedParticle2.complexity - 2) * 0.02));
+    }
   }
   
   return [updatedParticle1, updatedParticle2, interactionOccurred];

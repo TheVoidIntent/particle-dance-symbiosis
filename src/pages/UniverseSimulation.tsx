@@ -38,8 +38,9 @@ const UniverseSimulation = () => {
           <AlertDescription>
             This simulation demonstrates a universe born from intent field fluctuations. 
             Particles arise from these fluctuations and are imprinted with the "intent to know," 
-            causing them to explore and interact. The model now includes special particle types:
-            high-energy particles (yellow) and quantum particles (purple).
+            causing them to explore and interact. Particles can now exchange information to form 
+            composite structures with greater complexity, allowing the system to evolve into more 
+            sophisticated configurations.
           </AlertDescription>
         </Alert>
 
@@ -173,12 +174,24 @@ const UniverseSimulation = () => {
                   <span>{stats.quantumParticles}</span>
                 </div>
                 <div className="flex justify-between">
+                  <span className="text-blue-400 font-medium">Composite Particles:</span>
+                  <span>{stats.compositeParticles || 0}</span>
+                </div>
+                <div className="flex justify-between">
                   <span>Total Interactions:</span>
                   <span>{stats.totalInteractions}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Complexity Index:</span>
                   <span>{stats.complexityIndex.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Avg. Knowledge:</span>
+                  <span>{stats.averageKnowledge ? stats.averageKnowledge.toFixed(2) : '0.00'}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Max Complexity:</span>
+                  <span>{stats.maxComplexity ? stats.maxComplexity.toFixed(1) : '1.0'}</span>
                 </div>
               </div>
             </div>

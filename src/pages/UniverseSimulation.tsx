@@ -23,8 +23,11 @@ const UniverseSimulation = () => {
     neutralParticles: 0,
     highEnergyParticles: 0,
     quantumParticles: 0,
+    compositeParticles: 0,
     totalInteractions: 0,
-    complexityIndex: 0
+    complexityIndex: 0,
+    averageKnowledge: 0,
+    maxComplexity: 1
   });
 
   return (

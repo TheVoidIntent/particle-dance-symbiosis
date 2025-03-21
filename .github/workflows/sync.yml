@@ -3,7 +3,7 @@ name: Auto Sync Simulation Data
 
 on:
   schedule:
-    - cron: '0 * * * *'  # Runs every hour
+    - cron: '0 */6 * * *'  # Runs every 6 hours
   push:
     branches:
       - main
@@ -22,8 +22,13 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: '3.10'
+          
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install numpy matplotlib
 
-      - name: Run Simulation
+      - name: Run Enhanced Simulation
         run: |
           chmod +x src/run_simulation.py
           python src/run_simulation.py
@@ -35,3 +40,59 @@ jobs:
           git add data/
           git commit -m "Auto-update simulation data $(date +'%Y-%m-%d %H:%M:%S')" || echo "No changes to commit"
           git push origin main
+          
+      - name: Remove Old Data (Retain only last 5 runs)
+        run: |
+          python -c "
+          import os, json, glob
+          from datetime import datetime
+
+          # Get summary file
+          summary_path = 'data/summary.json'
+          if not os.path.exists(summary_path):
+              exit(0)
+              
+          # Load summary
+          with open(summary_path, 'r') as f:
+              summary = json.load(f)
+              
+          # Get all simulation files
+          simulation_files = glob.glob('data/simulation_*.json')
+          
+          # Group by simulation run
+          runs = {}
+          for file in simulation_files:
+              # Extract timestamp from filename
+              parts = file.split('_')
+              if len(parts) >= 3:
+                  timestamp = parts[-1].replace('.json', '')
+                  if timestamp not in runs:
+                      runs[timestamp] = []
+                  runs[timestamp].append(file)
+          
+          # Sort timestamps (newest first)
+          sorted_timestamps = sorted(runs.keys(), reverse=True)
+          
+          # Keep only the 5 newest runs
+          timestamps_to_keep = sorted_timestamps[:5]
+          
+          # Remove old files
+          deleted_count = 0
+          for timestamp, files in runs.items():
+              if timestamp not in timestamps_to_keep:
+                  for file in files:
+                      os.remove(file)
+                      deleted_count += 1
+                      
+          print(f'Removed {deleted_count} old simulation files')
+          
+          # Update summary
+          summary['latest_runs'] = timestamps_to_keep
+          with open(summary_path, 'w') as f:
+              json.dump(summary, f, indent=2)
+          "
+          
+          # Commit deleted files if any were removed
+          git add data/
+          git commit -m "Remove old simulation data (keeping only last 5 runs)" || echo "No changes to commit"
+          git push origin main || echo "No changes to push"

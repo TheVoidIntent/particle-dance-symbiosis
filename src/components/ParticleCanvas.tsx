@@ -1,4 +1,3 @@
-
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { 
   Particle, 
@@ -20,6 +19,13 @@ import {
   renderIntentField,
   renderParticleDensity
 } from '@/utils/renderUtils';
+import {
+  recordDataPoint,
+  exportDataToCSV,
+  exportDataToJSON,
+  shouldCollectData,
+  clearSimulationData
+} from '@/utils/dataExportUtils';
 import { useToast } from "@/hooks/use-toast";
 
 type ParticleCanvasProps = {
@@ -83,8 +89,13 @@ export const ParticleCanvas = ({
   });
   const [isInitialized, setIsInitialized] = useState(false);
   const { toast } = useToast();
-  
-  // Initialize the simulation
+  const dataCollectionActiveRef = useRef<boolean>(true);
+  const [dataExportOptions, setDataExportOptions] = useState({
+    autoExport: false,
+    exportInterval: 5000,
+    format: 'csv' as 'csv' | 'json'
+  });
+
   useEffect(() => {
     if (!canvasRef.current) return;
     
@@ -129,8 +140,7 @@ export const ParticleCanvas = ({
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
-  
-  // Create new particles
+
   useEffect(() => {
     if (!running || !isInitialized || intentFieldRef.current.length === 0) return;
     
@@ -165,20 +175,18 @@ export const ParticleCanvas = ({
           Date.now() + i
         );
         
-        // Create adaptive particles if enabled
-        if (useAdaptiveParticles && Math.random() < 0.1) { // 10% chance for adaptive particles
+        if (useAdaptiveParticles && Math.random() < 0.1) {
           newParticle.type = 'adaptive';
-          newParticle.color = 'rgba(236, 72, 153, 0.85)'; // Pink color for adaptive
-          newParticle.adaptiveScore = 1; // Initial score
+          newParticle.color = 'rgba(236, 72, 153, 0.85)';
+          newParticle.adaptiveScore = 1;
         }
         
-        // Apply energy conservation settings if enabled
         if (energyConservation) {
           newParticle.energyCapacity = 1 + Math.random() * 0.5;
           newParticle.intentDecayRate = 0.0002 + (Math.random() * 0.0002);
         } else {
-          newParticle.energyCapacity = 100; // Effectively unlimited
-          newParticle.intentDecayRate = 0.00001; // Negligible decay
+          newParticle.energyCapacity = 100;
+          newParticle.intentDecayRate = 0.00001;
         }
         
         newParticles.push(newParticle);
@@ -189,20 +197,17 @@ export const ParticleCanvas = ({
     
     return () => clearInterval(createParticlesInterval);
   }, [running, isInitialized, maxParticles, particleCreationRate, useAdaptiveParticles, energyConservation]);
-  
-  // Update intent field periodically
+
   useEffect(() => {
     if (!running || !isInitialized || intentFieldRef.current.length === 0) return;
     
     const updateIntentInterval = setInterval(() => {
-      // Probabilistic or standard intent updates
       intentFieldRef.current = updateIntentField(
         intentFieldRef.current, 
         intentFluctuationRate, 
         probabilisticIntent
       );
       
-      // Periodically apply particle influence to intent field (feedback loop)
       if (frameCountRef.current % 100 === 0) {
         const particleField = createFieldFromParticles(
           particlesRef.current, 
@@ -214,7 +219,6 @@ export const ParticleCanvas = ({
           dimensionsRef.current.width / intentFieldRef.current[0][0].length
         );
         
-        // Blend particle-created field with existing field (30% particle influence)
         const blendedField = intentFieldRef.current.map((plane, z) => 
           plane.map((row, y) => 
             row.map((value, x) => 
@@ -229,8 +233,7 @@ export const ParticleCanvas = ({
     
     return () => clearInterval(updateIntentInterval);
   }, [running, isInitialized, intentFluctuationRate, probabilisticIntent]);
-  
-  // Update particles' positions and interactions
+
   const updateParticles = useCallback(() => {
     const particles = particlesRef.current;
     const dimensions = dimensionsRef.current;
@@ -240,17 +243,15 @@ export const ParticleCanvas = ({
     
     const newParticles = [...particles];
     
-    // Update each particle's position
     for (let i = 0; i < newParticles.length; i++) {
       newParticles[i] = updateParticlePosition(
         newParticles[i], 
         dimensions, 
         intentField, 
         viewMode,
-        newParticles // Pass all particles for long-range interactions
+        newParticles
       );
       
-      // Handle particle interactions
       for (let j = i + 1; j < newParticles.length; j++) {
         const [updatedParticle1, updatedParticle2, interactionOccurred] = calculateParticleInteraction(
           newParticles[i],
@@ -268,15 +269,13 @@ export const ParticleCanvas = ({
       }
     }
     
-    // Remove particles with very low energy if energy conservation is enabled
     if (energyConservation) {
       return newParticles.filter(p => p.energy > 0.1);
     }
     
     return newParticles;
   }, [viewMode, learningRate, energyConservation]);
-  
-  // Main animation loop
+
   useEffect(() => {
     if (!running || !isInitialized) return;
     
@@ -284,10 +283,8 @@ export const ParticleCanvas = ({
       frameCountRef.current += 1;
       simulationTimeRef.current += 1;
       
-      // Update particles
       particlesRef.current = updateParticles();
       
-      // Render based on selected mode
       if (canvasRef.current) {
         const ctx = canvasRef.current.getContext('2d');
         if (ctx) {
@@ -310,17 +307,14 @@ export const ParticleCanvas = ({
           }
           
           if (renderMode === 'combined') {
-            // Add the intent field overlay with low opacity
             renderIntentField(ctx, intentFieldRef.current, dimensionsRef.current, 5, 0.1);
           }
         }
       }
       
-      // Calculate and update statistics every 30 frames (about 0.5 seconds)
       if (frameCountRef.current % 30 === 0) {
         const particles = particlesRef.current;
         
-        // Basic particle counts
         const positiveParticles = particles.filter(p => p.charge === 'positive').length;
         const negativeParticles = particles.filter(p => p.charge === 'negative').length;
         const neutralParticles = particles.filter(p => p.charge === 'neutral').length;
@@ -329,37 +323,29 @@ export const ParticleCanvas = ({
         const compositeParticles = particles.filter(p => p.type === 'composite').length;
         const adaptiveParticles = particles.filter(p => p.type === 'adaptive').length;
         
-        // Calculate knowledge metrics
         const totalKnowledge = particles.reduce((sum, p) => sum + p.knowledge, 0);
         const averageKnowledge = particles.length > 0 ? totalKnowledge / particles.length : 0;
         
-        // Find maximum complexity
         const maxComplexity = particles.length > 0 
           ? particles.reduce((max, p) => Math.max(max, p.complexity), 1) 
           : 1;
         
-        // Calculate variety factor for complexity index
         const varietyFactor = (positiveParticles * negativeParticles * neutralParticles * 
                              (highEnergyParticles + 1) * (quantumParticles + 1) *
                              (compositeParticles + 1) * (adaptiveParticles + 1)) / 
                              Math.max(1, particles.length ** 2);
         
-        // Enhanced complexity index with adaptive influence
         const complexityIndex = (totalKnowledge * varietyFactor) + 
                                (interactionsRef.current / 1000) + 
                                (compositeParticles * maxComplexity) +
                                (adaptiveParticles * 2);
         
-        // Analyze clusters
         const clusterAnalysis = analyzeParticleClusters(particles);
         
-        // Calculate system entropy
         const systemEntropy = calculateSystemEntropy(particles, intentFieldRef.current);
         
-        // Calculate intent field complexity
         const fieldAnalysis = analyzeIntentField(intentFieldRef.current);
         
-        // Update previous state for anomaly detection
         const currentState = {
           entropy: systemEntropy,
           clusterCount: clusterAnalysis.clusterCount,
@@ -367,8 +353,7 @@ export const ParticleCanvas = ({
           compositeCount: compositeParticles,
         };
         
-        // Detect anomalies
-        if (simulationTimeRef.current > 100) { // Allow system to stabilize first
+        if (simulationTimeRef.current > 100) {
           const anomalies = detectAnomalies(
             particles,
             previousStateRef.current,
@@ -376,12 +361,10 @@ export const ParticleCanvas = ({
             simulationTimeRef.current
           );
           
-          // Notify about significant anomalies
           anomalies.forEach(anomaly => {
             if (anomaly.severity > 0.6 && onAnomalyDetected) {
               onAnomalyDetected(anomaly);
               
-              // Show toast notification for major anomalies
               toast({
                 title: `Anomaly Detected: ${anomaly.type.replace('_', ' ')}`,
                 description: anomaly.description,
@@ -391,10 +374,8 @@ export const ParticleCanvas = ({
           });
         }
         
-        // Save current state for next comparison
         previousStateRef.current = currentState;
         
-        // Update stats
         onStatsUpdate({
           positiveParticles,
           negativeParticles,
@@ -412,6 +393,26 @@ export const ParticleCanvas = ({
           systemEntropy,
           intentFieldComplexity: fieldAnalysis.patternComplexity
         });
+        
+        if (dataCollectionActiveRef.current && shouldCollectData(frameCountRef.current)) {
+          recordDataPoint(
+            simulationTimeRef.current,
+            particles,
+            intentFieldRef.current,
+            interactionsRef.current,
+            clusterAnalysis,
+            systemEntropy,
+            complexityIndex
+          );
+        }
+      }
+      
+      if (dataExportOptions.autoExport && frameCountRef.current % 3000 === 0) {
+        if (dataExportOptions.format === 'csv') {
+          exportDataToCSV();
+        } else {
+          exportDataToJSON();
+        }
       }
       
       animationRef.current = requestAnimationFrame(animate);
@@ -422,17 +423,78 @@ export const ParticleCanvas = ({
     return () => {
       cancelAnimationFrame(animationRef.current);
     };
-  }, [running, isInitialized, updateParticles, renderMode, onStatsUpdate, onAnomalyDetected, viewMode, toast]);
-  
+  }, [running, isInitialized, updateParticles, renderMode, onStatsUpdate, onAnomalyDetected, viewMode, toast, dataExportOptions]);
+
+  const handleExportData = useCallback(() => {
+    if (dataExportOptions.format === 'csv') {
+      exportDataToCSV();
+    } else {
+      exportDataToJSON();
+    }
+    
+    toast({
+      title: "Data Exported",
+      description: `Simulation data exported in ${dataExportOptions.format.toUpperCase()} format.`,
+      variant: "default",
+    });
+  }, [dataExportOptions.format, toast]);
+
+  const toggleDataCollection = useCallback(() => {
+    dataCollectionActiveRef.current = !dataCollectionActiveRef.current;
+    
+    toast({
+      title: dataCollectionActiveRef.current ? "Data Collection Enabled" : "Data Collection Paused",
+      description: dataCollectionActiveRef.current 
+        ? "Simulation data points are now being recorded." 
+        : "Data collection has been paused.",
+      variant: "default",
+    });
+  }, [toast]);
+
+  const clearData = useCallback(() => {
+    clearSimulationData();
+    
+    toast({
+      title: "Data Cleared",
+      description: "All collected simulation data has been cleared.",
+      variant: "default",
+    });
+  }, [toast]);
+
   return (
-    <canvas 
-      ref={canvasRef} 
-      className="w-full h-full bg-black/90"
-    />
+    <div className="relative w-full h-full">
+      <canvas 
+        ref={canvasRef} 
+        className="w-full h-full bg-black/90"
+      />
+      
+      <div className="absolute bottom-4 right-4 flex flex-col gap-2 opacity-70 hover:opacity-100 transition-opacity">
+        <button 
+          onClick={handleExportData}
+          className="bg-indigo-600 text-white px-3 py-1 rounded text-xs"
+          title="Export collected data"
+        >
+          Export Data
+        </button>
+        <button 
+          onClick={toggleDataCollection}
+          className={`${dataCollectionActiveRef.current ? 'bg-green-600' : 'bg-red-600'} text-white px-3 py-1 rounded text-xs`}
+          title={dataCollectionActiveRef.current ? "Pause data collection" : "Resume data collection"}
+        >
+          {dataCollectionActiveRef.current ? "Collecting" : "Paused"}
+        </button>
+        <button 
+          onClick={clearData}
+          className="bg-gray-600 text-white px-3 py-1 rounded text-xs"
+          title="Clear all collected data"
+        >
+          Clear Data
+        </button>
+      </div>
+    </div>
   );
 };
 
-// Set default props
 ParticleCanvas.defaultProps = {
   renderMode: 'particles',
   useAdaptiveParticles: false,

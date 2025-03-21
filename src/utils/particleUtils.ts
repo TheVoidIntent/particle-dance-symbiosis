@@ -602,7 +602,7 @@ export function analyzeParticleClusters(particles: Particle[]): {
   return {
     clusterCount,
     averageClusterSize,
-    largestClusterSize,
+    largestClusterSize: largestSize,
     clusterStability
   };
 }
@@ -705,46 +705,4 @@ export function detectAnomalies(
         ? 'Sudden increase in system entropy (more disorder)' 
         : 'Sudden decrease in system entropy (more order)',
       affectedParticles: particles.length,
-      severity: Math.min(1, entropyChange * 2)
-    });
-  }
-  
-  const clusterChange = currentState.clusterCount - previousState.clusterCount;
-  if (Math.abs(clusterChange) > 2) {
-    anomalies.push({
-      timestamp,
-      type: clusterChange > 0 ? 'cluster_formation' : 'cluster_dissolution',
-      description: clusterChange > 0 
-        ? `Rapid formation of ${clusterChange} new clusters` 
-        : `Dissolution of ${Math.abs(clusterChange)} existing clusters`,
-      affectedParticles: Math.round(particles.length * 0.2),
-      severity: Math.min(1, Math.abs(clusterChange) / 5)
-    });
-  }
-  
-  const adaptiveChange = currentState.adaptiveCount - previousState.adaptiveCount;
-  if (adaptiveChange > 3) {
-    anomalies.push({
-      timestamp,
-      type: 'adaptive_emergence',
-      description: `Emergence of ${adaptiveChange} new adaptive particles`,
-      affectedParticles: adaptiveChange,
-      severity: Math.min(1, adaptiveChange / 10)
-    });
-  }
-  
-  const compositeChange = currentState.compositeCount - previousState.compositeCount;
-  if (compositeChange > 5 || (previousState.compositeCount > 0 && compositeChange < -5)) {
-    anomalies.push({
-      timestamp,
-      type: 'phase_transition',
-      description: compositeChange > 0 
-        ? `Rapid composition formation: ${compositeChange} new composite particles` 
-        : `Major composition breakdown: ${Math.abs(compositeChange)} composite particles lost`,
-      affectedParticles: Math.abs(compositeChange),
-      severity: Math.min(1, Math.abs(compositeChange) / 10)
-    });
-  }
-  
-  return anomalies;
-}
+      severity: Math

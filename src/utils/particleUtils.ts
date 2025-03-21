@@ -1,3 +1,4 @@
+
 // Define the extended particle types and interfaces
 export type ParticleType = 'standard' | 'high-energy' | 'quantum' | 'composite';
 export type ParticleCharge = 'positive' | 'negative' | 'neutral';
@@ -228,18 +229,20 @@ function tryFormCompositeParticle(
     (particle1.charge === 'positive' && (particle2.charge === 'negative' || particle2.charge === 'neutral')) ||
     (particle2.charge === 'positive' && (particle1.charge === 'negative' || particle1.charge === 'neutral'));
   
+  // Reduce knowledge threshold to make composite particles form more readily
   const sufficientKnowledge = 
-    particle1.knowledge > 5 && 
-    particle2.knowledge > 5;
+    particle1.knowledge > 1 && 
+    particle2.knowledge > 1;
   
+  // Reduce energy threshold to increase composite formation chance
   const sufficientEnergy = 
-    particle1.energy > 0.7 && 
-    particle2.energy > 0.7;
+    particle1.energy > 0.4 && 
+    particle2.energy > 0.4;
     
   const chanceToForm = Math.random();
   
-  // Higher chance to form composite particle if conditions are met
-  if (oppositeCharges && sufficientKnowledge && sufficientEnergy && chanceToForm < 0.3) {
+  // Increase chance to form composite particle (from 0.3 to 0.6)
+  if (oppositeCharges && sufficientKnowledge && sufficientEnergy && chanceToForm < 0.6) {
     // Randomly select which particle becomes composite
     if (Math.random() > 0.5) {
       updatedParticle1.type = 'composite';
@@ -250,7 +253,7 @@ function tryFormCompositeParticle(
       
       // Visual updates
       updatedParticle1.size = Math.min(15, particle1.size * 1.2);
-      updatedParticle1.color = blendColors(particle1.color, particle2.color, 0.5);
+      updatedParticle1.color = 'rgba(66, 153, 225, 0.85)'; // Blue color for composite particles
       
       // "Consume" the second particle by reducing its energy
       updatedParticle2.energy *= 0.3;
@@ -267,7 +270,7 @@ function tryFormCompositeParticle(
       
       // Visual updates
       updatedParticle2.size = Math.min(15, particle2.size * 1.2);
-      updatedParticle2.color = blendColors(particle2.color, particle1.color, 0.5);
+      updatedParticle2.color = 'rgba(66, 153, 225, 0.85)'; // Blue color for composite particles
       
       // "Consume" the first particle by reducing its energy
       updatedParticle1.energy *= 0.3;

@@ -36,6 +36,16 @@ export interface SimulationTimePoint {
 // Store collected data points
 export const simulationData: SimulationTimePoint[] = [];
 
+// Manage persisted simulation state between sessions
+export const persistedState = {
+  particles: [] as Particle[],
+  intentField: [] as number[][][],
+  interactions: 0,
+  simulationTime: 0,
+  hasPersistedState: false,
+  frameCount: 0
+};
+
 // Add a data point to the time series
 export function recordDataPoint(
   timestamp: number,
@@ -103,6 +113,14 @@ export function recordDataPoint(
     if (simulationData.length % 10 === 0) {
       console.log(`Data collection: ${simulationData.length} data points recorded`);
     }
+    
+    // Update persisted state
+    persistedState.particles = [...particles];
+    persistedState.intentField = JSON.parse(JSON.stringify(intentField)); // Deep copy
+    persistedState.interactions = interactions;
+    persistedState.simulationTime = timestamp;
+    persistedState.hasPersistedState = true;
+    persistedState.frameCount += 1;
   } catch (error) {
     console.error('Error recording data point:', error);
   }
@@ -183,4 +201,15 @@ export function shouldCollectData(frameCount: number): boolean {
 export function clearSimulationData(): void {
   simulationData.length = 0;
   console.log('Simulation data cleared');
+}
+
+// Clear persisted state
+export function clearPersistedState(): void {
+  persistedState.particles = [];
+  persistedState.intentField = [];
+  persistedState.interactions = 0;
+  persistedState.simulationTime = 0;
+  persistedState.hasPersistedState = false;
+  persistedState.frameCount = 0;
+  console.log('Persisted simulation state cleared');
 }

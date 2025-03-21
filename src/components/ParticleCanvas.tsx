@@ -1,3 +1,4 @@
+
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { 
   Particle, 
@@ -24,7 +25,9 @@ import {
   exportDataToCSV,
   exportDataToJSON,
   shouldCollectData,
-  clearSimulationData
+  clearSimulationData,
+  persistedState,
+  clearPersistedState
 } from '@/utils/dataExportUtils';
 import { useToast } from "@/hooks/use-toast";
 
@@ -35,10 +38,10 @@ type ParticleCanvasProps = {
   particleCreationRate: number;
   viewMode: '2d' | '3d';
   running: boolean;
-  renderMode: 'particles' | 'field' | 'density' | 'combined';
-  useAdaptiveParticles: boolean;
-  energyConservation: boolean;
-  probabilisticIntent: boolean;
+  renderMode?: 'particles' | 'field' | 'density' | 'combined';
+  useAdaptiveParticles?: boolean;
+  energyConservation?: boolean;
+  probabilisticIntent?: boolean;
   onStatsUpdate: (stats: {
     positiveParticles: number;
     negativeParticles: number;
@@ -59,35 +62,35 @@ type ParticleCanvasProps = {
   onAnomalyDetected?: (anomaly: AnomalyEvent) => void;
 };
 
-export const ParticleCanvas = ({
+export const ParticleCanvas: React.FC<ParticleCanvasProps> = ({
   intentFluctuationRate,
   maxParticles,
   learningRate,
   particleCreationRate,
   viewMode,
   running,
-  renderMode,
-  useAdaptiveParticles,
-  energyConservation,
-  probabilisticIntent,
+  renderMode = 'particles',
+  useAdaptiveParticles = false,
+  energyConservation = false,
+  probabilisticIntent = false,
   onStatsUpdate,
   onAnomalyDetected
-}: ParticleCanvasProps) => {
+}) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const particlesRef = useRef<Particle[]>([]);
-  const intentFieldRef = useRef<number[][][]>([]);
+  const particlesRef = useRef<Particle[]>(persistedState.hasPersistedState ? [...persistedState.particles] : []);
+  const intentFieldRef = useRef<number[][][]>(persistedState.hasPersistedState ? [...persistedState.intentField] : []);
   const dimensionsRef = useRef({ width: 0, height: 0 });
   const animationRef = useRef<number>(0);
-  const interactionsRef = useRef<number>(0);
-  const frameCountRef = useRef<number>(0);
-  const simulationTimeRef = useRef<number>(0);
+  const interactionsRef = useRef<number>(persistedState.hasPersistedState ? persistedState.interactions : 0);
+  const frameCountRef = useRef<number>(persistedState.hasPersistedState ? persistedState.frameCount : 0);
+  const simulationTimeRef = useRef<number>(persistedState.hasPersistedState ? persistedState.simulationTime : 0);
   const previousStateRef = useRef({
     entropy: 0,
     clusterCount: 0,
     adaptiveCount: 0,
     compositeCount: 0,
   });
-  const [isInitialized, setIsInitialized] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(persistedState.hasPersistedState);
   const { toast } = useToast();
   const dataCollectionActiveRef = useRef<boolean>(true);
   const [dataExportOptions, setDataExportOptions] = useState({
@@ -106,27 +109,52 @@ export const ParticleCanvas = ({
     canvas.height = height;
     dimensionsRef.current = { width, height };
     
-    const fieldResolution = 10;
-    const fieldWidth = Math.ceil(width / fieldResolution);
-    const fieldHeight = Math.ceil(height / fieldResolution);
-    const fieldDepth = 10;
-    
-    const newField: number[][][] = [];
-    
-    for (let z = 0; z < fieldDepth; z++) {
-      const plane: number[][] = [];
-      for (let y = 0; y < fieldHeight; y++) {
-        const row: number[] = [];
-        for (let x = 0; x < fieldWidth; x++) {
-          row.push(Math.random() * 2 - 1);
+    // Only initialize field if we don't have persisted state
+    if (!persistedState.hasPersistedState) {
+      const fieldResolution = 10;
+      const fieldWidth = Math.ceil(width / fieldResolution);
+      const fieldHeight = Math.ceil(height / fieldResolution);
+      const fieldDepth = 10;
+      
+      const newField: number[][][] = [];
+      
+      for (let z = 0; z < fieldDepth; z++) {
+        const plane: number[][] = [];
+        for (let y = 0; y < fieldHeight; y++) {
+          const row: number[] = [];
+          for (let x = 0; x < fieldWidth; x++) {
+            row.push(Math.random() * 2 - 1);
+          }
+          plane.push(row);
         }
-        plane.push(row);
+        newField.push(plane);
       }
-      newField.push(plane);
+      
+      intentFieldRef.current = newField;
     }
     
-    intentFieldRef.current = newField;
     setIsInitialized(true);
+    
+    // If we have state but the canvas size has changed, we need to adjust
+    if (persistedState.hasPersistedState) {
+      // Adjust particle positions to fit the new canvas
+      const ratioX = width / dimensionsRef.current.width;
+      const ratioY = height / dimensionsRef.current.height;
+      
+      if (ratioX !== 1 || ratioY !== 1) {
+        particlesRef.current = particlesRef.current.map(p => ({
+          ...p,
+          x: p.x * ratioX,
+          y: p.y * ratioY
+        }));
+      }
+      
+      toast({
+        title: "Simulation Continued",
+        description: `Continuing from previous state with ${particlesRef.current.length} particles`,
+        variant: "default",
+      });
+    }
     
     const handleResize = () => {
       if (!canvasRef.current) return;
@@ -139,7 +167,7 @@ export const ParticleCanvas = ({
     
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, []);
+  }, [toast]);
 
   useEffect(() => {
     if (!running || !isInitialized || intentFieldRef.current.length === 0) return;
@@ -461,6 +489,46 @@ export const ParticleCanvas = ({
     });
   }, [toast]);
 
+  const resetSimulation = useCallback(() => {
+    clearPersistedState();
+    clearSimulationData();
+    particlesRef.current = [];
+    interactionsRef.current = 0;
+    frameCountRef.current = 0;
+    simulationTimeRef.current = 0;
+    
+    // Reinitialize the field
+    if (canvasRef.current) {
+      const { width, height } = canvasRef.current.getBoundingClientRect();
+      const fieldResolution = 10;
+      const fieldWidth = Math.ceil(width / fieldResolution);
+      const fieldHeight = Math.ceil(height / fieldResolution);
+      const fieldDepth = 10;
+      
+      const newField: number[][][] = [];
+      
+      for (let z = 0; z < fieldDepth; z++) {
+        const plane: number[][] = [];
+        for (let y = 0; y < fieldHeight; y++) {
+          const row: number[] = [];
+          for (let x = 0; x < fieldWidth; x++) {
+            row.push(Math.random() * 2 - 1);
+          }
+          plane.push(row);
+        }
+        newField.push(plane);
+      }
+      
+      intentFieldRef.current = newField;
+    }
+    
+    toast({
+      title: "Simulation Reset",
+      description: "The simulation has been completely reset.",
+      variant: "default",
+    });
+  }, [toast]);
+
   return (
     <div className="relative w-full h-full">
       <canvas 
@@ -490,14 +558,14 @@ export const ParticleCanvas = ({
         >
           Clear Data
         </button>
+        <button 
+          onClick={resetSimulation}
+          className="bg-red-600 text-white px-3 py-1 rounded text-xs"
+          title="Reset the entire simulation"
+        >
+          Reset
+        </button>
       </div>
     </div>
   );
-};
-
-ParticleCanvas.defaultProps = {
-  renderMode: 'particles',
-  useAdaptiveParticles: false,
-  energyConservation: false,
-  probabilisticIntent: false
 };

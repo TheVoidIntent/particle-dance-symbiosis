@@ -1,4 +1,3 @@
-
 #!/usr/bin/env python3
 """
 Enhanced Universe Simulation Data Collection Script
@@ -33,7 +32,7 @@ def simulate_intent_field(size=10, fluctuation_rate=0.01, probabilistic=True):
                     if probabilistic:
                         # Use gaussian-like distribution
                         u1, u2 = random.random(), random.random()
-                        rand_std_normal = math.sqrt(-2.0 * math.log(u1)) * math.sin(2.0 * math.PI * u2)
+                        rand_std_normal = math.sqrt(-2.0 * math.log(u1)) * math.sin(2.0 * math.pi * u2)
                         fluctuation = rand_std_normal * fluctuation_rate * 0.3
                     else:
                         # Standard uniform random fluctuation

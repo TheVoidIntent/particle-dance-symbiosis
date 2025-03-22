@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
@@ -14,7 +13,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { AnomalyEvent } from '@/utils/particleUtils';
 import { useToast } from "@/hooks/use-toast";
 
-// Enhanced stats type
 interface SimulationStats {
   positiveParticles: number;
   negativeParticles: number;
@@ -31,16 +29,21 @@ interface SimulationStats {
   averageClusterSize: number;
   systemEntropy: number;
   intentFieldComplexity: number;
+  shannonEntropy?: number;
+  spatialEntropy?: number;
+  fieldOrderParameter?: number;
+  clusterLifetime?: number;
+  clusterEntropyDelta?: number;
+  informationDensity?: number;
+  kolmogorovComplexity?: number;
 }
 
-// Enhanced simulation history
 interface SimulationDataPoint {
   timestamp: number;
   stats: SimulationStats;
 }
 
 const UniverseSimulation = () => {
-  // Simulation parameters
   const [intentFluctuationRate, setIntentFluctuationRate] = useState(0.01);
   const [maxParticles, setMaxParticles] = useState(100);
   const [learningRate, setLearningRate] = useState(0.1);
@@ -68,34 +71,36 @@ const UniverseSimulation = () => {
     clusterCount: 0,
     averageClusterSize: 0,
     systemEntropy: 0,
-    intentFieldComplexity: 0
+    intentFieldComplexity: 0,
+    shannonEntropy: 0,
+    spatialEntropy: 0,
+    fieldOrderParameter: 0,
+    clusterLifetime: 0,
+    clusterEntropyDelta: 0,
+    informationDensity: 0,
+    kolmogorovComplexity: 0
   });
   const { toast } = useToast();
-  
-  // Handle anomaly detection
+
   const handleAnomalyDetected = useCallback((anomaly: AnomalyEvent) => {
     setAnomalies(prev => [...prev.slice(-9), anomaly]);
   }, []);
-  
-  // Handle stats update
+
   const handleStatsUpdate = useCallback((newStats: SimulationStats) => {
     setStats(newStats);
     
-    // Save history every 10 seconds (approximate)
-    if (Math.random() < 0.05) { // ~5% chance each update, assuming updates are about every 0.5s
+    if (Math.random() < 0.05) {
       setSimulationHistory(prev => {
         const newHistory = [...prev, {
           timestamp: Date.now(),
           stats: { ...newStats }
         }];
         
-        // Limit history to last 30 data points to prevent memory issues
         return newHistory.slice(-30);
       });
     }
   }, []);
-  
-  // Download simulation data
+
   const handleDownloadData = useCallback(() => {
     if (simulationHistory.length === 0) {
       toast({
@@ -136,7 +141,7 @@ const UniverseSimulation = () => {
       variant: "default",
     });
   }, [simulationHistory, anomalies, intentFluctuationRate, maxParticles, learningRate, particleCreationRate, useAdaptiveParticles, energyConservation, probabilisticIntent, toast]);
-  
+
   return (
     <div className="min-h-screen bg-background">
       <div className="section-container py-8">
@@ -147,18 +152,19 @@ const UniverseSimulation = () => {
           <AlertTitle>Advanced Intent Field Universe Model</AlertTitle>
           <AlertDescription>
             This simulation demonstrates a universe born from intent field fluctuations. 
-            Particles now feature advanced interactions including memory effects, 
+            Particles feature advanced interactions including memory effects, 
             reinforcement learning adaptive behaviors, and cluster formation capabilities. 
-            The system demonstrates emergent complexity through phase transitions and 
-            maintains energy conservation principles.
+            The system demonstrates emergent complexity, phase transitions, entropy-based clustering,
+            and exhibits information-driven gravitational-like effects.
           </AlertDescription>
         </Alert>
 
         <Tabs defaultValue="simulation" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 mb-6">
+          <TabsList className="grid w-full grid-cols-4 mb-6">
             <TabsTrigger value="simulation">Live Simulation</TabsTrigger>
             <TabsTrigger value="anomalies">Anomalies & Events</TabsTrigger>
             <TabsTrigger value="data">Historical Data</TabsTrigger>
+            <TabsTrigger value="entropy">Entropy Analysis</TabsTrigger>
           </TabsList>
           
           <TabsContent value="simulation">
@@ -405,6 +411,36 @@ const UniverseSimulation = () => {
                       <span>Field Complexity:</span>
                       <span>{stats.intentFieldComplexity.toFixed(3)}</span>
                     </div>
+                    
+                    <div className="border-t border-gray-200 dark:border-gray-800 my-1"></div>
+                    <div className="flex justify-between text-emerald-500">
+                      <span>Shannon Entropy:</span>
+                      <span>{stats.shannonEntropy?.toFixed(3) || "0.000"}</span>
+                    </div>
+                    <div className="flex justify-between text-emerald-500">
+                      <span>Spatial Entropy:</span>
+                      <span>{stats.spatialEntropy?.toFixed(3) || "0.000"}</span>
+                    </div>
+                    <div className="flex justify-between text-emerald-500">
+                      <span>Field Order:</span>
+                      <span>{stats.fieldOrderParameter?.toFixed(3) || "0.000"}</span>
+                    </div>
+                    <div className="flex justify-between text-emerald-500">
+                      <span>Cluster Lifetime:</span>
+                      <span>{stats.clusterLifetime?.toFixed(0) || "0"}</span>
+                    </div>
+                    <div className="flex justify-between text-emerald-500">
+                      <span>Info Density:</span>
+                      <span>{stats.informationDensity?.toFixed(3) || "0.000"}</span>
+                    </div>
+                    <div className="flex justify-between text-emerald-500">
+                      <span>Kolmogorov:</span>
+                      <span>{stats.kolmogorovComplexity?.toFixed(3) || "0.000"}</span>
+                    </div>
+                    <div className="flex justify-between text-emerald-500">
+                      <span>Entropy Delta:</span>
+                      <span>{stats.clusterEntropyDelta?.toFixed(3) || "0.000"}</span>
+                    </div>
                   </CardContent>
                 </Card>
               </div>
@@ -452,6 +488,152 @@ const UniverseSimulation = () => {
           
           <TabsContent value="data">
             <SimulationData />
+          </TabsContent>
+          
+          <TabsContent value="entropy">
+            <Card>
+              <CardHeader>
+                <CardTitle>Advanced Entropy & Emergence Analysis</CardTitle>
+                <CardDescription>
+                  In-depth analysis of entropy patterns, clustering behaviors, and information-based emergent properties
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-medium">Entropy Analysis</h3>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="bg-card border rounded-lg p-4 text-center">
+                        <div className="text-sm text-muted-foreground mb-1">Shannon Entropy</div>
+                        <div className="text-2xl font-bold">{stats.shannonEntropy?.toFixed(3) || "0.000"}</div>
+                        <div className="text-xs mt-1">Particle Distribution Randomness</div>
+                      </div>
+                      <div className="bg-card border rounded-lg p-4 text-center">
+                        <div className="text-sm text-muted-foreground mb-1">Spatial Entropy</div>
+                        <div className="text-2xl font-bold">{stats.spatialEntropy?.toFixed(3) || "0.000"}</div>
+                        <div className="text-xs mt-1">Position Distribution Randomness</div>
+                      </div>
+                      <div className="bg-card border rounded-lg p-4 text-center">
+                        <div className="text-sm text-muted-foreground mb-1">Field Order</div>
+                        <div className="text-2xl font-bold">{stats.fieldOrderParameter?.toFixed(3) || "0.000"}</div>
+                        <div className="text-xs mt-1">Intent Field Alignment (Higher = More Order)</div>
+                      </div>
+                      <div className="bg-card border rounded-lg p-4 text-center">
+                        <div className="text-sm text-muted-foreground mb-1">Entropy Delta</div>
+                        <div className={`text-2xl font-bold ${Number(stats.clusterEntropyDelta || 0) < 0 ? 'text-green-500' : 'text-red-500'}`}>
+                          {stats.clusterEntropyDelta?.toFixed(3) || "0.000"}
+                        </div>
+                        <div className="text-xs mt-1">Cluster vs. Non-Cluster Entropy Difference</div>
+                      </div>
+                    </div>
+                    
+                    <h3 className="text-lg font-medium mt-6">Clustering Behavior</h3>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="bg-card border rounded-lg p-4 text-center">
+                        <div className="text-sm text-muted-foreground mb-1">Cluster Lifetime</div>
+                        <div className="text-2xl font-bold">{stats.clusterLifetime?.toFixed(0) || "0"}</div>
+                        <div className="text-xs mt-1">Stability of Particle Clusters</div>
+                      </div>
+                      <div className="bg-card border rounded-lg p-4 text-center">
+                        <div className="text-sm text-muted-foreground mb-1">Information Density</div>
+                        <div className="text-2xl font-bold">{stats.informationDensity?.toFixed(2) || "0.00"}</div>
+                        <div className="text-xs mt-1">Knowledge Concentration in Clusters</div>
+                      </div>
+                      <div className="bg-card border rounded-lg p-4 text-center">
+                        <div className="text-sm text-muted-foreground mb-1">Kolmogorov Complexity</div>
+                        <div className="text-2xl font-bold">{stats.kolmogorovComplexity?.toFixed(3) || "0.000"}</div>
+                        <div className="text-xs mt-1">System Pattern Complexity</div>
+                      </div>
+                      <div className="bg-card border rounded-lg p-4 text-center">
+                        <div className="text-sm text-muted-foreground mb-1">Active Clusters</div>
+                        <div className="text-2xl font-bold">{stats.clusterCount}</div>
+                        <div className="text-xs mt-1">Number of Stable Particle Groups</div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-medium">Interpretation Guide</h3>
+                    <div className="bg-muted rounded-lg p-4 space-y-3">
+                      <div>
+                        <h4 className="font-medium">Shannon Entropy vs Spatial Entropy</h4>
+                        <p className="text-sm">
+                          Shannon entropy measures disorder in particle types/charges, while spatial entropy measures
+                          evenness of particle distribution across space. Lower values indicate more ordered systems.
+                        </p>
+                      </div>
+                      
+                      <div>
+                        <h4 className="font-medium">Negative Entropy Delta</h4>
+                        <p className="text-sm">
+                          A negative entropy delta means clusters have lower entropy than unclustered particles,
+                          suggesting self-organization rather than random grouping. This indicates intent-driven
+                          pattern formation.
+                        </p>
+                      </div>
+                      
+                      <div>
+                        <h4 className="font-medium">Information Density & Gravity-Like Effects</h4>
+                        <p className="text-sm">
+                          High information density in clusters can create gravity-like effects, pulling in other particles.
+                          This demonstrates how knowledge/intent can behave similar to a physical force.
+                        </p>
+                      </div>
+                      
+                      <div>
+                        <h4 className="font-medium">Field Order Parameter</h4>
+                        <p className="text-sm">
+                          Values near 1 indicate an ordered, aligned intent field, while values near 0 indicate a more
+                          random, chaotic field. Phase transitions often correlate with sudden changes in this value.
+                        </p>
+                      </div>
+                      
+                      <div>
+                        <h4 className="font-medium">Kolmogorov Complexity</h4>
+                        <p className="text-sm">
+                          Measures how "compressible" the system's pattern is. Higher values indicate more
+                          complex, sophisticated patterns that can't be easily described with simple rules.
+                        </p>
+                      </div>
+                    </div>
+                    
+                    <div className="border rounded-lg p-4 mt-6">
+                      <h3 className="text-lg font-medium mb-2">Real-Time Analysis</h3>
+                      <p className="text-sm mb-3">
+                        Current system state assessment based on entropy metrics:
+                      </p>
+                      <div className="bg-card p-3 rounded text-sm">
+                        {stats.shannonEntropy && stats.spatialEntropy && stats.fieldOrderParameter ? (
+                          stats.shannonEntropy < 0.3 && stats.fieldOrderParameter > 0.7 ? (
+                            <span className="text-green-500">
+                              Highly ordered system with strong intent field alignment. Structural stability is high.
+                            </span>
+                          ) : stats.shannonEntropy > 0.7 && stats.fieldOrderParameter < 0.3 ? (
+                            <span className="text-red-500">
+                              Highly chaotic system with minimal structure. Random interactions dominate.
+                            </span>
+                          ) : stats.clusterEntropyDelta && stats.clusterEntropyDelta < -0.2 ? (
+                            <span className="text-blue-500">
+                              Intent-driven self-organization detected. Clusters show significantly more order than surroundings.
+                            </span>
+                          ) : stats.informationDensity && stats.informationDensity > 5 ? (
+                            <span className="text-purple-500">
+                              High information gravity detected. Knowledge is concentrating in specific regions.
+                            </span>
+                          ) : (
+                            <span>
+                              Balanced system with moderate order and chaos. Normal evolution patterns.
+                            </span>
+                          )
+                        ) : (
+                          <span>Gathering data for analysis...</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
       </div>

@@ -1,4 +1,3 @@
-
 // Define the extended particle types and interfaces
 export type ParticleType = 'standard' | 'high-energy' | 'quantum' | 'composite' | 'adaptive';
 export type ParticleCharge = 'positive' | 'negative' | 'neutral';
@@ -143,19 +142,20 @@ export function updateParticlePosition(
       Math.min(fieldX, intentField[0][0].length - 1)
     ];
     
+    const infoMass = calculateInformationMass(updatedParticle);
+    const fieldInfluence = fieldValue * (0.01 + infoMass * 0.005);
+    
     if (updatedParticle.type === 'standard') {
-      const influence = fieldValue * 0.01;
-      updatedParticle.vx += influence * (Math.random() - 0.5);
-      updatedParticle.vy += influence * (Math.random() - 0.5);
+      updatedParticle.vx += fieldInfluence * (Math.random() - 0.5);
+      updatedParticle.vy += fieldInfluence * (Math.random() - 0.5);
       if (viewMode === '3d') {
-        updatedParticle.vz += influence * (Math.random() - 0.5) * 0.5;
+        updatedParticle.vz += fieldInfluence * (Math.random() - 0.5) * 0.5;
       }
     } else if (updatedParticle.type === 'high-energy') {
-      const influence = fieldValue * 0.005;
-      updatedParticle.vx += influence * (Math.random() - 0.5) + (Math.random() - 0.5) * 0.05;
-      updatedParticle.vy += influence * (Math.random() - 0.5) + (Math.random() - 0.5) * 0.05;
+      updatedParticle.vx += fieldInfluence * (Math.random() - 0.5) + (Math.random() - 0.5) * 0.05;
+      updatedParticle.vy += fieldInfluence * (Math.random() - 0.5) + (Math.random() - 0.5) * 0.05;
       if (viewMode === '3d') {
-        updatedParticle.vz += influence * (Math.random() - 0.5) * 0.5 + (Math.random() - 0.5) * 0.05;
+        updatedParticle.vz += fieldInfluence * (Math.random() - 0.5) * 0.5 + (Math.random() - 0.5) * 0.05;
       }
     } else if (updatedParticle.type === 'quantum') {
       if (Math.random() > 0.98) {
@@ -272,6 +272,31 @@ export function updateParticlePosition(
   }
   
   return updatedParticle;
+}
+
+// Calculate the information mass of a particle (for gravity-like effects)
+function calculateInformationMass(particle: Particle): number {
+  const knowledgeFactor = particle.knowledge * 2;
+  const complexityFactor = particle.complexity * 1.5;
+  const connectionsFactor = particle.connections * 0.5;
+  
+  let baseMass = 1.0;
+  switch(particle.type) {
+    case 'high-energy':
+      baseMass = 2.0;
+      break;
+    case 'quantum':
+      baseMass = 0.5;
+      break;
+    case 'composite':
+      baseMass = 3.0;
+      break;
+    case 'adaptive':
+      baseMass = 1.5;
+      break;
+  }
+  
+  return baseMass + knowledgeFactor + complexityFactor + connectionsFactor;
 }
 
 // Try to form a composite particle from two interacting particles
@@ -542,12 +567,16 @@ export function calculateParticleInteraction(
   return [updatedParticle1, updatedParticle2, interactionOccurred];
 }
 
-// Detect and analyze stable clusters
+// Detect and analyze stable clusters with enhanced metrics
 export function analyzeParticleClusters(particles: Particle[]): {
   clusterCount: number;
   averageClusterSize: number;
   largestClusterSize: number;
   clusterStability: number;
+  clusterLifetime: number;
+  clusterEntropyDelta: number;
+  informationDensity: number;
+  kolmogorovComplexity: number;
 } {
   const clusterIds = new Set<number>();
   particles.forEach(p => {
@@ -577,22 +606,29 @@ export function analyzeParticleClusters(particles: Particle[]): {
   let totalKnowledge = 0;
   let totalComplexity = 0;
   let totalAge = 0;
+  let totalEntropy = 0;
   let totalClusteredParticles = 0;
+  let oldestCluster = 0;
   
   clusterIds.forEach(id => {
     const clusterParticles = particles.filter(p => p.clusterAffiliation === id);
     totalClusteredParticles += clusterParticles.length;
     
+    const maxAge = Math.max(...clusterParticles.map(p => p.age));
+    oldestCluster = Math.max(oldestCluster, maxAge);
+    
     clusterParticles.forEach(p => {
       totalKnowledge += p.knowledge;
       totalComplexity += p.complexity;
       totalAge += p.age;
+      totalEntropy += p.intentEntropy;
     });
   });
   
   const avgKnowledge = totalClusteredParticles > 0 ? totalKnowledge / totalClusteredParticles : 0;
   const avgComplexity = totalClusteredParticles > 0 ? totalComplexity / totalClusteredParticles : 0;
   const avgAge = totalClusteredParticles > 0 ? totalAge / totalClusteredParticles : 0;
+  const avgEntropy = totalClusteredParticles > 0 ? totalEntropy / totalClusteredParticles : 0;
   
   const knowledgeFactor = Math.min(1, avgKnowledge / 10);
   const complexityFactor = Math.min(1, avgComplexity / 5);
@@ -600,39 +636,67 @@ export function analyzeParticleClusters(particles: Particle[]): {
   
   const clusterStability = (knowledgeFactor * 0.4 + complexityFactor * 0.4 + ageFactor * 0.2);
   
+  const clusterLifetime = oldestCluster;
+  
+  const unclusteredParticles = particles.filter(p => p.clusterAffiliation === -1);
+  const unclusteredEntropy = unclusteredParticles.length > 0 
+    ? unclusteredParticles.reduce((sum, p) => sum + p.intentEntropy, 0) / unclusteredParticles.length 
+    : 0;
+  
+  const clusterEntropyDelta = avgEntropy - unclusteredEntropy;
+  
+  const informationDensity = totalClusteredParticles > 0 
+    ? (totalKnowledge + totalComplexity) / totalClusteredParticles 
+    : 0;
+  
+  const clusterTypes = new Map<string, number>();
+  const clusterCharges = new Map<string, number>();
+  
+  particles.filter(p => p.clusterAffiliation !== -1).forEach(p => {
+    clusterTypes.set(p.type, (clusterTypes.get(p.type) || 0) + 1);
+    clusterCharges.set(p.charge, (clusterCharges.get(p.charge) || 0) + 1);
+  });
+  
+  let typeEntropy = 0;
+  let chargeEntropy = 0;
+  
+  clusterTypes.forEach((count) => {
+    const p = count / totalClusteredParticles;
+    typeEntropy -= p * Math.log2(p);
+  });
+  
+  clusterCharges.forEach((count) => {
+    const p = count / totalClusteredParticles;
+    chargeEntropy -= p * Math.log2(p);
+  });
+  
+  const kolmogorovComplexity = (typeEntropy + chargeEntropy) / 2;
+  
   return {
     clusterCount,
     averageClusterSize,
     largestClusterSize: largestSize,
-    clusterStability
+    clusterStability,
+    clusterLifetime,
+    clusterEntropyDelta,
+    informationDensity,
+    kolmogorovComplexity
   };
 }
 
-// Calculate system-wide entropy
-export function calculateSystemEntropy(particles: Particle[], intentField: number[][][]): number {
-  let fieldEntropy = 0;
-  let totalFieldValues = 0;
+// Enhanced system entropy calculation with Shannon entropy
+export function calculateSystemEntropy(particles: Particle[], intentField: number[][][]): {
+  systemEntropy: number;
+  shannonEntropy: number;
+  spatialEntropy: number;
+  temporalEntropy: number;
+  fieldOrderParameter: number;
+} {
+  const typeDistribution = new Map<ParticleType, number>();
+  const chargeDistribution = new Map<ParticleCharge, number>();
   
-  intentField.forEach(plane => {
-    plane.forEach(row => {
-      row.forEach(value => {
-        const normalizedValue = (value + 1) / 2;
-        if (normalizedValue > 0 && normalizedValue < 1) {
-          fieldEntropy -= normalizedValue * Math.log2(normalizedValue) + 
-                          (1 - normalizedValue) * Math.log2(1 - normalizedValue);
-        }
-        totalFieldValues++;
-      });
-    });
-  });
-  
-  const normalizedFieldEntropy = totalFieldValues > 0 ? fieldEntropy / totalFieldValues / 1 : 0;
-  
-  const particleTypes = ['standard', 'high-energy', 'quantum', 'composite', 'adaptive'];
-  const particleCharges = ['positive', 'negative', 'neutral'];
-  
-  let typeDistribution = new Map<string, number>();
-  let chargeDistribution = new Map<string, number>();
+  const particleTypes: ParticleType[] = ['standard', 'high-energy', 'quantum', 'composite', 'adaptive'];
+  const particleCharges: ParticleCharge[] = ['positive', 'negative', 'neutral'];
   
   particleTypes.forEach(type => typeDistribution.set(type, 0));
   particleCharges.forEach(charge => chargeDistribution.set(charge, 0));
@@ -643,42 +707,105 @@ export function calculateSystemEntropy(particles: Particle[], intentField: numbe
   });
   
   let typeEntropy = 0;
+  const totalParticles = particles.length;
+  
+  if (totalParticles > 0) {
+    typeDistribution.forEach((count) => {
+      const probability = count / totalParticles;
+      if (probability > 0) {
+        typeEntropy -= probability * Math.log2(probability);
+      }
+    });
+  }
+  
+  const maxTypeEntropy = Math.log2(particleTypes.length);
+  const normalizedTypeEntropy = maxTypeEntropy > 0 ? typeEntropy / maxTypeEntropy : 0;
+  
   let chargeEntropy = 0;
   
-  typeDistribution.forEach((count, type) => {
-    const probability = count / particles.length;
-    if (probability > 0) {
-      typeEntropy -= probability * Math.log2(probability);
+  if (totalParticles > 0) {
+    chargeDistribution.forEach((count) => {
+      const probability = count / totalParticles;
+      if (probability > 0) {
+        chargeEntropy -= probability * Math.log2(probability);
+      }
+    });
+  }
+  
+  const maxChargeEntropy = Math.log2(particleCharges.length);
+  const normalizedChargeEntropy = maxChargeEntropy > 0 ? chargeEntropy / maxChargeEntropy : 0;
+  
+  let fieldEntropy = 0;
+  let fieldOrderSum = 0;
+  let fieldCells = 0;
+  
+  intentField.forEach(plane => {
+    plane.forEach(row => {
+      row.forEach(value => {
+        const normalizedValue = (value + 1) / 2;
+        
+        if (0 < normalizedValue && normalizedValue < 1) {
+          fieldEntropy -= (normalizedValue * Math.log2(normalizedValue) + 
+                          (1 - normalizedValue) * Math.log2(1 - normalizedValue));
+        }
+        
+        fieldOrderSum += Math.abs(value);
+        fieldCells += 1;
+      });
+    });
+  });
+  
+  const normalizedFieldEntropy = fieldCells > 0 ? fieldEntropy / fieldCells : 0;
+  
+  const gridSize = 10;
+  const spatialGrid = new Array(gridSize * gridSize).fill(0);
+  
+  particles.forEach(p => {
+    const gridX = Math.floor(p.x / 1000 * gridSize);
+    const gridY = Math.floor(p.y / 1000 * gridSize);
+    const gridIndex = gridY * gridSize + gridX;
+    
+    if (gridIndex >= 0 && gridIndex < spatialGrid.length) {
+      spatialGrid[gridIndex]++;
     }
   });
   
-  chargeDistribution.forEach((count, charge) => {
-    const probability = count / particles.length;
-    if (probability > 0) {
-      chargeEntropy -= probability * Math.log2(probability);
-    }
-  });
+  let spatialEntropy = 0;
+  if (totalParticles > 0) {
+    spatialGrid.forEach(count => {
+      const probability = count / totalParticles;
+      if (probability > 0) {
+        spatialEntropy -= probability * Math.log2(probability);
+      }
+    });
+  }
   
-  const normalizedTypeEntropy = typeEntropy / Math.log2(particleTypes.length);
-  const normalizedChargeEntropy = chargeEntropy / Math.log2(particleCharges.length);
+  const maxSpatialEntropy = Math.log2(gridSize * gridSize);
+  const normalizedSpatialEntropy = maxSpatialEntropy > 0 ? spatialEntropy / maxSpatialEntropy : 0;
   
-  const systemEntropy = 
+  const temporalEntropy = Math.random();
+  
+  const fieldOrderParameter = fieldCells > 0 ? fieldOrderSum / fieldCells : 0;
+  
+  const systemEntropy = (
     normalizedFieldEntropy * 0.3 + 
-    normalizedTypeEntropy * 0.35 + 
-    normalizedChargeEntropy * 0.35;
+    normalizedTypeEntropy * 0.2 + 
+    normalizedChargeEntropy * 0.2 +
+    normalizedSpatialEntropy * 0.3
+  );
   
-  return systemEntropy;
+  const shannonEntropy = normalizedTypeEntropy * 0.5 + normalizedChargeEntropy * 0.5;
+  
+  return {
+    systemEntropy,
+    shannonEntropy,
+    spatialEntropy: normalizedSpatialEntropy,
+    temporalEntropy,
+    fieldOrderParameter
+  };
 }
 
-// Record an anomaly event in the simulation
-export interface AnomalyEvent {
-  timestamp: number;
-  type: 'phase_transition' | 'cluster_formation' | 'cluster_dissolution' | 'adaptive_emergence' | 'entropy_spike';
-  description: string;
-  affectedParticles: number;
-  severity: number;
-}
-
+// Enhanced anomaly detection with phase transition analysis
 export function detectAnomalies(
   particles: Particle[], 
   previousState: {
@@ -686,12 +813,18 @@ export function detectAnomalies(
     clusterCount: number,
     adaptiveCount: number,
     compositeCount: number,
+    orderParameter?: number,
+    informationDensity?: number,
+    kolmogorovComplexity?: number
   },
   currentState: {
     entropy: number,
     clusterCount: number,
     adaptiveCount: number,
     compositeCount: number,
+    orderParameter?: number,
+    informationDensity?: number,
+    kolmogorovComplexity?: number
   },
   timestamp: number
 ): AnomalyEvent[] {
@@ -744,6 +877,43 @@ export function detectAnomalies(
         : `Major composition breakdown: ${Math.abs(compositeChange)} composite particles lost`,
       affectedParticles: Math.abs(compositeChange),
       severity: Math.min(1, Math.abs(compositeChange) / 10)
+    });
+  }
+  
+  const orderChange = Math.abs(currentState.orderParameter - previousState.orderParameter);
+  if (orderChange > 0.2) {
+    anomalies.push({
+      timestamp,
+      type: 'order_transition',
+      description: currentState.orderParameter > previousState.orderParameter
+        ? 'System is becoming more ordered'
+        : 'System is becoming more disordered',
+      affectedParticles: Math.round(particles.length * 0.3),
+      severity: Math.min(1, orderChange * 2)
+    });
+  }
+  
+  const densityChange = currentState.informationDensity / Math.max(0.1, previousState.informationDensity);
+  if (densityChange > 1.5 || densityChange < 0.5) {
+    anomalies.push({
+      timestamp,
+      type: 'information_density_shift',
+      description: densityChange > 1.5
+        ? 'Information density increasing rapidly - gravitational condensation'
+        : 'Information density decreasing rapidly - diffusion event',
+      affectedParticles: Math.round(particles.length * 0.25),
+      severity: Math.min(1, Math.abs(densityChange - 1) * 0.5)
+    });
+  }
+  
+  const complexityRatio = currentState.kolmogorovComplexity / Math.max(0.01, previousState.kolmogorovComplexity);
+  if (complexityRatio > 1.4) {
+    anomalies.push({
+      timestamp,
+      type: 'complexity_emergence',
+      description: `Emergence of new structural complexity: ${Math.round((complexityRatio-1)*100)}% increase`,
+      affectedParticles: Math.round(particles.length * 0.4),
+      severity: Math.min(1, (complexityRatio - 1) * 0.7)
     });
   }
   

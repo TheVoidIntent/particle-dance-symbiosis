@@ -1,3 +1,4 @@
+
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { 
   Particle, 
@@ -57,6 +58,14 @@ type ParticleCanvasProps = {
     averageClusterSize: number;
     systemEntropy: number;
     intentFieldComplexity: number;
+    // New enhanced metrics
+    shannonEntropy?: number;
+    spatialEntropy?: number;
+    fieldOrderParameter?: number;
+    clusterLifetime?: number;
+    clusterEntropyDelta?: number;
+    informationDensity?: number;
+    kolmogorovComplexity?: number;
   }) => void;
   onAnomalyDetected?: (anomaly: AnomalyEvent) => void;
 };
@@ -345,6 +354,7 @@ export const ParticleCanvas: React.FC<ParticleCanvasProps> = ({
       if (frameCountRef.current % 30 === 0) {
         const particles = particlesRef.current;
         
+        // Basic particle counts
         const positiveParticles = particles.filter(p => p.charge === 'positive').length;
         const negativeParticles = particles.filter(p => p.charge === 'negative').length;
         const neutralParticles = particles.filter(p => p.charge === 'neutral').length;
@@ -353,6 +363,7 @@ export const ParticleCanvas: React.FC<ParticleCanvasProps> = ({
         const compositeParticles = particles.filter(p => p.type === 'composite').length;
         const adaptiveParticles = particles.filter(p => p.type === 'adaptive').length;
         
+        // Knowledge and complexity
         const totalKnowledge = particles.reduce((sum, p) => sum + p.knowledge, 0);
         const averageKnowledge = particles.length > 0 ? totalKnowledge / particles.length : 0;
         
@@ -360,30 +371,40 @@ export const ParticleCanvas: React.FC<ParticleCanvasProps> = ({
           ? particles.reduce((max, p) => Math.max(max, p.complexity), 1) 
           : 1;
         
+        // Variety factor calculation
         const varietyFactor = (positiveParticles * negativeParticles * neutralParticles * 
                              (highEnergyParticles + 1) * (quantumParticles + 1) *
                              (compositeParticles + 1) * (adaptiveParticles + 1)) / 
                              Math.max(1, particles.length ** 2);
         
+        // Complexity index calculation
         const complexityIndex = (totalKnowledge * varietyFactor) + 
                                (interactionsRef.current / 1000) + 
                                (compositeParticles * maxComplexity) +
                                (adaptiveParticles * 2);
         
+        // Enhanced cluster analysis with new metrics
         const clusterAnalysis = analyzeParticleClusters(particles);
         
-        const systemEntropy = calculateSystemEntropy(particles, intentFieldRef.current);
+        // Enhanced entropy calculation with new metrics
+        const entropyAnalysis = calculateSystemEntropy(particles, intentFieldRef.current);
         
+        // Field analysis
         const fieldAnalysis = analyzeIntentField(intentFieldRef.current);
         
+        // Current state for anomaly detection (enhanced)
         const currentState = {
-          entropy: systemEntropy,
+          entropy: entropyAnalysis.systemEntropy,
           clusterCount: clusterAnalysis.clusterCount,
           adaptiveCount: adaptiveParticles,
           compositeCount: compositeParticles,
+          orderParameter: entropyAnalysis.fieldOrderParameter,
+          informationDensity: clusterAnalysis.informationDensity,
+          kolmogorovComplexity: clusterAnalysis.kolmogorovComplexity
         };
         
         if (simulationTimeRef.current > 100) {
+          // Detect anomalies with enhanced criteria
           const anomalies = detectAnomalies(
             particles,
             previousStateRef.current,
@@ -404,8 +425,10 @@ export const ParticleCanvas: React.FC<ParticleCanvasProps> = ({
           });
         }
         
+        // Update previous state with enhanced metrics
         previousStateRef.current = currentState;
         
+        // Update stats with enhanced metrics
         onStatsUpdate({
           positiveParticles,
           negativeParticles,
@@ -420,19 +443,36 @@ export const ParticleCanvas: React.FC<ParticleCanvasProps> = ({
           maxComplexity,
           clusterCount: clusterAnalysis.clusterCount,
           averageClusterSize: clusterAnalysis.averageClusterSize,
-          systemEntropy,
-          intentFieldComplexity: fieldAnalysis.patternComplexity
+          systemEntropy: entropyAnalysis.systemEntropy,
+          intentFieldComplexity: fieldAnalysis.patternComplexity,
+          // New enhanced metrics
+          shannonEntropy: entropyAnalysis.shannonEntropy,
+          spatialEntropy: entropyAnalysis.spatialEntropy,
+          fieldOrderParameter: entropyAnalysis.fieldOrderParameter,
+          clusterLifetime: clusterAnalysis.clusterLifetime,
+          clusterEntropyDelta: clusterAnalysis.clusterEntropyDelta,
+          informationDensity: clusterAnalysis.informationDensity,
+          kolmogorovComplexity: clusterAnalysis.kolmogorovComplexity
         });
         
         if (dataCollectionActiveRef.current && shouldCollectData(frameCountRef.current)) {
+          // Record enhanced data points
           recordDataPoint(
             simulationTimeRef.current,
             particles,
             intentFieldRef.current,
             interactionsRef.current,
             clusterAnalysis,
-            systemEntropy,
-            complexityIndex
+            entropyAnalysis.systemEntropy,
+            complexityIndex,
+            {
+              shannonEntropy: entropyAnalysis.shannonEntropy,
+              spatialEntropy: entropyAnalysis.spatialEntropy,
+              fieldOrderParameter: entropyAnalysis.fieldOrderParameter,
+              temporalEntropy: entropyAnalysis.temporalEntropy,
+              informationDensity: clusterAnalysis.informationDensity,
+              kolmogorovComplexity: clusterAnalysis.kolmogorovComplexity
+            }
           );
         }
       }

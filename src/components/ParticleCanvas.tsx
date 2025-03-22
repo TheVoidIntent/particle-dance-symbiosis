@@ -1,4 +1,3 @@
-
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { 
   Particle, 
@@ -98,6 +97,7 @@ export const ParticleCanvas: React.FC<ParticleCanvasProps> = ({
     exportInterval: 5000,
     format: 'csv' as 'csv' | 'json'
   });
+  const isAnimatingRef = useRef(false);
 
   useEffect(() => {
     if (!canvasRef.current) return;
@@ -109,7 +109,6 @@ export const ParticleCanvas: React.FC<ParticleCanvasProps> = ({
     canvas.height = height;
     dimensionsRef.current = { width, height };
     
-    // Only initialize field if we don't have persisted state
     if (!persistedState.hasPersistedState) {
       const fieldResolution = 10;
       const fieldWidth = Math.ceil(width / fieldResolution);
@@ -135,9 +134,7 @@ export const ParticleCanvas: React.FC<ParticleCanvasProps> = ({
     
     setIsInitialized(true);
     
-    // If we have state but the canvas size has changed, we need to adjust
     if (persistedState.hasPersistedState) {
-      // Adjust particle positions to fit the new canvas
       const ratioX = width / dimensionsRef.current.width;
       const ratioY = height / dimensionsRef.current.height;
       
@@ -304,10 +301,17 @@ export const ParticleCanvas: React.FC<ParticleCanvasProps> = ({
     return newParticles;
   }, [viewMode, learningRate, energyConservation]);
 
-  useEffect(() => {
-    if (!running || !isInitialized) return;
+  const startAnimation = useCallback(() => {
+    if (isAnimatingRef.current) return;
+    
+    isAnimatingRef.current = true;
     
     const animate = () => {
+      if (!running) {
+        isAnimatingRef.current = false;
+        return;
+      }
+      
       frameCountRef.current += 1;
       simulationTimeRef.current += 1;
       
@@ -316,21 +320,19 @@ export const ParticleCanvas: React.FC<ParticleCanvasProps> = ({
       if (canvasRef.current) {
         const ctx = canvasRef.current.getContext('2d');
         if (ctx) {
+          ctx.clearRect(0, 0, dimensionsRef.current.width, dimensionsRef.current.height);
+          ctx.fillStyle = 'rgba(0, 0, 0, 0.9)';
+          ctx.fillRect(0, 0, dimensionsRef.current.width, dimensionsRef.current.height);
+          
           if (renderMode === 'particles' || renderMode === 'combined') {
             renderParticles(ctx, particlesRef.current, dimensionsRef.current, viewMode, true);
           }
           
           if (renderMode === 'field') {
-            ctx.clearRect(0, 0, dimensionsRef.current.width, dimensionsRef.current.height);
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.9)';
-            ctx.fillRect(0, 0, dimensionsRef.current.width, dimensionsRef.current.height);
             renderIntentField(ctx, intentFieldRef.current, dimensionsRef.current, 5, 0.3);
           }
           
           if (renderMode === 'density') {
-            ctx.clearRect(0, 0, dimensionsRef.current.width, dimensionsRef.current.height);
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.9)';
-            ctx.fillRect(0, 0, dimensionsRef.current.width, dimensionsRef.current.height);
             renderParticleDensity(ctx, particlesRef.current, dimensionsRef.current, 15, 0.4);
           }
           
@@ -443,15 +445,34 @@ export const ParticleCanvas: React.FC<ParticleCanvasProps> = ({
         }
       }
       
-      animationRef.current = requestAnimationFrame(animate);
+      animationRef.current = window.requestAnimationFrame(animate);
     };
     
-    animationRef.current = requestAnimationFrame(animate);
-    
-    return () => {
+    animationRef.current = window.requestAnimationFrame(animate);
+  }, [running, updateParticles, renderMode, onStatsUpdate, onAnomalyDetected, viewMode, toast, dataExportOptions]);
+
+  useEffect(() => {
+    if (running && isInitialized) {
+      if (!isAnimatingRef.current) {
+        startAnimation();
+      }
+      
+      const animationCheckInterval = setInterval(() => {
+        if (running && !isAnimatingRef.current) {
+          startAnimation();
+        }
+      }, 1000);
+      
+      return () => {
+        clearInterval(animationCheckInterval);
+        cancelAnimationFrame(animationRef.current);
+        isAnimatingRef.current = false;
+      };
+    } else if (!running) {
       cancelAnimationFrame(animationRef.current);
-    };
-  }, [running, isInitialized, updateParticles, renderMode, onStatsUpdate, onAnomalyDetected, viewMode, toast, dataExportOptions]);
+      isAnimatingRef.current = false;
+    }
+  }, [running, isInitialized, startAnimation]);
 
   const handleExportData = useCallback(() => {
     if (dataExportOptions.format === 'csv') {
@@ -497,7 +518,6 @@ export const ParticleCanvas: React.FC<ParticleCanvasProps> = ({
     frameCountRef.current = 0;
     simulationTimeRef.current = 0;
     
-    // Reinitialize the field
     if (canvasRef.current) {
       const { width, height } = canvasRef.current.getBoundingClientRect();
       const fieldResolution = 10;

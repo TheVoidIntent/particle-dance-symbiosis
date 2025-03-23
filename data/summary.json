@@ -6,5 +6,8 @@
     "energy_conservation",
     "full_features"
   ],
-  "latest_run": "20250323_020410"
+  "latest_run": "20250323_020410",
+  "latest_runs": [
+    "020410"
+  ]
 }

@@ -42,7 +42,20 @@ jobs:
           git add data/
           git commit -m "Auto-update simulation data $(date +'%Y-%m-%d %H:%M:%S')" || echo "No changes to commit"
           git push origin main
-          
+
+  
+      - name: Sync simulation data
+        run: |
+          # Ensure all simulation records are added
+          echo "Syncing data..."
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/simulation_energy_conservation_*.json
+          git add data/simulation_full_features_*.json
+          git add data/summary.json
+          git commit -m "Auto sync simulation data"
+          git push       
+            
       - name: Remove Old Data (Retain only last 5 runs)
         run: |
           python -c "

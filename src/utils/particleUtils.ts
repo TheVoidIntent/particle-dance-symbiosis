@@ -919,3 +919,12 @@ export function detectAnomalies(
   
   return anomalies;
 }
+
+// Add AnomalyEvent interface
+export interface AnomalyEvent {
+  type: string;
+  timestamp: number;
+  description: string;
+  affectedParticles: number;
+  severity: number;
+}

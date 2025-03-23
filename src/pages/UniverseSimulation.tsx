@@ -12,6 +12,7 @@ import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { AnomalyEvent } from '@/utils/particleUtils';
 import { useToast } from "@/hooks/use-toast";
+import MotherSimulationControl from "@/components/MotherSimulationControl";
 
 interface SimulationStats {
   positiveParticles: number;
@@ -143,22 +144,19 @@ const UniverseSimulation = () => {
   }, [simulationHistory, anomalies, intentFluctuationRate, maxParticles, learningRate, particleCreationRate, useAdaptiveParticles, energyConservation, probabilisticIntent, toast]);
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="section-container py-8">
-        <h1 className="text-3xl font-bold mb-6">Universe Simulation</h1>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-12">
+      <div className="container mx-auto px-4 py-8">
+        <h1 className="text-4xl font-bold mb-8 text-center">Universe Simulation</h1>
         
-        <Alert className="mb-6">
-          <InfoIcon className="h-4 w-4" />
-          <AlertTitle>Advanced Intent Field Universe Model</AlertTitle>
-          <AlertDescription>
-            This simulation demonstrates a universe born from intent field fluctuations. 
-            Particles feature advanced interactions including memory effects, 
-            reinforcement learning adaptive behaviors, and cluster formation capabilities. 
-            The system demonstrates emergent complexity, phase transitions, entropy-based clustering,
-            and exhibits information-driven gravitational-like effects.
-          </AlertDescription>
-        </Alert>
-
+        {/* Mother Simulation Control */}
+        <div className="mb-8">
+          <h2 className="text-2xl font-bold mb-4">Persistent Simulation</h2>
+          <MotherSimulationControl />
+        </div>
+        
+        {/* Interactive Simulation Controls */}
+        <h2 className="text-2xl font-bold mb-4">Interactive Simulation</h2>
+        
         <Tabs defaultValue="simulation" className="w-full">
           <TabsList className="grid w-full grid-cols-4 mb-6">
             <TabsTrigger value="simulation">Live Simulation</TabsTrigger>

@@ -1,282 +1,299 @@
-// Import required libraries
-import FileSaver from 'file-saver';
 import { Particle } from './particleUtils';
 
-interface DataPoint {
+// Data collection and recording
+interface SimulationDataPoint {
   timestamp: number;
-  particleCount: number;
-  positiveParticles: number;
-  negativeParticles: number;
-  neutralParticles: number;
-  highEnergyParticles: number;
-  quantumParticles: number;
-  compositeParticles: number;
-  adaptiveParticles: number;
-  totalInteractions: number;
-  avgKnowledge: number;
-  complexityIndex: number;
-  clusterCount: number;
-  avgClusterSize: number;
-  systemEntropy: number;
-  // Enhanced metrics
-  shannonEntropy?: number;
-  spatialEntropy?: number;
-  fieldOrderParameter?: number;
-  temporalEntropy?: number;
-  clusterLifetime?: number;
-  clusterEntropyDelta?: number;
-  informationDensity?: number;
-  kolmogorovComplexity?: number;
-}
-
-// Data collection
-const simulationData: DataPoint[] = [];
-
-// Data collection interval calculator
-export function shouldCollectData(frameCount: number): boolean {
-  // Collect at fixed intervals, less frequently as simulation progresses
-  if (frameCount < 1000) {
-    return frameCount % 30 === 0; // Every 30 frames initially
-  } else if (frameCount < 10000) {
-    return frameCount % 150 === 0; // Less frequently later
-  }
-  return frameCount % 300 === 0; // Even less frequently for long runs
-}
-
-// Record a data point
-export function recordDataPoint(
-  timestamp: number,
-  particles: Particle[],
-  intentField: number[][][],
-  interactions: number,
-  clusterAnalysis: {
-    clusterCount: number;
-    averageClusterSize: number;
-    largestClusterSize: number;
-    clusterStability: number;
-    clusterLifetime?: number;
-    clusterEntropyDelta?: number;
-    informationDensity?: number;
-    kolmogorovComplexity?: number;
-  },
-  systemEntropy: number,
-  complexityIndex: number,
-  enhancedMetrics?: {
-    shannonEntropy?: number;
-    spatialEntropy?: number;
-    fieldOrderParameter?: number;
-    temporalEntropy?: number;
-    informationDensity?: number;
-    kolmogorovComplexity?: number;
-  }
-): void {
-  // Calculate particle type counts
-  const positiveParticles = particles.filter(p => p.charge === 'positive').length;
-  const negativeParticles = particles.filter(p => p.charge === 'negative').length;
-  const neutralParticles = particles.filter(p => p.charge === 'neutral').length;
-  const highEnergyParticles = particles.filter(p => p.type === 'high-energy').length;
-  const quantumParticles = particles.filter(p => p.type === 'quantum').length;
-  const compositeParticles = particles.filter(p => p.type === 'composite').length;
-  const adaptiveParticles = particles.filter(p => p.type === 'adaptive').length;
-  
-  // Average knowledge
-  const totalKnowledge = particles.reduce((sum, p) => sum + p.knowledge, 0);
-  const avgKnowledge = particles.length > 0 ? totalKnowledge / particles.length : 0;
-  
-  // Create data point with enhanced metrics
-  const dataPoint: DataPoint = {
-    timestamp,
-    particleCount: particles.length,
-    positiveParticles,
-    negativeParticles,
-    neutralParticles,
-    highEnergyParticles,
-    quantumParticles,
-    compositeParticles,
-    adaptiveParticles,
-    totalInteractions: interactions,
-    avgKnowledge,
-    complexityIndex,
-    clusterCount: clusterAnalysis.clusterCount,
-    avgClusterSize: clusterAnalysis.averageClusterSize,
-    systemEntropy,
-    // Include enhanced metrics if available
-    ...(enhancedMetrics ? {
-      shannonEntropy: enhancedMetrics.shannonEntropy,
-      spatialEntropy: enhancedMetrics.spatialEntropy,
-      fieldOrderParameter: enhancedMetrics.fieldOrderParameter,
-      temporalEntropy: enhancedMetrics.temporalEntropy,
-    } : {}),
-    ...(clusterAnalysis.clusterLifetime !== undefined ? {
-      clusterLifetime: clusterAnalysis.clusterLifetime,
-    } : {}),
-    ...(clusterAnalysis.clusterEntropyDelta !== undefined ? {
-      clusterEntropyDelta: clusterAnalysis.clusterEntropyDelta,
-    } : {}),
-    ...(clusterAnalysis.informationDensity !== undefined ? {
-      informationDensity: clusterAnalysis.informationDensity,
-    } : {}),
-    ...(clusterAnalysis.kolmogorovComplexity !== undefined ? {
-      kolmogorovComplexity: clusterAnalysis.kolmogorovComplexity,
-    } : {})
+  particle_counts: {
+    positive: number;
+    negative: number;
+    neutral: number;
+    high_energy: number;
+    quantum: number;
+    standard: number;
+    composite: number;
+    adaptive: number;
   };
-  
-  simulationData.push(dataPoint);
-  
-  // Limit data array to prevent memory issues
-  if (simulationData.length > 2000) {
-    simulationData.splice(0, 500); // Remove oldest 500 entries when we exceed 2000
-  }
-}
-
-// Export data as CSV
-export function exportDataToCSV(): void {
-  if (simulationData.length === 0) return;
-  
-  // CSV header
-  let csv = 'Timestamp,ParticleCount,PositiveParticles,NegativeParticles,NeutralParticles,';
-  csv += 'HighEnergyParticles,QuantumParticles,CompositeParticles,AdaptiveParticles,';
-  csv += 'TotalInteractions,AvgKnowledge,ComplexityIndex,ClusterCount,AvgClusterSize,SystemEntropy,';
-  
-  // Add enhanced metrics to header
-  if (simulationData[0].shannonEntropy !== undefined) {
-    csv += 'ShannonEntropy,';
-  }
-  if (simulationData[0].spatialEntropy !== undefined) {
-    csv += 'SpatialEntropy,';
-  }
-  if (simulationData[0].fieldOrderParameter !== undefined) {
-    csv += 'FieldOrderParameter,';
-  }
-  if (simulationData[0].temporalEntropy !== undefined) {
-    csv += 'TemporalEntropy,';
-  }
-  if (simulationData[0].clusterLifetime !== undefined) {
-    csv += 'ClusterLifetime,';
-  }
-  if (simulationData[0].clusterEntropyDelta !== undefined) {
-    csv += 'ClusterEntropyDelta,';
-  }
-  if (simulationData[0].informationDensity !== undefined) {
-    csv += 'InformationDensity,';
-  }
-  if (simulationData[0].kolmogorovComplexity !== undefined) {
-    csv += 'KolmogorovComplexity,';
-  }
-  
-  csv = csv.slice(0, -1) + '\n'; // Remove last comma and add newline
-  
-  // Add data rows
-  simulationData.forEach(point => {
-    csv += `${point.timestamp},${point.particleCount},${point.positiveParticles},${point.negativeParticles},${point.neutralParticles},`;
-    csv += `${point.highEnergyParticles},${point.quantumParticles},${point.compositeParticles},${point.adaptiveParticles},`;
-    csv += `${point.totalInteractions},${point.avgKnowledge},${point.complexityIndex},${point.clusterCount},${point.avgClusterSize},${point.systemEntropy},`;
-    
-    // Add enhanced metrics to data rows
-    if (simulationData[0].shannonEntropy !== undefined) {
-      csv += `${point.shannonEntropy !== undefined ? point.shannonEntropy : ''},`;
-    }
-    if (simulationData[0].spatialEntropy !== undefined) {
-      csv += `${point.spatialEntropy !== undefined ? point.spatialEntropy : ''},`;
-    }
-    if (simulationData[0].fieldOrderParameter !== undefined) {
-      csv += `${point.fieldOrderParameter !== undefined ? point.fieldOrderParameter : ''},`;
-    }
-    if (simulationData[0].temporalEntropy !== undefined) {
-      csv += `${point.temporalEntropy !== undefined ? point.temporalEntropy : ''},`;
-    }
-    if (simulationData[0].clusterLifetime !== undefined) {
-      csv += `${point.clusterLifetime !== undefined ? point.clusterLifetime : ''},`;
-    }
-    if (simulationData[0].clusterEntropyDelta !== undefined) {
-      csv += `${point.clusterEntropyDelta !== undefined ? point.clusterEntropyDelta : ''},`;
-    }
-    if (simulationData[0].informationDensity !== undefined) {
-      csv += `${point.informationDensity !== undefined ? point.informationDensity : ''},`;
-    }
-    if (simulationData[0].kolmogorovComplexity !== undefined) {
-      csv += `${point.kolmogorovComplexity !== undefined ? point.kolmogorovComplexity : ''},`;
-    }
-    
-    csv = csv.slice(0, -1) + '\n'; // Remove last comma and add newline
-  });
-  
-  // Create and download file
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
-  const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-  FileSaver.saveAs(blob, `universe-simulation-data-${timestamp}.csv`);
-}
-
-// Export data as JSON
-export function exportDataToJSON(): void {
-  if (simulationData.length === 0) return;
-  
-  // Create JSON object
-  const exportData = {
-    timestamp: new Date().toISOString(),
-    totalDataPoints: simulationData.length,
-    data: simulationData
+  total_particles: number;
+  total_interactions: number;
+  avg_knowledge: number;
+  avg_complexity: number;
+  max_complexity: number;
+  complexity_index: number;
+  cluster_analysis: {
+    cluster_count: number;
+    average_cluster_size: number;
+    largest_cluster_size: number;
+    cluster_stability: number;
   };
-  
-  // Create and download file
-  const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
-  const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-  FileSaver.saveAs(blob, `universe-simulation-data-${timestamp}.json`);
+  system_entropy: number;
+  advanced_metrics?: {
+    shannon_entropy?: number;
+    spatial_entropy?: number;
+    field_order_parameter?: number;
+    temporal_entropy?: number;
+    information_density?: number;
+    kolmogorov_complexity?: number;
+  };
 }
 
-// Clear all simulation data
-export function clearSimulationData(): void {
-  simulationData.length = 0;
-}
-
-// Persistence logic to preserve state on page refresh
-type PersistedStateType = {
-  hasPersistedState: boolean;
+interface PersistentState {
   particles: Particle[];
   intentField: number[][][];
   interactions: number;
   frameCount: number;
   simulationTime: number;
-};
+  hasPersistedState: boolean;
+}
 
-export const persistedState: PersistedStateType = {
-  hasPersistedState: false,
+// Initialize state
+const simulationData: SimulationDataPoint[] = [];
+let persistedState: PersistentState = {
   particles: [],
   intentField: [],
   interactions: 0,
   frameCount: 0,
-  simulationTime: 0
+  simulationTime: 0,
+  hasPersistedState: false
 };
 
-// Save state to localStorage
-export function persistState(
+// Load persisted state if it exists
+try {
+  const savedState = localStorage.getItem('simulationState');
+  if (savedState) {
+    persistedState = JSON.parse(savedState);
+    persistedState.hasPersistedState = true;
+    
+    // Restore simulation data if available
+    const savedData = localStorage.getItem('simulationData');
+    if (savedData) {
+      const parsedData = JSON.parse(savedData);
+      if (Array.isArray(parsedData)) {
+        simulationData.push(...parsedData);
+      }
+    }
+    
+    console.log('Restored simulation state with', persistedState.particles.length, 'particles');
+  }
+} catch (error) {
+  console.error('Failed to restore simulation state:', error);
+  persistedState.hasPersistedState = false;
+}
+
+// Auto-save state every 5 seconds
+setInterval(() => {
+  if (persistedState.particles.length > 0) {
+    try {
+      localStorage.setItem('simulationState', JSON.stringify(persistedState));
+      
+      // Only save last 20 data points to avoid exceeding storage limits
+      const dataToSave = simulationData.slice(-20);
+      localStorage.setItem('simulationData', JSON.stringify(dataToSave));
+      
+      console.log('Simulation state auto-saved');
+    } catch (error) {
+      console.error('Failed to auto-save simulation state:', error);
+    }
+  }
+}, 5000);
+
+export function recordDataPoint(
+  timestamp: number,
   particles: Particle[],
   intentField: number[][][],
   interactions: number,
-  frameCount: number,
-  simulationTime: number
-): void {
-  try {
-    persistedState.hasPersistedState = true;
-    persistedState.particles = [...particles];
-    persistedState.intentField = [...intentField];
-    persistedState.interactions = interactions;
-    persistedState.frameCount = frameCount;
-    persistedState.simulationTime = simulationTime;
-    
-    // Note: We don't actually save to localStorage due to size limitations
-    // But we keep the cached state in memory for use within the current session
-  } catch (error) {
-    console.error('Failed to persist state:', error);
+  clusterAnalysis: any,
+  systemEntropy: number,
+  complexityIndex: number,
+  advancedMetrics?: any
+) {
+  // Update persisted state
+  persistedState.particles = [...particles];
+  persistedState.intentField = intentField;
+  persistedState.interactions = interactions;
+  persistedState.frameCount++;
+  persistedState.simulationTime = timestamp;
+  
+  // Basic particle counts
+  const positiveParticles = particles.filter(p => p.charge === 'positive').length;
+  const negativeParticles = particles.filter(p => p.charge === 'negative').length;
+  const neutralParticles = particles.filter(p => p.charge === 'neutral').length;
+  const highEnergyParticles = particles.filter(p => p.type === 'high-energy').length;
+  const quantumParticles = particles.filter(p => p.type === 'quantum').length;
+  const standardParticles = particles.filter(p => p.type === 'standard').length;
+  const compositeParticles = particles.filter(p => p.type === 'composite').length;
+  const adaptiveParticles = particles.filter(p => p.type === 'adaptive').length;
+  
+  // Knowledge and complexity metrics
+  const totalKnowledge = particles.reduce((sum, p) => sum + p.knowledge, 0);
+  const avgKnowledge = particles.length > 0 ? totalKnowledge / particles.length : 0;
+  const avgComplexity = particles.length > 0 
+    ? particles.reduce((sum, p) => sum + p.complexity, 0) / particles.length 
+    : 0;
+  const maxComplexity = particles.length > 0 
+    ? particles.reduce((max, p) => Math.max(max, p.complexity), 1) 
+    : 1;
+
+  // Create data point
+  const dataPoint: SimulationDataPoint = {
+    timestamp,
+    particle_counts: {
+      positive: positiveParticles,
+      negative: negativeParticles,
+      neutral: neutralParticles,
+      high_energy: highEnergyParticles,
+      quantum: quantumParticles,
+      standard: standardParticles,
+      composite: compositeParticles,
+      adaptive: adaptiveParticles
+    },
+    total_particles: particles.length,
+    total_interactions: interactions,
+    avg_knowledge: avgKnowledge,
+    avg_complexity: avgComplexity,
+    max_complexity: maxComplexity,
+    complexity_index: complexityIndex,
+    cluster_analysis: {
+      cluster_count: clusterAnalysis.clusterCount,
+      average_cluster_size: clusterAnalysis.averageClusterSize,
+      largest_cluster_size: clusterAnalysis.largestClusterSize || 0,
+      cluster_stability: clusterAnalysis.clusterStability || 0
+    },
+    system_entropy: systemEntropy
+  };
+  
+  if (advancedMetrics) {
+    dataPoint.advanced_metrics = {
+      shannon_entropy: advancedMetrics.shannonEntropy,
+      spatial_entropy: advancedMetrics.spatialEntropy,
+      field_order_parameter: advancedMetrics.fieldOrderParameter,
+      temporal_entropy: advancedMetrics.temporalEntropy,
+      information_density: advancedMetrics.informationDensity,
+      kolmogorov_complexity: advancedMetrics.kolmogorovComplexity
+    };
+  }
+  
+  simulationData.push(dataPoint);
+  
+  // If we have a lot of data points, keep only the last 500
+  if (simulationData.length > 500) {
+    simulationData.splice(0, simulationData.length - 500);
+  }
+  
+  return dataPoint;
+}
+
+export function shouldCollectData(frameCount: number) {
+  // Collect data less frequently for long-running simulations
+  if (frameCount < 500) {
+    return frameCount % 30 === 0; // Every 30 frames initially
+  } else if (frameCount < 2000) {
+    return frameCount % 60 === 0; // Every 60 frames after 500 frames
+  } else {
+    return frameCount % 120 === 0; // Every 120 frames after 2000 frames
   }
 }
 
-// Clear persisted state
-export function clearPersistedState(): void {
-  persistedState.hasPersistedState = false;
-  persistedState.particles = [];
-  persistedState.intentField = [];
-  persistedState.interactions = 0;
-  persistedState.frameCount = 0;
-  persistedState.simulationTime = 0;
+export function clearSimulationData() {
+  simulationData.length = 0;
 }
+
+export function clearPersistedState() {
+  localStorage.removeItem('simulationState');
+  localStorage.removeItem('simulationData');
+  persistedState = {
+    particles: [],
+    intentField: [],
+    interactions: 0,
+    frameCount: 0,
+    simulationTime: 0,
+    hasPersistedState: false
+  };
+}
+
+export function getSimulationData() {
+  return [...simulationData];
+}
+
+export function exportDataToCSV() {
+  if (simulationData.length === 0) {
+    console.error('No data to export');
+    return null;
+  }
+  
+  const headers = [
+    'timestamp', 'positive', 'negative', 'neutral',
+    'high_energy', 'quantum', 'standard', 'composite', 'adaptive',
+    'total_particles', 'total_interactions', 'avg_knowledge',
+    'avg_complexity', 'max_complexity', 'complexity_index',
+    'cluster_count', 'avg_cluster_size', 'system_entropy'
+  ];
+  
+  const rows = simulationData.map(d => [
+    d.timestamp,
+    d.particle_counts.positive,
+    d.particle_counts.negative,
+    d.particle_counts.neutral,
+    d.particle_counts.high_energy,
+    d.particle_counts.quantum,
+    d.particle_counts.standard,
+    d.particle_counts.composite,
+    d.particle_counts.adaptive,
+    d.total_particles,
+    d.total_interactions,
+    d.avg_knowledge,
+    d.avg_complexity,
+    d.max_complexity,
+    d.complexity_index,
+    d.cluster_analysis.cluster_count,
+    d.cluster_analysis.average_cluster_size,
+    d.system_entropy
+  ]);
+  
+  const csvContent = [
+    headers.join(','),
+    ...rows.map(row => row.join(','))
+  ].join('\n');
+  
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.setAttribute('href', url);
+  link.setAttribute('download', `simulation_data_${new Date().toISOString().slice(0,19).replace(/:/g,'-')}.csv`);
+  link.style.visibility = 'hidden';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  
+  return url;
+}
+
+export function exportDataToJSON() {
+  if (simulationData.length === 0) {
+    console.error('No data to export');
+    return null;
+  }
+  
+  const jsonData = {
+    timestamp: new Date().toISOString(),
+    data: simulationData,
+    metadata: {
+      points: simulationData.length,
+      timespan: simulationData[simulationData.length - 1].timestamp - simulationData[0].timestamp,
+      final_complexity: simulationData[simulationData.length - 1].complexity_index
+    }
+  };
+  
+  const blob = new Blob([JSON.stringify(jsonData, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.setAttribute('href', url);
+  link.setAttribute('download', `simulation_data_${new Date().toISOString().slice(0,19).replace(/:/g,'-')}.json`);
+  link.style.visibility = 'hidden';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  
+  return url;
+}
+
+export { persistedState };

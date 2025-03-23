@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
+import HomePage from "./pages/HomePage";
 import UniverseSimulation from "./pages/UniverseSimulation";
 import NotFound from "./pages/NotFound";
 import React from "react";
@@ -29,7 +30,8 @@ const App: React.FC = () => {
             <Toaster />
             <Sonner />
             <Routes>
-              <Route path="/" element={<Index />} />
+              <Route path="/" element={<HomePage />} />
+              <Route path="/index" element={<Index />} />
               <Route path="/simulation" element={<UniverseSimulation />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />

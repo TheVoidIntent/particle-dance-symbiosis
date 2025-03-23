@@ -1,0 +1,535 @@
+{
+  "config": {
+    "max_particles": 150,
+    "learning_rate": 0.2,
+    "fluctuation_rate": 0.02,
+    "use_adaptive": true,
+    "energy_conservation": false,
+    "probabilistic_intent": true,
+    "name": "adaptive_probabilistic"
+  },
+  "data": [
+    {
+      "timestamp": 1,
+      "particle_counts": {
+        "positive": 27,
+        "negative": 25,
+        "neutral": 24,
+        "high_energy": 14,
+        "quantum": 22,
+        "standard": 27,
+        "composite": 10,
+        "adaptive": 3
+      },
+      "total_particles": 76,
+      "total_interactions": 1780,
+      "avg_knowledge": 3.8162673817280437,
+      "avg_complexity": 1.1197368421052634,
+      "max_complexity": 3.8,
+      "complexity_index": 182587.72562352705,
+      "cluster_analysis": {
+        "cluster_count": 13,
+        "average_cluster_size": 5.076923076923077,
+        "largest_cluster_size": 13,
+        "cluster_stability": 0.2555770188999079
+      },
+      "system_entropy": 0.8782118675434516
+    },
+    {
+      "timestamp": 51,
+      "particle_counts": {
+        "positive": 45,
+        "negative": 40,
+        "neutral": 41,
+        "high_energy": 9,
+        "quantum": 16,
+        "standard": 41,
+        "composite": 58,
+        "adaptive": 2
+      },
+      "total_particles": 126,
+      "total_interactions": 162038,
+      "avg_knowledge": 3.190895752469429e+92,
+      "avg_complexity": 32.79383248754148,
+      "max_complexity": 441.7729513558061,
+      "complexity_index": 4.7905424423212825e+97,
+      "cluster_analysis": {
+        "cluster_count": 13,
+        "average_cluster_size": 9.692307692307692,
+        "largest_cluster_size": 23,
+        "cluster_stability": 1.0
+      },
+      "system_entropy": 0.8339541712983669
+    },
+    {
+      "timestamp": 101,
+      "particle_counts": {
+        "positive": 55,
+        "negative": 46,
+        "neutral": 49,
+        "high_energy": 10,
+        "quantum": 20,
+        "standard": 49,
+        "composite": 69,
+        "adaptive": 2
+      },
+      "total_particles": 150,
+      "total_interactions": 480634,
+      "avg_knowledge": 3.7719368293869395e+211,
+      "avg_complexity": 652.1942088203872,
+      "max_complexity": 29066.20979988664,
+      "complexity_index": 1.0702101278272245e+217,
+      "cluster_analysis": {
+        "cluster_count": 13,
+        "average_cluster_size": 11.538461538461538,
+        "largest_cluster_size": 28,
+        "cluster_stability": 1.0
+      },
+      "system_entropy": 0.8203811638724097
+    },
+    {
+      "timestamp": 151,
+      "particle_counts": {
+        "positive": 55,
+        "negative": 46,
+        "neutral": 49,
+        "high_energy": 10,
+        "quantum": 20,
+        "standard": 49,
+        "composite": 69,
+        "adaptive": 2
+      },
+      "total_particles": 150,
+      "total_interactions": 823699,
+      "avg_knowledge": Infinity,
+      "avg_complexity": 652.1942088203872,
+      "max_complexity": 29066.20979988664,
+      "complexity_index": Infinity,
+      "cluster_analysis": {
+        "cluster_count": 13,
+        "average_cluster_size": 11.538461538461538,
+        "largest_cluster_size": 28,
+        "cluster_stability": 1.0
+      },
+      "system_entropy": 0.833899322870227
+    },
+    {
+      "timestamp": 201,
+      "particle_counts": {
+        "positive": 55,
+        "negative": 46,
+        "neutral": 49,
+        "high_energy": 10,
+        "quantum": 20,
+        "standard": 49,
+        "composite": 69,
+        "adaptive": 2
+      },
+      "total_particles": 150,
+      "total_interactions": 1166611,
+      "avg_knowledge": Infinity,
+      "avg_complexity": 652.1942088203872,
+      "max_complexity": 29066.20979988664,
+      "complexity_index": Infinity,
+      "cluster_analysis": {
+        "cluster_count": 13,
+        "average_cluster_size": 11.538461538461538,
+        "largest_cluster_size": 28,
+        "cluster_stability": 1.0
+      },
+      "system_entropy": 0.8264321393344414
+    },
+    {
+      "timestamp": 251,
+      "particle_counts": {
+        "positive": 55,
+        "negative": 46,
+        "neutral": 49,
+        "high_energy": 10,
+        "quantum": 20,
+        "standard": 49,
+        "composite": 69,
+        "adaptive": 2
+      },
+      "total_particles": 150,
+      "total_interactions": 1509944,
+      "avg_knowledge": Infinity,
+      "avg_complexity": 652.1942088203872,
+      "max_complexity": 29066.20979988664,
+      "complexity_index": Infinity,
+      "cluster_analysis": {
+        "cluster_count": 13,
+        "average_cluster_size": 11.538461538461538,
+        "largest_cluster_size": 28,
+        "cluster_stability": 1.0
+      },
+      "system_entropy": 0.8289674269920206
+    },
+    {
+      "timestamp": 301,
+      "particle_counts": {
+        "positive": 55,
+        "negative": 46,
+        "neutral": 49,
+        "high_energy": 10,
+        "quantum": 20,
+        "standard": 49,
+        "composite": 69,
+        "adaptive": 2
+      },
+      "total_particles": 150,
+      "total_interactions": 1853086,
+      "avg_knowledge": Infinity,
+      "avg_complexity": 652.1942088203872,
+      "max_complexity": 29066.20979988664,
+      "complexity_index": Infinity,
+      "cluster_analysis": {
+        "cluster_count": 13,
+        "average_cluster_size": 11.538461538461538,
+        "largest_cluster_size": 28,
+        "cluster_stability": 1.0
+      },
+      "system_entropy": 0.8205791038393876
+    },
+    {
+      "timestamp": 351,
+      "particle_counts": {
+        "positive": 55,
+        "negative": 46,
+        "neutral": 49,
+        "high_energy": 10,
+        "quantum": 20,
+        "standard": 49,
+        "composite": 69,
+        "adaptive": 2
+      },
+      "total_particles": 150,
+      "total_interactions": 2196610,
+      "avg_knowledge": Infinity,
+      "avg_complexity": 652.1942088203872,
+      "max_complexity": 29066.20979988664,
+      "complexity_index": Infinity,
+      "cluster_analysis": {
+        "cluster_count": 13,
+        "average_cluster_size": 11.538461538461538,
+        "largest_cluster_size": 28,
+        "cluster_stability": 1.0
+      },
+      "system_entropy": 0.8345737791407761
+    },
+    {
+      "timestamp": 401,
+      "particle_counts": {
+        "positive": 55,
+        "negative": 46,
+        "neutral": 49,
+        "high_energy": 10,
+        "quantum": 20,
+        "standard": 49,
+        "composite": 69,
+        "adaptive": 2
+      },
+      "total_particles": 150,
+      "total_interactions": 2539677,
+      "avg_knowledge": Infinity,
+      "avg_complexity": 652.1942088203872,
+      "max_complexity": 29066.20979988664,
+      "complexity_index": Infinity,
+      "cluster_analysis": {
+        "cluster_count": 13,
+        "average_cluster_size": 11.538461538461538,
+        "largest_cluster_size": 28,
+        "cluster_stability": 1.0
+      },
+      "system_entropy": 0.8229577668459938
+    },
+    {
+      "timestamp": 451,
+      "particle_counts": {
+        "positive": 55,
+        "negative": 46,
+        "neutral": 49,
+        "high_energy": 10,
+        "quantum": 20,
+        "standard": 49,
+        "composite": 69,
+        "adaptive": 2
+      },
+      "total_particles": 150,
+      "total_interactions": 2882653,
+      "avg_knowledge": Infinity,
+      "avg_complexity": 652.1942088203872,
+      "max_complexity": 29066.20979988664,
+      "complexity_index": Infinity,
+      "cluster_analysis": {
+        "cluster_count": 13,
+        "average_cluster_size": 11.538461538461538,
+        "largest_cluster_size": 28,
+        "cluster_stability": 1.0
+      },
+      "system_entropy": 0.8325209078514237
+    },
+    {
+      "timestamp": 501,
+      "particle_counts": {
+        "positive": 55,
+        "negative": 46,
+        "neutral": 49,
+        "high_energy": 10,
+        "quantum": 20,
+        "standard": 49,
+        "composite": 69,
+        "adaptive": 2
+      },
+      "total_particles": 150,
+      "total_interactions": 3225925,
+      "avg_knowledge": Infinity,
+      "avg_complexity": 652.1942088203872,
+      "max_complexity": 29066.20979988664,
+      "complexity_index": Infinity,
+      "cluster_analysis": {
+        "cluster_count": 13,
+        "average_cluster_size": 11.538461538461538,
+        "largest_cluster_size": 28,
+        "cluster_stability": 1.0
+      },
+      "system_entropy": 0.8234862979859972
+    },
+    {
+      "timestamp": 551,
+      "particle_counts": {
+        "positive": 55,
+        "negative": 46,
+        "neutral": 49,
+        "high_energy": 10,
+        "quantum": 20,
+        "standard": 49,
+        "composite": 69,
+        "adaptive": 2
+      },
+      "total_particles": 150,
+      "total_interactions": 3569480,
+      "avg_knowledge": Infinity,
+      "avg_complexity": 652.1942088203872,
+      "max_complexity": 29066.20979988664,
+      "complexity_index": Infinity,
+      "cluster_analysis": {
+        "cluster_count": 13,
+        "average_cluster_size": 11.538461538461538,
+        "largest_cluster_size": 28,
+        "cluster_stability": 1.0
+      },
+      "system_entropy": 0.8368112244375285
+    },
+    {
+      "timestamp": 601,
+      "particle_counts": {
+        "positive": 55,
+        "negative": 46,
+        "neutral": 49,
+        "high_energy": 10,
+        "quantum": 20,
+        "standard": 49,
+        "composite": 69,
+        "adaptive": 2
+      },
+      "total_particles": 150,
+      "total_interactions": 3912912,
+      "avg_knowledge": Infinity,
+      "avg_complexity": 652.1942088203872,
+      "max_complexity": 29066.20979988664,
+      "complexity_index": Infinity,
+      "cluster_analysis": {
+        "cluster_count": 13,
+        "average_cluster_size": 11.538461538461538,
+        "largest_cluster_size": 28,
+        "cluster_stability": 1.0
+      },
+      "system_entropy": 0.8221929551381721
+    },
+    {
+      "timestamp": 651,
+      "particle_counts": {
+        "positive": 55,
+        "negative": 46,
+        "neutral": 49,
+        "high_energy": 10,
+        "quantum": 20,
+        "standard": 49,
+        "composite": 69,
+        "adaptive": 2
+      },
+      "total_particles": 150,
+      "total_interactions": 4255798,
+      "avg_knowledge": Infinity,
+      "avg_complexity": 652.1942088203872,
+      "max_complexity": 29066.20979988664,
+      "complexity_index": Infinity,
+      "cluster_analysis": {
+        "cluster_count": 13,
+        "average_cluster_size": 11.538461538461538,
+        "largest_cluster_size": 28,
+        "cluster_stability": 1.0
+      },
+      "system_entropy": 0.8347301251678265
+    },
+    {
+      "timestamp": 701,
+      "particle_counts": {
+        "positive": 55,
+        "negative": 46,
+        "neutral": 49,
+        "high_energy": 10,
+        "quantum": 20,
+        "standard": 49,
+        "composite": 69,
+        "adaptive": 2
+      },
+      "total_particles": 150,
+      "total_interactions": 4599294,
+      "avg_knowledge": Infinity,
+      "avg_complexity": 652.1942088203872,
+      "max_complexity": 29066.20979988664,
+      "complexity_index": Infinity,
+      "cluster_analysis": {
+        "cluster_count": 13,
+        "average_cluster_size": 11.538461538461538,
+        "largest_cluster_size": 28,
+        "cluster_stability": 1.0
+      },
+      "system_entropy": 0.8265775443398088
+    },
+    {
+      "timestamp": 751,
+      "particle_counts": {
+        "positive": 55,
+        "negative": 46,
+        "neutral": 49,
+        "high_energy": 10,
+        "quantum": 20,
+        "standard": 49,
+        "composite": 69,
+        "adaptive": 2
+      },
+      "total_particles": 150,
+      "total_interactions": 4942412,
+      "avg_knowledge": Infinity,
+      "avg_complexity": 652.1942088203872,
+      "max_complexity": 29066.20979988664,
+      "complexity_index": Infinity,
+      "cluster_analysis": {
+        "cluster_count": 13,
+        "average_cluster_size": 11.538461538461538,
+        "largest_cluster_size": 28,
+        "cluster_stability": 1.0
+      },
+      "system_entropy": 0.8354511171033259
+    },
+    {
+      "timestamp": 801,
+      "particle_counts": {
+        "positive": 55,
+        "negative": 46,
+        "neutral": 49,
+        "high_energy": 10,
+        "quantum": 20,
+        "standard": 49,
+        "composite": 69,
+        "adaptive": 2
+      },
+      "total_particles": 150,
+      "total_interactions": 5285734,
+      "avg_knowledge": Infinity,
+      "avg_complexity": 652.1942088203872,
+      "max_complexity": 29066.20979988664,
+      "complexity_index": Infinity,
+      "cluster_analysis": {
+        "cluster_count": 13,
+        "average_cluster_size": 11.538461538461538,
+        "largest_cluster_size": 28,
+        "cluster_stability": 1.0
+      },
+      "system_entropy": 0.8207220694733413
+    },
+    {
+      "timestamp": 851,
+      "particle_counts": {
+        "positive": 55,
+        "negative": 46,
+        "neutral": 49,
+        "high_energy": 10,
+        "quantum": 20,
+        "standard": 49,
+        "composite": 69,
+        "adaptive": 2
+      },
+      "total_particles": 150,
+      "total_interactions": 5629243,
+      "avg_knowledge": Infinity,
+      "avg_complexity": 652.1942088203872,
+      "max_complexity": 29066.20979988664,
+      "complexity_index": Infinity,
+      "cluster_analysis": {
+        "cluster_count": 13,
+        "average_cluster_size": 11.538461538461538,
+        "largest_cluster_size": 28,
+        "cluster_stability": 1.0
+      },
+      "system_entropy": 0.834616082426936
+    },
+    {
+      "timestamp": 901,
+      "particle_counts": {
+        "positive": 55,
+        "negative": 46,
+        "neutral": 49,
+        "high_energy": 10,
+        "quantum": 20,
+        "standard": 49,
+        "composite": 69,
+        "adaptive": 2
+      },
+      "total_particles": 150,
+      "total_interactions": 5972249,
+      "avg_knowledge": Infinity,
+      "avg_complexity": 652.1942088203872,
+      "max_complexity": 29066.20979988664,
+      "complexity_index": Infinity,
+      "cluster_analysis": {
+        "cluster_count": 13,
+        "average_cluster_size": 11.538461538461538,
+        "largest_cluster_size": 28,
+        "cluster_stability": 1.0
+      },
+      "system_entropy": 0.8227582500258772
+    },
+    {
+      "timestamp": 951,
+      "particle_counts": {
+        "positive": 55,
+        "negative": 46,
+        "neutral": 49,
+        "high_energy": 10,
+        "quantum": 20,
+        "standard": 49,
+        "composite": 69,
+        "adaptive": 2
+      },
+      "total_particles": 150,
+      "total_interactions": 6315079,
+      "avg_knowledge": Infinity,
+      "avg_complexity": 652.1942088203872,
+      "max_complexity": 29066.20979988664,
+      "complexity_index": Infinity,
+      "cluster_analysis": {
+        "cluster_count": 13,
+        "average_cluster_size": 11.538461538461538,
+        "largest_cluster_size": 28,
+        "cluster_stability": 1.0
+      },
+      "system_entropy": 0.8326550850897132
+    }
+  ],
+  "anomalies": [],
+  "timestamp": "20250323_185206"
+}

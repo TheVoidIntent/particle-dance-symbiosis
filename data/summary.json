@@ -1,10 +1,10 @@
 {
-  "timestamp": "20250323_061348",
+  "timestamp": "20250323_121814",
   "simulations": [
     "baseline",
     "adaptive_probabilistic",
     "energy_conservation",
     "full_features"
   ],
-  "latest_run": "20250323_061348"
+  "latest_run": "20250323_121814"
 }

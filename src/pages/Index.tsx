@@ -1,47 +1,35 @@
 
-import React, { useEffect } from 'react';
-import Navbar from '@/components/Navbar';
-import Hero from '@/components/Hero';
-import Features from '@/components/Features';
-import Testimonials from '@/components/Testimonials';
-import ContactSection from '@/components/ContactSection';
-import Footer from '@/components/Footer';
+import React from "react";
+import { Helmet } from "react-helmet";
+import Hero from "../components/Hero";
+import Features from "../components/Features";
+import Testimonials from "../components/Testimonials";
+import SimulationData from "../components/SimulationData";
+import GitHubDataVisualization from "../components/GitHubDataVisualization";
+import ContactSection from "../components/ContactSection";
+import Footer from "../components/Footer";
 
 const Index = () => {
-  useEffect(() => {
-    const handleScroll = () => {
-      const sections = document.querySelectorAll('section');
-      sections.forEach(section => {
-        const sectionTop = section.getBoundingClientRect().top;
-        const sectionHeight = section.getBoundingClientRect().height;
-        
-        // When the section is in view
-        if (sectionTop < window.innerHeight - sectionHeight / 3) {
-          section.classList.add('visible');
-        }
-      });
-    };
-
-    // Initial check
-    handleScroll();
-    
-    // Add scroll event listener
-    window.addEventListener('scroll', handleScroll);
-    
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-    };
-  }, []);
-
   return (
-    <div className="relative min-h-screen">
-      <Navbar />
+    <>
+      <Helmet>
+        <title>Universe Simulation</title>
+        <meta name="description" content="Explore the universe simulation with emergent complexity" />
+      </Helmet>
       <Hero />
+      <div className="container mx-auto px-4 py-16">
+        <h2 className="text-3xl font-bold text-center mb-12">Universe Simulation Data</h2>
+        <SimulationData />
+        <div className="mt-16 mb-16">
+          <h2 className="text-3xl font-bold text-center mb-12">Repository Analytics</h2>
+          <GitHubDataVisualization />
+        </div>
+      </div>
       <Features />
       <Testimonials />
       <ContactSection />
       <Footer />
-    </div>
+    </>
   );
 };
 

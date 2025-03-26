@@ -1,10 +1,10 @@
 
 import { Particle, calculateParticleInteraction, updateParticlePosition } from '../particleUtils';
 import { simulationState, saveState } from './state';
-import { updateIntentField, createFieldFromParticles } from '../fieldUtils';
+import { updateIntentField, createFieldFromParticles } from '../fields';
+import { analyzeIntentField } from '../fields';
 import { recordDataPoint } from '../dataExportUtils';
 import { analyzeParticleClusters, calculateSystemEntropy } from '../particleUtils';
-import { analyzeIntentField } from '../fieldUtils';
 import { defaultConfig, simulationDimensions } from './config';
 import { createNewParticle } from './initialization';
 

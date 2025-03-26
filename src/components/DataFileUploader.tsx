@@ -65,7 +65,13 @@ const DataFileUploader = () => {
     reader.onload = (e) => {
       try {
         const content = e.target?.result as string;
-        const parsedData = JSON.parse(content);
+        
+        // Handle Infinity values before parsing JSON
+        const processedContent = content
+          .replace(/"avg_knowledge":\s*Infinity/g, '"avg_knowledge": "Infinity"')
+          .replace(/"complexity_index":\s*Infinity/g, '"complexity_index": "Infinity"');
+        
+        const parsedData = JSON.parse(processedContent);
         
         // Basic validation to ensure the file has the expected structure
         if (!parsedData.config || !parsedData.data || !Array.isArray(parsedData.data)) {

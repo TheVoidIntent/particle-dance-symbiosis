@@ -20,10 +20,10 @@ type SimulationDataPoint = {
   };
   total_particles: number;
   total_interactions: number;
-  avg_knowledge: number;
+  avg_knowledge: number | string;
   avg_complexity: number;
   max_complexity: number;
-  complexity_index: number;
+  complexity_index: number | string;
 };
 
 type SimulationResult = {
@@ -91,7 +91,13 @@ const SimulationData = () => {
         throw new Error(`Failed to load data for simulation: ${simulationName}`);
       }
       
-      const data = await response.json();
+      // Get the text and handle Infinity values before parsing
+      const text = await response.text();
+      const processedText = text
+        .replace(/"avg_knowledge":\s*Infinity/g, '"avg_knowledge": "Infinity"')
+        .replace(/"complexity_index":\s*Infinity/g, '"complexity_index": "Infinity"');
+      
+      const data = JSON.parse(processedText);
       setSimulationData(data);
       
     } catch (err) {

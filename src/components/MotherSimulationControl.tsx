@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,7 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import {
   startMotherSimulation,
   stopMotherSimulation,
-  getMotherSimulationStats,
+  getSimulationStats,
   isMotherSimulationRunning,
   initializeMotherSimulation
 } from '@/utils/motherSimulation';
@@ -35,13 +34,11 @@ export const MotherSimulationControl = () => {
   });
   const [isInitialized, setIsInitialized] = useState(false);
 
-  // Initialize on mount
   useEffect(() => {
     if (typeof window !== 'undefined') {
       initializeMotherSimulation();
       setIsInitialized(true);
       
-      // Check if it should auto-start
       const shouldAutoStart = localStorage.getItem('motherSimAutoStart') === 'true';
       if (shouldAutoStart && !isMotherSimulationRunning()) {
         handleStart();
@@ -49,19 +46,16 @@ export const MotherSimulationControl = () => {
     }
   }, []);
 
-  // Update stats periodically
   useEffect(() => {
     if (!isInitialized) return;
     
     const updateStats = () => {
-      const currentStats = getMotherSimulationStats();
+      const currentStats = getSimulationStats();
       setStats(currentStats);
     };
     
-    // Initial stats update
     updateStats();
     
-    // Set up interval for live updates
     const interval = setInterval(updateStats, 2000);
     
     return () => clearInterval(interval);
@@ -87,7 +81,6 @@ export const MotherSimulationControl = () => {
     });
   };
 
-  // Format large numbers with K, M, B, T suffixes
   const formatNumber = (num: number) => {
     if (num === Infinity) return '∞';
     if (num > 1e12) return (num / 1e12).toFixed(1) + 'T';
@@ -115,7 +108,6 @@ export const MotherSimulationControl = () => {
     const { particleTypes, interactionsCount } = stats;
     if (!particleTypes) return 0;
     
-    // A very simplified complexity calculation
     const compositeFactor = particleTypes.composite * 3;
     const adaptiveFactor = particleTypes.adaptive * 2;
     const interactionFactor = Math.min(100, interactionsCount / 10000);

@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import HomePage from "./pages/HomePage";
 import UniverseSimulation from "./pages/UniverseSimulation";
+import DataAnalysis from "./pages/DataAnalysis";
 import NotFound from "./pages/NotFound";
 import React from "react";
 
@@ -33,6 +34,7 @@ const App: React.FC = () => {
               <Route path="/" element={<HomePage />} />
               <Route path="/index" element={<Index />} />
               <Route path="/simulation" element={<UniverseSimulation />} />
+              <Route path="/analysis" element={<DataAnalysis />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>

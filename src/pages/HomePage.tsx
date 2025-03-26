@@ -5,12 +5,13 @@ import DataFileUploader from "@/components/DataFileUploader";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { Database, ChartLine } from "lucide-react";
+import { Database, ChartLine, FileJson, Github } from "lucide-react";
 
 export default function HomePage() {
   return (
     <div className="container mx-auto py-8">
-      <h1 className="text-3xl font-bold mb-4 text-center">Universe Intent Simulation Explorer</h1>
+      <h1 className="text-3xl font-bold mb-4 text-center">intentSim.org</h1>
+      <p className="text-center mb-6 text-lg">Universe Intent Simulation Explorer</p>
       
       <div className="flex justify-center gap-4 mb-8">
         <Button asChild variant="outline">
@@ -41,6 +42,11 @@ export default function HomePage() {
           <DataFileUploader />
         </TabsContent>
       </Tabs>
+
+      <div className="text-center text-sm text-gray-500 mt-8">
+        <p>This application is designed to visualize and analyze universe simulation data.</p>
+        <p>Upload your simulation files or explore existing datasets.</p>
+      </div>
     </div>
   );
 }

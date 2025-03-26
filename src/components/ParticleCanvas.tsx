@@ -6,7 +6,7 @@ import { useCanvasRenderer } from '@/hooks/useCanvasRenderer';
 import { useAnimationLoop } from '@/hooks/useAnimationLoop';
 import { SimulationControlButtons } from '@/components/SimulationControlButtons';
 import { AnomalyEvent } from '@/utils/particleUtils';
-import { clearPersistedState } from '@/utils/dataExportUtils';
+import { clearPersistedState, clearSimulationData } from '@/utils/dataExportUtils';
 import { useToast } from "@/hooks/use-toast";
 
 type ParticleCanvasProps = {

@@ -1,6 +1,6 @@
 
 import React, { useRef, useEffect, useCallback, useState } from 'react';
-import { useParticleSimulation, InflationEvent } from '@/hooks/useParticleSimulation';
+import { useParticleSimulation, InflationEvent } from '@/hooks/simulation';
 import { useSimulationData } from '@/hooks/useSimulationData';
 import { useCanvasRenderer } from '@/hooks/useCanvasRenderer';
 import { useAnimationLoop } from '@/hooks/useAnimationLoop';

@@ -25,4 +25,4 @@ export interface InflationEvent {
   particlesAfterInflation: number;
 }
 
-export { SimulationConfig, SimulationState, InflationEvent };
+// No re-exports here - these are already exported above

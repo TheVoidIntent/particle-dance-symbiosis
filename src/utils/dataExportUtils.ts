@@ -55,6 +55,22 @@ export const clearPersistedState = () => {
   }
 };
 
+// Load stored data points from localStorage
+export const loadStoredDataPoints = () => {
+  if (typeof window === 'undefined') return [];
+  
+  try {
+    const storedData = localStorage.getItem('currentSimulationData');
+    if (storedData) {
+      return parseJsonWithInfinity(storedData);
+    }
+  } catch (error) {
+    console.error('Error loading stored data points:', error);
+  }
+  
+  return [];
+};
+
 // Get the current simulation data
 export const getSimulationData = () => {
   try {

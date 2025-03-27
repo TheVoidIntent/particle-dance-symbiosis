@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, Atom } from 'lucide-react';
+import { Menu, X, Atom, DownloadCloud } from 'lucide-react';
 
 const Navbar: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -22,6 +22,7 @@ const Navbar: React.FC = () => {
     { name: 'Home', path: '/' },
     { name: 'Universe Simulation', path: '/simulation' },
     { name: 'Data Analysis', path: '/analysis' },
+    { name: 'Deployment', path: '/deployment' },
   ];
 
   return (

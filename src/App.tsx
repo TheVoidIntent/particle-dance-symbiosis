@@ -9,6 +9,7 @@ import Footer from "./components/Footer";
 import HomePage from "./pages/HomePage";
 import UniverseSimulation from "./pages/UniverseSimulation";
 import DataAnalysis from "./pages/DataAnalysis";
+import Deployment from "./pages/Deployment";
 import NotFound from "./pages/NotFound";
 import React from "react";
 
@@ -39,6 +40,7 @@ const App: React.FC = () => {
                   <Route path="/index" element={<Navigate to="/" replace />} />
                   <Route path="/simulation" element={<UniverseSimulation />} />
                   <Route path="/analysis" element={<DataAnalysis />} />
+                  <Route path="/deployment" element={<Deployment />} />
                   {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                   <Route path="*" element={<NotFound />} />
                 </Routes>

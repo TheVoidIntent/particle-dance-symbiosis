@@ -1,100 +1,110 @@
-
 import { useCallback } from 'react';
+import { SimulationConfig, SimulationState, Particle } from './types';
 import { createParticleFromField } from '@/utils/particleUtils';
-import { SimulationConfig } from './types';
 
 export function useParticleCreation(
   config: SimulationConfig,
   running: boolean,
   isInitialized: boolean,
-  particlesRef: React.MutableRefObject<any[]>,
+  particlesRef: React.MutableRefObject<Particle[]>,
   intentFieldRef: React.MutableRefObject<number[][][]>,
-  dimensionsRef: React.MutableRefObject<{ width: number; height: number }>
+  dimensionsRef: React.MutableRefObject<SimulationState['dimensions']>
 ) {
-  // Get post-inflation particle color
-  const getPostInflationColor = (charge: 'positive' | 'negative' | 'neutral'): string => {
-    switch (charge) {
-      case 'positive':
-        return 'rgba(209, 70, 239, 0.95)'; // Bright magenta
-      case 'negative':
-        return 'rgba(139, 92, 246, 0.95)'; // Bright purple
-      case 'neutral':
-        return 'rgba(14, 165, 233, 0.95)'; // Bright blue
-      default:
-        return 'rgba(209, 70, 239, 0.95)';
-    }
-  };
-
-  // Create new particles
-  const createNewParticles = useCallback((count = 3, postInflation = false) => {
-    if (!running || !isInitialized || 
-       (!postInflation && particlesRef.current.length >= config.maxParticles)) {
+  const createNewParticles = useCallback(() => {
+    if (!running || !isInitialized || particlesRef.current.length >= config.maxParticles) {
       return;
     }
 
     const { width, height } = dimensionsRef.current;
+    const intentField = intentFieldRef.current;
     
-    // Maximum number of particles to add per call
-    const maxNewParticles = postInflation 
-      ? count 
-      : Math.min(count, config.maxParticles - particlesRef.current.length);
+    if (!intentField.length || !intentField[0].length || !intentField[0][0].length) {
+      return;
+    }
     
-    // Random number of new particles, at least 1
-    const numNewParticles = postInflation 
-      ? maxNewParticles 
-      : Math.max(1, Math.floor(Math.random() * maxNewParticles));
+    // Create 1-3 particles
+    const numToCreate = Math.min(
+      Math.floor(Math.random() * 3) + 1,
+      config.maxParticles - particlesRef.current.length
+    );
     
-    for (let i = 0; i < numNewParticles; i++) {
-      // Random position
-      const x = Math.random() * width;
-      const y = Math.random() * height;
-      const z = Math.random() * 10; // For 3D simulations
+    for (let i = 0; i < numToCreate; i++) {
+      // Find a random location with reasonable intent fluctuation
+      let attempts = 0;
+      let foundLocation = false;
+      let x = 0, y = 0, z = 0, fieldValue = 0;
       
-      // Get field value at position
-      const fieldX = Math.floor(x / (width / intentFieldRef.current[0][0].length));
-      const fieldY = Math.floor(y / (height / intentFieldRef.current[0].length));
-      const fieldZ = Math.floor(z / (10 / intentFieldRef.current.length));
-      
-      // Get the intent field value at this location (with boundary checks)
-      const fieldValue = intentFieldRef.current[
-        Math.min(fieldZ, intentFieldRef.current.length - 1)
-      ][
-        Math.min(fieldY, intentFieldRef.current[0].length - 1)
-      ][
-        Math.min(fieldX, intentFieldRef.current[0][0].length - 1)
-      ];
-      
-      // Create particle based on field value
-      const newParticle = createParticleFromField(fieldValue, x, y, z, Date.now() + i);
-
-      // Mark as post-inflation particle
-      if (postInflation) {
-        newParticle.isPostInflation = true;
-        newParticle.color = getPostInflationColor(newParticle.charge);
-        newParticle.scale = 1.2; // Slightly larger
+      // Try to find a location with significant intent fluctuation
+      while (!foundLocation && attempts < 10) {
+        x = Math.random() * width;
+        y = Math.random() * height;
+        z = Math.random() * 9.9; // z-dimension for 3D
+        
+        // Get the intent field value at this location
+        const fieldX = Math.floor(x / (width / intentField[0][0].length));
+        const fieldY = Math.floor(y / (height / intentField[0].length));
+        const fieldZ = Math.floor(z / (10 / intentField.length));
+        
+        if (fieldZ < intentField.length && 
+            fieldY < intentField[0].length && 
+            fieldX < intentField[0][0].length) {
+          fieldValue = intentField[fieldZ][fieldY][fieldX];
+          
+          // If using probabilistic intent, higher fluctuations increase likelihood of particle creation
+          if (config.probabilisticIntent) {
+            const threshold = 0.1 + config.intentFluctuationRate * 2;  
+            // The stronger the fluctuation (positive or negative), the more likely to create a particle
+            const fluctuationStrength = Math.abs(fieldValue);
+            
+            if (fluctuationStrength > threshold) {
+              foundLocation = true;
+            }
+          } else {
+            // Otherwise just accept the location
+            foundLocation = true;
+          }
+        }
+        
+        attempts++;
       }
-
-      // Maybe make it adaptive
-      if (config.useAdaptiveParticles && Math.random() < 0.1) {
+      
+      if (!foundLocation) {
+        // If we couldn't find a good spot, just pick a random one
+        x = Math.random() * width;
+        y = Math.random() * height;
+        z = Math.random() * 9.9;
+        
+        const fieldX = Math.floor(x / (width / intentField[0][0].length));
+        const fieldY = Math.floor(y / (height / intentField[0].length));
+        const fieldZ = Math.floor(z / (10 / intentField.length));
+        
+        if (fieldZ < intentField.length && 
+            fieldY < intentField[0].length && 
+            fieldX < intentField[0][0].length) {
+          fieldValue = intentField[fieldZ][fieldY][fieldX];
+        } else {
+          fieldValue = (Math.random() * 2) - 1; // Random value between -1 and 1
+        }
+      }
+      
+      // Create particle based on field fluctuation
+      const newId = particlesRef.current.length > 0 ? 
+        Math.max(...particlesRef.current.map(p => p.id)) + 1 : 0;
+      
+      const newParticle = createParticleFromField(fieldValue, x, y, z, newId);
+      
+      // Apply additional configuration based on simulation settings
+      if (config.useAdaptiveParticles && Math.random() < 0.2) {
         newParticle.type = 'adaptive';
-        newParticle.color = postInflation 
-          ? 'rgba(236, 72, 253, 0.9)' // Brighter pink for post-inflation adaptive particles
-          : 'rgba(236, 72, 153, 0.85)'; // Regular pink for adaptive particles
-        newParticle.adaptiveScore = 1;
+        newParticle.adaptiveScore = Math.random();
+        // Adaptive particles have different colors
+        newParticle.color = 'rgba(59, 130, 246, 0.8)'; // Blue-ish
       }
       
-      // Configure energy properties
-      if (config.energyConservation) {
-        newParticle.energyCapacity = 1 + Math.random() * 0.5;
-        newParticle.intentDecayRate = 0.0002 + (Math.random() * 0.0002);
-      } else {
-        newParticle.energyCapacity = 100;
-        newParticle.intentDecayRate = 0.00001;
-      }
-      
+      // Add particle to the simulation
       particlesRef.current.push(newParticle);
     }
-  }, [config, running, isInitialized, particlesRef, dimensionsRef, intentFieldRef]);
+  }, [config, running, isInitialized, particlesRef, intentFieldRef, dimensionsRef]);
 
   return { createNewParticles };
 }

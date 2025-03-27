@@ -8,6 +8,7 @@ import { SimulationControlButtons } from '@/components/SimulationControlButtons'
 import { AnomalyEvent } from '@/utils/particleUtils';
 import { clearPersistedState, clearSimulationData } from '@/utils/dataExportUtils';
 import { useToast } from "@/hooks/use-toast";
+import { Particle } from '@/hooks/simulation/types';
 
 type ParticleCanvasProps = {
   intentFluctuationRate: number;
@@ -42,6 +43,7 @@ export const ParticleCanvas: React.FC<ParticleCanvasProps> = ({
   const { toast } = useToast();
   const [showInflationBanner, setShowInflationBanner] = useState(false);
   const [latestInflation, setLatestInflation] = useState<InflationEvent | null>(null);
+  const [particleCount, setParticleCount] = useState(0);
 
   // Initialize simulation hooks
   const {
@@ -66,6 +68,7 @@ export const ParticleCanvas: React.FC<ParticleCanvasProps> = ({
       learningRate,
       particleCreationRate,
       viewMode,
+      renderMode,
       useAdaptiveParticles,
       energyConservation,
       probabilisticIntent
@@ -84,6 +87,13 @@ export const ParticleCanvas: React.FC<ParticleCanvasProps> = ({
   } = useSimulationData(onStatsUpdate);
 
   const { renderSimulation } = useCanvasRenderer();
+
+  // Update particle count for UI display
+  useEffect(() => {
+    if (particlesRef.current) {
+      setParticleCount(particlesRef.current.length);
+    }
+  }, [particlesRef.current?.length]);
 
   // Handle inflation events
   function handleInflationDetected(event: InflationEvent) {
@@ -118,12 +128,14 @@ export const ParticleCanvas: React.FC<ParticleCanvasProps> = ({
     };
     
     window.addEventListener('resize', handleResize);
+    handleResize(); // Call once to initialize
+    
     return () => window.removeEventListener('resize', handleResize);
   }, [initializeSimulation, dimensionsRef]);
 
   // Manage particle creation based on simulation parameters
   useEffect(() => {
-    if (!running || !isInitialized || intentFieldRef.current.length === 0) return;
+    if (!running || !isInitialized || !intentFieldRef.current || intentFieldRef.current.length === 0) return;
     
     const createParticlesInterval = setInterval(() => {
       createNewParticles();
@@ -202,6 +214,11 @@ export const ParticleCanvas: React.FC<ParticleCanvasProps> = ({
         ref={canvasRef} 
         className="w-full h-full bg-black/90"
       />
+      
+      {/* Particle Count Display */}
+      <div className="absolute top-2 left-2 bg-black/50 text-white px-2 py-1 rounded text-xs">
+        Particles: {particleCount}
+      </div>
       
       {/* Inflation Banner */}
       {showInflationBanner && (

@@ -57,9 +57,9 @@ const Documentation: React.FC = () => {
                   <Atom className="mr-2 h-4 w-4" />
                   Overview
                 </TabsTrigger>
-                <TabsTrigger value="theory" className="data-[state=active]:bg-indigo-600">
+                <TabsTrigger value="hypothesis" className="data-[state=active]:bg-indigo-600">
                   <Brain className="mr-2 h-4 w-4" />
-                  Theoretical Basis
+                  Hypothesis
                 </TabsTrigger>
                 <TabsTrigger value="implementation" className="data-[state=active]:bg-indigo-600">
                   <Share2 className="mr-2 h-4 w-4" />
@@ -140,7 +140,7 @@ const Documentation: React.FC = () => {
               </Card>
             </TabsContent>
 
-            <TabsContent value="theory" className="animate-fade-in">
+            <TabsContent value="hypothesis" className="animate-fade-in">
               <Card className="bg-gray-800/50 border-gray-700 text-white">
                 <CardHeader>
                   <CardTitle className="text-2xl">Theoretical Foundations</CardTitle>
@@ -149,11 +149,14 @@ const Documentation: React.FC = () => {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  <p className="text-lg">
-                    The Intent Universe Framework builds upon several theoretical concepts, extending them
-                    to explore a universe where consciousness and intent are fundamental properties.
-                  </p>
-
+                  <div className="w-full h-[800px] rounded-lg overflow-hidden border border-gray-700">
+                    <iframe 
+                      src="https://docs.google.com/document/d/e/2PACX-1vSvP75WZNFmfVqZpus0jo_cpRLCZ-yrW4vNnL-Sw6dy1wPbSOIrge0V69KxtONSpQyPwqtH5UZhCWbA/pub?embedded=true" 
+                      className="w-full h-full"
+                      title="Intent Universe Hypothesis Document"
+                    ></iframe>
+                  </div>
+                  
                   <div className="space-y-8 mt-4">
                     <div>
                       <h3 className="text-xl font-semibold mb-3">Proto-Universe Intent</h3>

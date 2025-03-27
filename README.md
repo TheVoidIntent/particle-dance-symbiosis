@@ -1,77 +1,92 @@
 
-# Universe Intent Simulation Explorer
+# 🌌 Particle Dance Symbiosis
+### The Core Engine of the IntentSim Universe Simulation Project
 
-A theoretical laboratory for exploring universe creation through intent field fluctuations.
+Welcome to **Particle Dance Symbiosis**, the official public repository for the real-time universe simulation exploring the emergence of complexity from intent-driven particles.
 
-## Running the Application
+Hosted at: [🌐 intentSim.org](https://intentsim.org)  
+Powered by: [🧠 Lovable.dev](https://lovable.dev)
 
-### Frontend (Web Interface)
+---
 
+## 🚀 Overview
+**Particle Dance Symbiosis** is the beating heart of a bold hypothesis: that the universe may be fundamentally structured by **intent** and **information**—not just matter and energy.
+
+This simulation lets you:
+- Observe intent-based proto-particles interact and self-organize
+- Track emergent behaviors and complexity thresholds
+- Explore entropy buildup, phase transitions, and pseudo-gravitational phenomena
+- Experiment with information-intent thresholds to trigger "inflationary" states (like the Big Bang)
+
+---
+
+## 🔮 Featured Concepts
+- **Intent Field Fluctuations**: The source of all particle birth events
+- **Information–Intent Nexus**: A new framework proposing the foundations of spacetime and physical law
+- **Black Body Radiation Problem**: Used to analyze pressure and entropy within the simulated field
+- **Complexity Metrics**: Emergence, clustering, and infinity thresholds
+
+> _"It’s not just a simulation—it’s a theoretical laboratory for the preconditions of existence."_
+
+---
+
+## 📁 Key Directories
 ```bash
-# Install dependencies
+/data                         # Core logic files (intents, simulation, entropy)
+/src                          # Frontend components powered by Lovable.dev
+/media                        # Visual assets, demos, and concept art
+/docs                         # Research notes and theoretical background
+/products                     # Public simulation drops & analysis packages
+```
+
+---
+
+## 🧠 Run the Simulation
+Access the live persistent universe simulation:
+👉 [https://intentsim.org/simulation](https://intentsim.org/simulation)
+
+You can also fork and run it locally using:
+```bash
+git clone https://github.com/TheVoidIntent/particle-dance-symbiosis.git
+cd particle-dance-symbiosis
 npm install
-
-# Start the development server
 npm run dev
-
-# Build for production
-npm run build
 ```
 
-### Data Compilation
+---
 
-The Python script `compile_data.py` helps compile simulation data files for visualization:
+## 📦 Simulation Drops
+🎁 Public releases with data, visuals, and theory:
+- [IntentSim Drop #001](https://www.patreon.com/TheVoidIntent) — Core dataset, simulation footage, Nexus summary
 
-```bash
-# Basic usage
-python compile_data.py /path/to/source/data
+Get early access + behind-the-scenes:
+👉 [Join the Project on Patreon](https://www.patreon.com/TheVoidIntent)
 
-# With custom output directory
-python compile_data.py /path/to/source/data --output_dir ./custom_output_directory
-```
+---
 
-Example:
-```bash
-# Compile data from your Documents folder
-python compile_data.py ~/Documents/simulation_data --output_dir ./data
-```
+## 📚 Theory: Information–Intent Nexus
+Learn more about the foundational hypothesis guiding this work:
+- [Full Nexus Paper](https://intentsim.org/nexus)  
+- [NotebookLM Research Assistant](https://notebooklm.google.com/)  
+- [Nexus GitHub Page (coming soon)]
 
-## Data Visualization
+---
 
-1. Run the data compilation script to prepare your simulation data
-2. Start the web application
-3. Navigate to the "Upload Data" tab
-4. Upload your compiled JSON file
-5. View the visualizations
+## 🙌 Credits & Vision
+Created by [**TheVoidIntent** LLC]  
+Crafted using real-time AI copilots and intuitive simulation systems via [Lovable.dev](https://lovable.dev)
 
-## Data Format
+We believe in curiosity, transparency, and open-ended exploration. If the laws of reality are emergent, so too should be our science.
 
-The application expects simulation data in the following JSON format:
+---
 
-```json
-{
-  "config": {
-    "max_particles": 150,
-    "learning_rate": 0.2,
-    "fluctuation_rate": 0.02,
-    "name": "simulation_name"
-  },
-  "data": [
-    {
-      "timestamp": 1,
-      "particle_counts": {
-        "positive": 42,
-        "negative": 36,
-        "neutral": 22,
-        "composite": 5
-      },
-      "total_particles": 105,
-      "total_interactions": 324,
-      "avg_knowledge": 0.42,
-      "avg_complexity": 1.3,
-      "max_complexity": 2.8,
-      "complexity_index": 0.65
-    }
+## 🛸 Contact & Collaborate
+- GitHub: [@TheVoidIntent](https://github.com/TheVoidIntent)
+- Web: [https://intentsim.org](https://intentsim.org)
+- Twitter: [@VoidIntent](https://twitter.com/VoidIntent)
+- Email: [contact@intentsim.org](mailto:contact@intentsim.org)
+
+
     // Additional timestep entries...
   ],
   "timestamp": "20250323_205710"

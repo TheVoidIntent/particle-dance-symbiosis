@@ -1,6 +1,6 @@
 
 import { useState, useEffect, useCallback } from 'react';
-import { Particle } from '@/types/simulation';
+import { Particle } from './types';
 import { useSimulationStore } from '@/stores/simulationStore';
 import { generateUniqueId } from '@/utils/idGenerator';
 import { calculateComplexity } from '@/utils/complexityCalculator';
@@ -53,7 +53,7 @@ export const useParticleCreation = ({
 
     const position = getRandomPosition();
     const velocity = getRandomVelocity();
-    const type = getRandomParticleType();
+    const chargeType = getRandomParticleType();
     
     const newParticle: Particle = {
       id: parseInt(generateUniqueId().split('-')[1]),
@@ -64,8 +64,8 @@ export const useParticleCreation = ({
       vy: velocity.y,
       vz: velocity.z,
       type: 'standard',
-      charge: type,
-      size: 3 + Math.random() * 5,
+      charge: chargeType,
+      radius: 3 + Math.random() * 5,
       mass: 1 + Math.random() * 2,
       energy: 50 + Math.random() * 50,
       knowledge: 0,
@@ -74,12 +74,11 @@ export const useParticleCreation = ({
       age: 0,
       interactions: 0,
       lastInteraction: Date.now(),
-      color: type === 'positive' ? 'rgba(255, 0, 0, 0.8)' : 
-             type === 'negative' ? 'rgba(0, 0, 255, 0.8)' : 
+      color: chargeType === 'positive' ? 'rgba(255, 0, 0, 0.8)' : 
+             chargeType === 'negative' ? 'rgba(0, 0, 255, 0.8)' : 
              'rgba(0, 255, 0, 0.8)',
       created: Date.now(),
       interactionCount: 0,
-      radius: 3 + Math.random() * 5,
       intentDecayRate: 0.001,
       energyCapacity: 100,
     };
@@ -171,7 +170,7 @@ export const useParticleCreation = ({
         const newAge = particle.age + 1;
         
         // Update complexity based on age and interactions
-        const newComplexity = calculateComplexity(particle.complexity, particle.interactionCount, newAge);
+        const newComplexity = calculateComplexity(particle.complexity, particle.interactions, newAge);
 
         return {
           ...particle,
@@ -224,7 +223,7 @@ export const useParticleCreation = ({
             // Update interaction counts
             newParticles[i] = {
               ...p1,
-              interactionCount: p1.interactionCount + 1,
+              interactions: p1.interactions + 1,
               lastInteraction: Date.now(),
               // Knowledge increases with each interaction
               knowledge: Math.min(1, p1.knowledge + 0.01),
@@ -232,7 +231,7 @@ export const useParticleCreation = ({
             
             newParticles[j] = {
               ...p2,
-              interactionCount: p2.interactionCount + 1,
+              interactions: p2.interactions + 1,
               lastInteraction: Date.now(),
               // Knowledge increases with each interaction
               knowledge: Math.min(1, p2.knowledge + 0.01),
@@ -272,5 +271,15 @@ export const useParticleCreation = ({
     return () => clearInterval(intervalId);
   }, [updateParticles, handleInteractions]);
 
-  return { particles, setParticles };
+  // Add a function to create new particles that can be exported
+  const createNewParticles = useCallback(() => {
+    if (particles.length >= maxParticles) return;
+    createParticle();
+  }, [particles.length, maxParticles, createParticle]);
+
+  return { 
+    particles, 
+    setParticles,
+    createNewParticles 
+  };
 };

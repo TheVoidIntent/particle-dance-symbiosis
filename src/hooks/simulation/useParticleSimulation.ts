@@ -40,7 +40,7 @@ export function useParticleSimulation(
   );
 
   // Create particles
-  const { particles, setParticles } = useParticleCreation({
+  const { particles, setParticles, createNewParticles } = useParticleCreation({
     maxParticles: config.maxParticles,
     particleCreationRate: config.particleCreationRate,
     intentFluctuationRate: config.intentFluctuationRate,
@@ -65,11 +65,11 @@ export function useParticleSimulation(
     dimensionsRef,
     originalDimensionsRef,
     () => {
-      // This function replaces createNewParticles
+      // This function creates new particles after inflation
       const newParticlesCount = Math.floor(Math.random() * 10) + 5;
       for (let i = 0; i < newParticlesCount; i++) {
         if (particlesRef.current.length < config.maxParticles) {
-          // Let the useParticleCreation hook handle particle creation
+          createNewParticles();
         }
       }
     },
@@ -126,6 +126,7 @@ export function useParticleSimulation(
     inflationTimeRef,
     initializeSimulation,
     updateParticles,
+    createNewParticles,  // Expose this function
     detectSimulationAnomalies
   };
 }

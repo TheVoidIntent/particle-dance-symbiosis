@@ -12,7 +12,7 @@ export interface SimulationConfig {
 }
 
 export interface Particle {
-  id: number; // Changed from string to number to match particleUtils.Particle
+  id: number;
   x: number;
   y: number;
   z: number;
@@ -32,12 +32,13 @@ export interface Particle {
   lastInteraction: number;
   isPostInflation?: boolean;
   scale?: number;
-  // Added properties from particleUtils.Particle
+  // These are from particleUtils.Particle
   intentDecayRate: number;
   energy: number;
   energyCapacity: number;
   interactionCount: number;
   adaptiveScore?: number;
+  created?: number;
 }
 
 export interface SimulationState {
@@ -53,5 +54,3 @@ export interface InflationEvent {
   particlesBeforeInflation: number;
   particlesAfterInflation: number;
 }
-
-// No re-exports here - these are already exported above

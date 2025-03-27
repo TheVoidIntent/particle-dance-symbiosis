@@ -25,7 +25,17 @@ This will create a `dist` directory containing all the optimized static files.
 2. Configure your hosting to build from your repository using the command `npm run build`
 3. Configure your hosting to serve files from the `dist` directory
 
-## Step 3: Verify the Installation
+## Step 3: Domain Configuration
+1. In your domain registrar (like GoDaddy, Namecheap, etc.), point the DNS records for intentSim.org to your hosting provider
+2. For most hosting providers, you'll need to:
+   - Set an A record pointing to your hosting's IP address
+   - Set CNAME records for www.intentSim.org pointing to intentSim.org
+
+## Step 4: HTTPS Setup
+1. Make sure your hosting provider enables HTTPS for your domain
+2. Many hosting providers offer free SSL certificates through Let's Encrypt
+
+## Step 5: Verify the Installation
 1. Visit intentSim.org in your web browser
 2. Check that all pages and features work correctly
 3. Test navigation between different sections of the application

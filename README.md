@@ -1,10 +1,9 @@
-
 # 🌌 Particle Dance Symbiosis
 
 **Live Universe Simulation** powered by Intent & Information  
 [🌐 Visit Site → intentsim.org](https://intentsim.org)  
 [🧠 Read the Theory → Information–Intent Nexus](https://docs.google.com/document/d/13JLJROA3SsKpD-XfTNc3CbdnxxebcsZQ57Td5sznG8g)  
-[🎁 Patreon Drops → TheVoidIntent](https://www.patreon.com/TheVoidIntent)
+[🏱 Patreon Drops → TheVoidIntent](https://www.patreon.com/TheVoidIntent)
 
 ---
 
@@ -73,6 +72,8 @@ Custom Domain: [`intentsim.org`](https://intentsim.org)
 
 Our theory proposes that intent is the generative force behind physical law, and information acts as the shaping constraint. The Nexus model links entropy, clustering, and emergent gravity-like phenomena.
 
+<iframe src="https://docs.google.com/document/d/e/2PACX-1vSvP75WZNFmfVqZpus0jo_cpRLCZ-yrW4vNnL-Sw6dy1wPbSOIrge0V69KxtONSpQyPwqtH5UZhCWbA/pub?embedded=true"></iframe>
+
 🔗 [Read the full Google Doc](https://docs.google.com/document/d/13JLJROA3SsKpD-XfTNc3CbdnxxebcsZQ57Td5sznG8g)  
 📄 [Download the PDF Summary](https://intentsim.org/nexus)
 
@@ -82,7 +83,7 @@ Our theory proposes that intent is the generative force behind physical law, and
 
 Support the project and download the full simulation bundle from Patreon:
 
-### 🎁 `IntentSim: Core Simulation Drop #001`
+### 🏱 `IntentSim: Core Simulation Drop #001`
 
 Includes:
 - 📊 `intentsim_drop_001_data.csv` — Particle state data (snapshot)

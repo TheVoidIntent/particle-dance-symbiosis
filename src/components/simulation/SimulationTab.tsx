@@ -4,7 +4,8 @@ import { ParticleCanvas } from '@/components/ParticleCanvas';
 import SimulationStats from './SimulationStats';
 import { SimulationStats as StatsType } from '@/types/simulation';
 import { Button } from "@/components/ui/button";
-import { Download } from "lucide-react";
+import { Download, NotebookText, FileText } from "lucide-react";
+import { toast } from "sonner";
 
 interface SimulationTabProps {
   intentFluctuationRate: number;
@@ -59,6 +60,35 @@ const SimulationTab: React.FC<SimulationTabProps> = ({
   setRunning,
   handleDownloadData
 }) => {
+  const handleExportForNotebook = () => {
+    // Create a formatted version of the data specifically for notebook analysis
+    const notebookData = {
+      simulationParams: {
+        intentFluctuationRate,
+        maxParticles,
+        learningRate,
+        particleCreationRate,
+        useAdaptiveParticles,
+        energyConservation,
+        probabilisticIntent
+      },
+      currentStats: stats,
+      timestamp: new Date().toISOString(),
+      exportType: "notebook_lm_data"
+    };
+    
+    // Create download link
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(notebookData, null, 2));
+    const downloadAnchorNode = document.createElement('a');
+    downloadAnchorNode.setAttribute("href", dataStr);
+    downloadAnchorNode.setAttribute("download", `intentSim-notebook-data-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.json`);
+    document.body.appendChild(downloadAnchorNode);
+    downloadAnchorNode.click();
+    downloadAnchorNode.remove();
+    
+    toast.success("Data exported for Notebook LM analysis");
+  };
+
   return (
     <>
       <ParticleCanvas 
@@ -78,7 +108,11 @@ const SimulationTab: React.FC<SimulationTabProps> = ({
       
       <div className="grid grid-cols-3 gap-4 mt-4">
         <SimulationStats stats={stats} />
-        <div className="col-span-3 flex justify-end">
+        <div className="col-span-3 flex justify-end gap-2">
+          <Button onClick={handleExportForNotebook} variant="outline" className="bg-purple-900/20">
+            <NotebookText className="mr-2 h-4 w-4" />
+            Export for Notebook LM
+          </Button>
           <Button onClick={handleDownloadData} variant="outline">
             <Download className="mr-2 h-4 w-4" />
             Download Simulation Data

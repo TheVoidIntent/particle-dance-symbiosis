@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Atom, Github, Mail, Twitter, FileText } from 'lucide-react';
+import { Atom, Github, Mail, Twitter, FileText, BookOpen, Brain } from 'lucide-react';
 
 const Footer: React.FC = () => {
   return (
@@ -50,6 +50,10 @@ const Footer: React.FC = () => {
             <li><a href="#" className="hover:text-white transition-colors">Research</a></li>
             <li><a href="#" className="hover:text-white transition-colors">Publications</a></li>
             <li><a href="#" className="hover:text-white transition-colors">API</a></li>
+            <li className="flex items-center gap-1">
+              <Brain className="h-4 w-4 text-purple-400" />
+              <span className="hover:text-white transition-colors">Notebook LM Integration</span>
+            </li>
           </ul>
         </div>
         

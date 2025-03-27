@@ -44,6 +44,13 @@ interface SimulationDataPoint {
   stats: SimulationStats;
 }
 
+interface NotebookAnnotation {
+  text: string;
+  timestamp: string;
+  source: string;
+  relatedDatapoint?: number;
+}
+
 export function useSimulationData(
   onStatsUpdate: (stats: SimulationStats) => void
 ) {
@@ -53,6 +60,7 @@ export function useSimulationData(
     exportInterval: 5000,
     format: 'csv' as 'csv' | 'json'
   });
+  const [notebookAnnotations, setNotebookAnnotations] = useState<NotebookAnnotation[]>([]);
 
   // Process and collect simulation data
   const processSimulationData = useCallback((
@@ -169,6 +177,45 @@ export function useSimulationData(
     });
   }, [dataExportOptions.format]);
 
+  // Export data specifically formatted for Notebook LM
+  const exportForNotebookLM = useCallback(() => {
+    const exportData = {
+      simulationData: exportDataToJSON(false),
+      annotations: notebookAnnotations,
+      exportTimestamp: new Date().toISOString(),
+      format: "notebook_lm_compatible"
+    };
+    
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportData, null, 2));
+    const downloadAnchorNode = document.createElement('a');
+    downloadAnchorNode.setAttribute("href", dataStr);
+    downloadAnchorNode.setAttribute("download", `intentSim-notebook-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.json`);
+    document.body.appendChild(downloadAnchorNode);
+    downloadAnchorNode.click();
+    downloadAnchorNode.remove();
+    
+    toast({
+      title: "Notebook Export Complete",
+      description: "Data exported in Notebook LM format with annotations included.",
+      variant: "default",
+    });
+    
+    return true;
+  }, [notebookAnnotations]);
+
+  // Import annotations from Notebook LM
+  const importNotebookAnnotations = useCallback((annotations: NotebookAnnotation[]) => {
+    setNotebookAnnotations(prev => [...prev, ...annotations]);
+    
+    toast({
+      title: "Annotations Imported",
+      description: `${annotations.length} annotations imported from Notebook LM.`,
+      variant: "default",
+    });
+    
+    return true;
+  }, []);
+
   // Toggle data collection on/off
   const toggleDataCollection = useCallback(() => {
     dataCollectionActiveRef.current = !dataCollectionActiveRef.current;
@@ -185,9 +232,13 @@ export function useSimulationData(
   return {
     dataCollectionActiveRef,
     dataExportOptions,
+    notebookAnnotations,
     setDataExportOptions,
+    setNotebookAnnotations,
     processSimulationData,
     handleExportData,
+    exportForNotebookLM,
+    importNotebookAnnotations,
     toggleDataCollection
   };
 }

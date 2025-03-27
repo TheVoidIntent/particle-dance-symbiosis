@@ -304,7 +304,7 @@ export const exportDataToCSV = () => {
 };
 
 // Export current simulation data to JSON
-export const exportDataToJSON = () => {
+export const exportDataToJSON = (triggerDownload = true) => {
   const data = getSimulationData();
   if (!data.length) {
     console.warn('No simulation data to export');
@@ -324,6 +324,58 @@ export const exportDataToJSON = () => {
     data: data
   };
   
-  exportAsJSON(exportData, filename);
+  if (triggerDownload) {
+    exportAsJSON(exportData, filename);
+  }
+  
+  return exportData;
+};
+
+// Export data for notebook LM
+export const exportForNotebookLM = (data: any[], annotations: any[] = []) => {
+  if (!data.length) {
+    console.warn('No simulation data to export for notebook');
+    return null;
+  }
+  
+  const timestamp = new Date().toISOString().replace(/[:.]/g, '').slice(0, 15);
+  const filename = `intentSim_notebook_${timestamp}`;
+  
+  // Create a notebook-friendly format
+  const notebookData = {
+    metadata: {
+      timestamp: new Date().toISOString(),
+      source: 'intentSim.org',
+      version: '1.0.0',
+      format: 'notebook_lm_compatible'
+    },
+    simulation_data: data,
+    annotations: annotations,
+    summary: {
+      total_datapoints: data.length,
+      total_annotations: annotations.length,
+      data_timespan: data.length > 0 ? 
+        { start: data[0].timestamp, end: data[data.length - 1].timestamp } : 
+        null
+    }
+  };
+  
+  exportAsJSON(notebookData, filename);
   return filename;
+};
+
+// Import annotations from notebook LM
+export const importNotebookAnnotations = (jsonData: string): any[] | null => {
+  try {
+    const parsed = parseJsonWithInfinity(jsonData);
+    
+    if (parsed && parsed.annotations && Array.isArray(parsed.annotations)) {
+      return parsed.annotations;
+    }
+    
+    return null;
+  } catch (error) {
+    console.error('Error importing notebook annotations:', error);
+    return null;
+  }
 };

@@ -1,7 +1,17 @@
 
-<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-atom">
-  <circle cx="12" cy="12" r="1" fill="#8B5CF6"></circle>
-  <path d="M12 12m-5 0a8 8 0 1 0 16 0a8 8 0 1 0-16 0" stroke="#8B5CF6"></path>
-  <path d="M12 12m-9 0a8 8 0 1 0 16 0a8 8 0 1 0-16 0" stroke="#8B5CF6"></path>
-  <path d="M12 3a9 9 0 0 1 9 9" stroke="#D946EF"></path>
+<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
+  <!-- Stylized "I" with gradient -->
+  <rect x="13" y="8" width="6" height="16" fill="#2196F3"/>
+  
+  <!-- Circle at top -->
+  <circle cx="16" cy="6" r="3" fill="#2196F3"/>
+  
+  <!-- Particle simulation wave with dots -->
+  <path d="M8,12 C11,8 13,14 16,12 C19,10 21,14 24,12" stroke="#2196F3" fill="none" stroke-width="1"/>
+  
+  <!-- Dots representing particles -->
+  <circle cx="10" cy="11" r="1" fill="#2196F3"/>
+  <circle cx="14" cy="13" r="1" fill="#2196F3"/>
+  <circle cx="18" cy="11" r="1" fill="#2196F3"/>
+  <circle cx="22" cy="12" r="1" fill="#2196F3"/>
 </svg>

@@ -1,0 +1,25 @@
+
+<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200">
+  <!-- Background (transparent) -->
+  <rect width="200" height="200" fill="transparent"/>
+  
+  <!-- Stylized "I" with gradient -->
+  <rect x="85" y="50" width="30" height="100" fill="#2196F3"/>
+  
+  <!-- Circle at top -->
+  <circle cx="100" cy="40" r="15" fill="#2196F3"/>
+  
+  <!-- Particle simulation wave with dots -->
+  <path d="M50,70 C70,50 80,90 100,70 C120,50 130,90 150,70" stroke="#2196F3" fill="none" stroke-width="3"/>
+  
+  <!-- Dots representing particles -->
+  <circle cx="60" cy="65" r="3" fill="#2196F3"/>
+  <circle cx="70" cy="75" r="3" fill="#2196F3"/>
+  <circle cx="85" cy="68" r="3" fill="#2196F3"/>
+  <circle cx="95" cy="60" r="2" fill="#2196F3"/>
+  <circle cx="110" cy="65" r="3" fill="#2196F3"/>
+  <circle cx="120" cy="72" r="2" fill="#2196F3"/>
+  <circle cx="130" cy="65" r="3" fill="#2196F3"/>
+  <circle cx="140" cy="70" r="2" fill="#2196F3"/>
+  <circle cx="150" cy="68" r="2" fill="#2196F3"/>
+</svg>

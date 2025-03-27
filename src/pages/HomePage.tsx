@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Helmet } from "react-helmet";
 import { Link } from "react-router-dom";
@@ -51,6 +52,25 @@ const HomePage: React.FC = () => {
                   View Data Analysis
                 </Button>
               </Link>
+            </div>
+          </div>
+          
+          {/* Cosmic Universe Image */}
+          <div className="flex justify-center my-16 animate-float">
+            <div className="relative group">
+              <div className="absolute -inset-0.5 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-3xl blur opacity-75 group-hover:opacity-100 transition duration-1000 group-hover:duration-200 animate-pulse"></div>
+              <div className="relative">
+                <img 
+                  src="/lovable-uploads/be1b6633-26f7-4b05-83a6-6a1c4d0b90ad.png" 
+                  alt="Cosmic Universe Diagram" 
+                  className="rounded-2xl shadow-2xl max-w-full md:max-w-xl mx-auto transform transition-transform duration-500 hover:scale-105"
+                />
+                <div className="absolute inset-0 rounded-2xl bg-black bg-opacity-40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  <p className="text-white text-lg font-medium px-6 text-center">
+                    Universe Intent Model: The fundamental structure of particle creation from intent field fluctuations
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
           

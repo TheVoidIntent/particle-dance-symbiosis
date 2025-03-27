@@ -12,7 +12,7 @@ export interface SimulationConfig {
 }
 
 export interface Particle {
-  id: string;
+  id: number; // Changed from string to number to match particleUtils.Particle
   x: number;
   y: number;
   z: number;
@@ -32,7 +32,7 @@ export interface Particle {
   lastInteraction: number;
   isPostInflation?: boolean;
   scale?: number;
-  // Adding the missing properties from particleUtils.Particle
+  // Added properties from particleUtils.Particle
   intentDecayRate: number;
   energy: number;
   energyCapacity: number;

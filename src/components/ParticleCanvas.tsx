@@ -1,5 +1,5 @@
 
-import React, { useRef, useEffect, useCallback, useState } from 'react';
+import React, { useCallback } from 'react';
 import { useParticleSimulation, InflationEvent } from '@/hooks/simulation';
 import { useSimulationData } from '@/hooks/useSimulationData';
 import { useCanvasRenderer } from '@/hooks/useCanvasRenderer';
@@ -8,7 +8,9 @@ import { SimulationControlButtons } from '@/components/SimulationControlButtons'
 import { AnomalyEvent } from '@/utils/particleUtils';
 import { clearPersistedState, clearSimulationData } from '@/utils/dataExportUtils';
 import { useToast } from "@/hooks/use-toast";
-import { Particle } from '@/hooks/simulation/types';
+import { ParticleDisplay } from '@/components/simulation/ParticleDisplay';
+import { useInflationEvents } from '@/hooks/useInflationEvents';
+import { useParticleManagement } from '@/hooks/useParticleManagement';
 
 type ParticleCanvasProps = {
   intentFluctuationRate: number;
@@ -39,45 +41,47 @@ export const ParticleCanvas: React.FC<ParticleCanvasProps> = ({
   onStatsUpdate,
   onAnomalyDetected
 }) => {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
   const { toast } = useToast();
-  const [showInflationBanner, setShowInflationBanner] = useState(false);
-  const [latestInflation, setLatestInflation] = useState<InflationEvent | null>(null);
-  const [particleCount, setParticleCount] = useState(0);
+  
+  // Setup inflation handling
+  const { 
+    showInflationBanner, 
+    latestInflation, 
+    handleInflationDetected 
+  } = useInflationEvents();
 
-  // Initialize simulation hooks
+  // Setup particle management
   const {
+    canvasRef,
+    particleCount,
     particlesRef,
     intentFieldRef,
     dimensionsRef,
-    interactionsRef,
     frameCountRef,
     simulationTimeRef,
+    interactionsRef,
     isInitialized,
     isAnimatingRef,
-    isInflatedRef,
-    inflationTimeRef,
-    initializeSimulation,
     updateParticles,
-    createNewParticles,
-    detectSimulationAnomalies
-  } = useParticleSimulation(
-    {
-      intentFluctuationRate,
-      maxParticles,
-      learningRate,
-      particleCreationRate,
-      viewMode,
-      renderMode,
-      useAdaptiveParticles,
-      energyConservation,
-      probabilisticIntent
-    },
+    detectSimulationAnomalies,
+    handleCanvasReady
+  } = useParticleManagement({
+    intentFluctuationRate,
+    maxParticles,
+    learningRate,
+    particleCreationRate,
+    viewMode,
     running,
+    renderMode,
+    useAdaptiveParticles,
+    energyConservation,
+    probabilisticIntent,
     onAnomalyDetected,
-    handleInflationDetected
-  );
+    onInflationDetected: handleInflationDetected,
+    onStatsUpdate
+  });
 
+  // Setup data collection
   const {
     dataCollectionActiveRef,
     dataExportOptions,
@@ -86,117 +90,10 @@ export const ParticleCanvas: React.FC<ParticleCanvasProps> = ({
     toggleDataCollection
   } = useSimulationData(onStatsUpdate);
 
+  // Setup rendering
   const { renderSimulation } = useCanvasRenderer();
 
-  // Update particle count for UI display and ensure stats processing
-  useEffect(() => {
-    if (particlesRef.current) {
-      setParticleCount(particlesRef.current.length);
-      
-      // Make sure we're updating stats even if no simulation step has happened yet
-      if (particlesRef.current.length > 0) {
-        const stats = processSimulationData(
-          particlesRef.current,
-          intentFieldRef.current || [],
-          interactionsRef.current || 0,
-          frameCountRef.current || 0,
-          simulationTimeRef.current || 0
-        );
-        
-        // Force stats update at least once per second
-        onStatsUpdate(stats);
-      }
-    }
-  }, [
-    particlesRef.current?.length, 
-    processSimulationData, 
-    intentFieldRef, 
-    interactionsRef, 
-    frameCountRef, 
-    simulationTimeRef, 
-    onStatsUpdate
-  ]);
-
-  // Regular stats update on interval
-  useEffect(() => {
-    if (!isInitialized || !running) return;
-    
-    const statsUpdateInterval = setInterval(() => {
-      if (particlesRef.current && particlesRef.current.length > 0) {
-        const stats = processSimulationData(
-          particlesRef.current,
-          intentFieldRef.current || [],
-          interactionsRef.current || 0,
-          frameCountRef.current || 0,
-          simulationTimeRef.current || 0
-        );
-        onStatsUpdate(stats);
-      }
-    }, 500); // Update every 500ms
-    
-    return () => clearInterval(statsUpdateInterval);
-  }, [
-    isInitialized, 
-    running, 
-    particlesRef, 
-    intentFieldRef, 
-    interactionsRef, 
-    frameCountRef, 
-    simulationTimeRef, 
-    processSimulationData, 
-    onStatsUpdate
-  ]);
-
-  // Handle inflation events
-  function handleInflationDetected(event: InflationEvent) {
-    setLatestInflation(event);
-    setShowInflationBanner(true);
-    
-    // Show toast notification
-    toast({
-      title: "Universe Inflation Detected!",
-      description: `The simulation space has expanded with ${event.particlesAfterInflation - event.particlesBeforeInflation} new particles`,
-      variant: "default",
-    });
-    
-    // Hide banner after 5 seconds
-    setTimeout(() => {
-      setShowInflationBanner(false);
-    }, 5000);
-  }
-
-  // Initialize canvas and start simulation
-  useEffect(() => {
-    if (!canvasRef.current) return;
-    initializeSimulation(canvasRef.current);
-    
-    const handleResize = () => {
-      if (!canvasRef.current) return;
-      const canvas = canvasRef.current;
-      const { width, height } = canvas.getBoundingClientRect();
-      canvas.width = width;
-      canvas.height = height;
-      dimensionsRef.current = { width, height };
-    };
-    
-    window.addEventListener('resize', handleResize);
-    handleResize(); // Call once to initialize
-    
-    return () => window.removeEventListener('resize', handleResize);
-  }, [initializeSimulation, dimensionsRef]);
-
-  // Manage particle creation based on simulation parameters
-  useEffect(() => {
-    if (!running || !isInitialized || !intentFieldRef.current || intentFieldRef.current.length === 0) return;
-    
-    const createParticlesInterval = setInterval(() => {
-      createNewParticles();
-    }, 1000 / particleCreationRate);
-    
-    return () => clearInterval(createParticlesInterval);
-  }, [running, isInitialized, createNewParticles, particleCreationRate, intentFieldRef]);
-
-  // Animation loop
+  // Setup animation loop
   useAnimationLoop({
     running,
     isInitialized,
@@ -281,22 +178,13 @@ export const ParticleCanvas: React.FC<ParticleCanvasProps> = ({
 
   return (
     <div className="relative w-full h-full">
-      <canvas 
-        ref={canvasRef} 
-        className="w-full h-full bg-black/90"
+      <ParticleDisplay
+        canvasRef={canvasRef}
+        particleCount={particleCount}
+        showInflationBanner={showInflationBanner}
+        latestInflation={latestInflation}
+        onCanvasReady={handleCanvasReady}
       />
-      
-      {/* Particle Count Display */}
-      <div className="absolute top-2 left-2 bg-black/50 text-white px-2 py-1 rounded text-xs">
-        Particles: {particleCount}
-      </div>
-      
-      {/* Inflation Banner */}
-      {showInflationBanner && (
-        <div className="absolute top-0 left-0 right-0 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white font-bold py-2 text-center animate-pulse z-10">
-          🌌 Universe Inflation Event Detected! 🌌
-        </div>
-      )}
       
       <SimulationControlButtons 
         dataCollectionActive={dataCollectionActiveRef.current}

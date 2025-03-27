@@ -79,7 +79,7 @@ const Navbar: React.FC = () => {
               variant="ghost"
               size="sm"
               className="text-gray-300 hover:bg-gray-700 hover:text-white"
-              onClick={() => window.open("https://github.com/yourusername/intent-universe", "_blank")}
+              onClick={() => window.open("https://github.com/TheVoidIntent/IntentSim", "_blank")}
             >
               <Github className="h-5 w-5 mr-1" />
               GitHub
@@ -161,7 +161,7 @@ const Navbar: React.FC = () => {
               Documentation
             </Link>
             <a
-              href="https://github.com/yourusername/intent-universe"
+              href="https://github.com/TheVoidIntent/IntentSim"
               target="_blank"
               rel="noopener noreferrer"
               className="block px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:bg-gray-700 hover:text-white"

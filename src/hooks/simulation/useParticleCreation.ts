@@ -1,5 +1,6 @@
+
 import { useState, useEffect, useCallback } from 'react';
-import { Particle, ParticleType } from '@/types/simulation';
+import { Particle } from '@/types/simulation';
 import { useSimulationStore } from '@/stores/simulationStore';
 import { generateUniqueId } from '@/utils/idGenerator';
 import { calculateComplexity } from '@/utils/complexityCalculator';
@@ -41,8 +42,8 @@ export const useParticleCreation = ({
     };
   }, []);
 
-  const getRandomParticleType = useCallback(() => {
-    const types: ParticleType[] = ['positive', 'negative', 'neutral'];
+  const getRandomParticleType = useCallback((): 'positive' | 'negative' | 'neutral' => {
+    const types: ('positive' | 'negative' | 'neutral')[] = ['positive', 'negative', 'neutral'];
     const randomIndex = Math.floor(Math.random() * types.length);
     return types[randomIndex];
   }, []);
@@ -55,27 +56,32 @@ export const useParticleCreation = ({
     const type = getRandomParticleType();
     
     const newParticle: Particle = {
-      id: generateUniqueId(),
-      position,
-      velocity,
-      type,
+      id: parseInt(generateUniqueId().split('-')[1]),
+      x: position.x,
+      y: position.y,
+      z: position.z,
+      vx: velocity.x,
+      vy: velocity.y,
+      vz: velocity.z,
+      type: 'standard',
+      charge: type,
       size: 3 + Math.random() * 5,
       mass: 1 + Math.random() * 2,
-      charge: type === 'positive' ? 1 : type === 'negative' ? -1 : 0,
       energy: 50 + Math.random() * 50,
-      intentVector: {
-        x: (Math.random() - 0.5) * intentFluctuationRate,
-        y: (Math.random() - 0.5) * intentFluctuationRate,
-        z: (Math.random() - 0.5) * intentFluctuationRate,
-      },
       knowledge: 0,
       complexity: 1,
+      intent: Math.random() * 2 - 1,
       age: 0,
       interactions: 0,
-      lastInteractionTime: Date.now(),
-      isComposite: false,
-      components: [],
-      bonds: [],
+      lastInteraction: Date.now(),
+      color: type === 'positive' ? 'rgba(255, 0, 0, 0.8)' : 
+             type === 'negative' ? 'rgba(0, 0, 255, 0.8)' : 
+             'rgba(0, 255, 0, 0.8)',
+      created: Date.now(),
+      interactionCount: 0,
+      radius: 3 + Math.random() * 5,
+      intentDecayRate: 0.001,
+      energyCapacity: 100,
     };
 
     setParticles((prevParticles) => [...prevParticles, newParticle]);
@@ -104,9 +110,9 @@ export const useParticleCreation = ({
       return prevParticles.map((particle) => {
         // Update position based on velocity
         const newPosition = {
-          x: particle.position.x + particle.velocity.x,
-          y: particle.position.y + particle.velocity.y,
-          z: particle.position.z + particle.velocity.z,
+          x: particle.x + particle.vx,
+          y: particle.y + particle.vy,
+          z: particle.z + particle.vz,
         };
 
         // Boundary checks and bounce
@@ -116,7 +122,11 @@ export const useParticleCreation = ({
           z: 100, // Arbitrary depth for 3D
         };
 
-        let newVelocity = { ...particle.velocity };
+        let newVelocity = { 
+          x: particle.vx,
+          y: particle.vy,
+          z: particle.vz
+        };
 
         if (newPosition.x <= 0 || newPosition.x >= bounds.x) {
           newVelocity.x = -newVelocity.x;
@@ -129,7 +139,11 @@ export const useParticleCreation = ({
         }
 
         // Apply intent vector (with probabilistic variation if enabled)
-        let intentEffect = { ...particle.intentVector };
+        let intentEffect = { 
+          x: particle.intent * 0.01,
+          y: particle.intent * 0.01,
+          z: particle.intent * 0.01
+        };
         
         if (probabilisticIntent) {
           // Add random fluctuations to intent
@@ -157,12 +171,16 @@ export const useParticleCreation = ({
         const newAge = particle.age + 1;
         
         // Update complexity based on age and interactions
-        const newComplexity = calculateComplexity(particle.complexity, particle.interactions, newAge);
+        const newComplexity = calculateComplexity(particle.complexity, particle.interactionCount, newAge);
 
         return {
           ...particle,
-          position: boundedPosition,
-          velocity: newVelocity,
+          x: boundedPosition.x,
+          y: boundedPosition.y,
+          z: boundedPosition.z,
+          vx: newVelocity.x,
+          vy: newVelocity.y,
+          vz: newVelocity.z,
           age: newAge,
           complexity: newComplexity,
         };
@@ -194,9 +212,9 @@ export const useParticleCreation = ({
           const p2 = newParticles[j];
           
           // Calculate distance between particles
-          const dx = p2.position.x - p1.position.x;
-          const dy = p2.position.y - p1.position.y;
-          const dz = p2.position.z - p1.position.z;
+          const dx = p2.x - p1.x;
+          const dy = p2.y - p1.y;
+          const dz = p2.z - p1.z;
           const distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
           
           if (distance < interactionRadius) {
@@ -206,34 +224,37 @@ export const useParticleCreation = ({
             // Update interaction counts
             newParticles[i] = {
               ...p1,
-              interactions: p1.interactions + 1,
-              lastInteractionTime: Date.now(),
+              interactionCount: p1.interactionCount + 1,
+              lastInteraction: Date.now(),
               // Knowledge increases with each interaction
               knowledge: Math.min(1, p1.knowledge + 0.01),
             };
             
             newParticles[j] = {
               ...p2,
-              interactions: p2.interactions + 1,
-              lastInteractionTime: Date.now(),
+              interactionCount: p2.interactionCount + 1,
+              lastInteraction: Date.now(),
               // Knowledge increases with each interaction
               knowledge: Math.min(1, p2.knowledge + 0.01),
             };
             
             // Simple repulsion/attraction based on charge
-            const forceMagnitude = 0.2 * (p1.charge * p2.charge) / Math.max(1, distance);
+            const chargeValue1 = p1.charge === 'positive' ? 1 : p1.charge === 'negative' ? -1 : 0;
+            const chargeValue2 = p2.charge === 'positive' ? 1 : p2.charge === 'negative' ? -1 : 0;
+            const forceMagnitude = 0.2 * (chargeValue1 * chargeValue2) / Math.max(1, distance);
+            
             const forceX = (dx / distance) * forceMagnitude;
             const forceY = (dy / distance) * forceMagnitude;
             const forceZ = (dz / distance) * forceMagnitude;
             
             // Apply forces to velocities
-            newParticles[i].velocity.x -= forceX;
-            newParticles[i].velocity.y -= forceY;
-            newParticles[i].velocity.z -= forceZ;
+            newParticles[i].vx -= forceX;
+            newParticles[i].vy -= forceY;
+            newParticles[i].vz -= forceZ;
             
-            newParticles[j].velocity.x += forceX;
-            newParticles[j].velocity.y += forceY;
-            newParticles[j].velocity.z += forceZ;
+            newParticles[j].vx += forceX;
+            newParticles[j].vy += forceY;
+            newParticles[j].vz += forceZ;
           }
         }
       }

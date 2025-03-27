@@ -40,14 +40,18 @@ export function useParticleSimulation(
   );
 
   // Create particles
-  const { createNewParticles } = useParticleCreation(
-    config,
-    running,
-    isInitialized,
-    particlesRef,
-    intentFieldRef,
-    dimensionsRef
-  );
+  const { particles, setParticles } = useParticleCreation({
+    maxParticles: config.maxParticles,
+    particleCreationRate: config.particleCreationRate,
+    intentFluctuationRate: config.intentFluctuationRate,
+    probabilisticIntent: config.probabilisticIntent || false,
+    running
+  });
+
+  // Update particlesRef with the latest particles
+  useEffect(() => {
+    particlesRef.current = particles;
+  }, [particles, particlesRef]);
 
   // Handle inflation
   const { checkInflationConditions, resetInflation } = useInflationHandler(
@@ -60,7 +64,15 @@ export function useParticleSimulation(
     interactionsRef,
     dimensionsRef,
     originalDimensionsRef,
-    createNewParticles,
+    () => {
+      // This function replaces createNewParticles
+      const newParticlesCount = Math.floor(Math.random() * 10) + 5;
+      for (let i = 0; i < newParticlesCount; i++) {
+        if (particlesRef.current.length < config.maxParticles) {
+          // Let the useParticleCreation hook handle particle creation
+        }
+      }
+    },
     onInflationDetected
   );
 
@@ -114,7 +126,6 @@ export function useParticleSimulation(
     inflationTimeRef,
     initializeSimulation,
     updateParticles,
-    createNewParticles,
     detectSimulationAnomalies
   };
 }

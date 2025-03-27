@@ -3,37 +3,30 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { BookOpen, Save, Upload, Brain } from "lucide-react";
-import { toast } from "sonner";
+import { BookOpen, Save, Upload, Brain, Trash2, Play } from "lucide-react";
 import AudioFileUploader from './AudioFileUploader';
+import { useNotebookIntegration } from '@/hooks/useNotebookIntegration';
+import { SimulationStats } from '@/types/simulation';
 
-interface NotebookAnnotation {
-  id: string;
-  text: string;
-  timestamp: string;
-  source: string;
+interface NotebookAnnotationsProps {
+  currentStats?: Partial<SimulationStats>;
 }
 
-const NotebookAnnotations: React.FC = () => {
-  const [annotations, setAnnotations] = useState<NotebookAnnotation[]>([]);
+const NotebookAnnotations: React.FC<NotebookAnnotationsProps> = ({ currentStats }) => {
   const [newAnnotation, setNewAnnotation] = useState('');
+  const { 
+    annotations, 
+    addAnnotation, 
+    importAnnotations, 
+    exportAnnotations, 
+    clearAnnotations 
+  } = useNotebookIntegration();
 
   const handleAddAnnotation = () => {
-    if (!newAnnotation.trim()) {
-      toast.error("Please enter an annotation");
-      return;
-    }
-
-    const annotation: NotebookAnnotation = {
-      id: `annotation-${Date.now()}`,
-      text: newAnnotation,
-      timestamp: new Date().toISOString(),
-      source: "manual"
-    };
-
-    setAnnotations([...annotations, annotation]);
+    if (!newAnnotation.trim()) return;
+    
+    addAnnotation(newAnnotation, currentStats);
     setNewAnnotation('');
-    toast.success("Annotation added successfully");
   };
 
   const handleImportAnnotations = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -42,55 +35,26 @@ const NotebookAnnotations: React.FC = () => {
 
     const reader = new FileReader();
     reader.onload = (e) => {
-      try {
-        const importedData = JSON.parse(e.target?.result as string);
-        
-        if (Array.isArray(importedData.annotations)) {
-          // Add imported annotations to existing ones
-          const newAnnotations = importedData.annotations.map((anno: any) => ({
-            ...anno,
-            id: `imported-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-            source: "notebook_lm"
-          }));
-          
-          setAnnotations([...annotations, ...newAnnotations]);
-          toast.success(`Imported ${newAnnotations.length} annotations from Notebook LM`);
-        } else {
-          toast.error("Invalid annotation format in imported file");
-        }
-      } catch (error) {
-        console.error("Error parsing annotations:", error);
-        toast.error("Failed to parse imported annotations");
+      if (e.target?.result) {
+        importAnnotations(e.target.result as string);
       }
     };
     
     reader.readAsText(file);
-    
-    // Reset file input
     event.target.value = '';
   };
 
   const handleExportAnnotations = () => {
-    if (annotations.length === 0) {
-      toast.warning("No annotations to export");
-      return;
-    }
+    exportAnnotations();
+  };
 
-    const exportData = {
-      annotations,
-      exportTimestamp: new Date().toISOString(),
-      source: "intentSim.org"
-    };
-
-    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportData, null, 2));
-    const downloadAnchorNode = document.createElement('a');
-    downloadAnchorNode.setAttribute("href", dataStr);
-    downloadAnchorNode.setAttribute("download", `intentSim-annotations-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.json`);
-    document.body.appendChild(downloadAnchorNode);
-    downloadAnchorNode.click();
-    downloadAnchorNode.remove();
+  const playAudio = (audioUrl?: string) => {
+    if (!audioUrl) return;
     
-    toast.success("Annotations exported successfully");
+    const audio = new Audio(audioUrl);
+    audio.play().catch(err => {
+      console.error('Failed to play audio:', err);
+    });
   };
 
   return (
@@ -108,7 +72,7 @@ const NotebookAnnotations: React.FC = () => {
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <Textarea
-              placeholder="Add a new observation or insight..."
+              placeholder="Add a new observation or insight about the simulation..."
               value={newAnnotation}
               onChange={(e) => setNewAnnotation(e.target.value)}
               className="min-h-[100px]"
@@ -145,6 +109,16 @@ const NotebookAnnotations: React.FC = () => {
               <BookOpen className="h-4 w-4 mr-2" />
               Export Annotations
             </Button>
+            
+            <Button 
+              variant="outline" 
+              className="flex-1"
+              onClick={clearAnnotations}
+              disabled={annotations.length === 0}
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Clear All
+            </Button>
           </div>
           
           <div className="mt-6">
@@ -172,7 +146,31 @@ const NotebookAnnotations: React.FC = () => {
                         {annotation.source === 'notebook_lm' ? 'Notebook LM' : 'Manual Entry'}
                       </span>
                     </div>
-                    <p className="text-sm">{annotation.text}</p>
+                    <p className="text-sm mb-2">{annotation.text}</p>
+                    {annotation.audioUrl && (
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="w-full mt-1"
+                        onClick={() => playAudio(annotation.audioUrl)}
+                      >
+                        <Play className="h-3 w-3 mr-1" />
+                        Play Audio
+                      </Button>
+                    )}
+                    {annotation.relatedStats && (
+                      <div className="mt-2 p-2 bg-gray-800/5 rounded border border-gray-700/10 text-xs">
+                        <div className="font-medium mb-1">Related Simulation Stats:</div>
+                        <div className="grid grid-cols-2 gap-x-4 gap-y-1">
+                          {Object.entries(annotation.relatedStats).map(([key, value]) => (
+                            <div key={key} className="flex justify-between">
+                              <span>{key}:</span>
+                              <span className="font-mono">{typeof value === 'number' ? value.toFixed(2) : value}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>

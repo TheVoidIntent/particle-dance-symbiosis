@@ -4,46 +4,22 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Download, Upload, Play, BookOpen, ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { importNotebookAnnotations } from '@/utils/dataExportUtils';
-import { useToast } from "@/hooks/use-toast";
-
-interface NotebookEntry {
-  id: string;
-  text: string;
-  timestamp: string;
-  source: string;
-  audioUrl?: string;
-}
+import { toast } from "sonner";
+import { useNotebookIntegration } from '@/hooks/useNotebookIntegration';
 
 const NotebookLmEntries = () => {
-  const [entries, setEntries] = useState<NotebookEntry[]>([]);
   const [loading, setLoading] = useState(true);
-  const { toast } = useToast();
   const navigate = useNavigate();
+  const { annotations, importAnnotations } = useNotebookIntegration();
 
   useEffect(() => {
-    // Load entries from localStorage if available
-    loadEntriesFromStorage();
-  }, []);
-
-  const loadEntriesFromStorage = () => {
-    setLoading(true);
-    try {
-      const storedEntries = localStorage.getItem('notebookLmEntries');
-      if (storedEntries) {
-        setEntries(JSON.parse(storedEntries));
-      }
-    } catch (error) {
-      console.error('Error loading notebook entries:', error);
-      toast({
-        title: "Error Loading Entries",
-        description: "Failed to load Notebook LM entries.",
-        variant: "destructive",
-      });
-    } finally {
+    // Simulate loading state for UI smoothness
+    const timer = setTimeout(() => {
       setLoading(false);
-    }
-  };
+    }, 500);
+    
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleImportEntries = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -51,52 +27,26 @@ const NotebookLmEntries = () => {
 
     const reader = new FileReader();
     reader.onload = (e) => {
-      try {
-        if (!e.target?.result) return;
-        
-        const result = e.target.result.toString();
-        const importedAnnotations = importNotebookAnnotations(result);
-        
-        if (importedAnnotations && importedAnnotations.length > 0) {
-          // Convert to our entry format and save
-          const newEntries = importedAnnotations.map((anno, index) => ({
-            id: `imported-${Date.now()}-${index}`,
-            text: anno.text,
-            timestamp: anno.timestamp || new Date().toISOString(),
-            source: "notebook_lm",
-            audioUrl: anno.audioUrl
-          }));
-          
-          const updatedEntries = [...newEntries, ...entries].slice(0, 20); // Keep most recent 20
-          setEntries(updatedEntries);
-          
-          // Save to localStorage
-          localStorage.setItem('notebookLmEntries', JSON.stringify(updatedEntries));
-          
-          toast({
-            title: "Entries Imported",
-            description: `${newEntries.length} entries imported from Notebook LM.`,
-            variant: "default",
-          });
-        } else {
-          toast({
-            title: "Import Error",
-            description: "No valid entries found in the imported file.",
-            variant: "destructive",
-          });
-        }
-      } catch (error) {
-        console.error('Error parsing imported entries:', error);
-        toast({
-          title: "Import Failed",
-          description: "Could not process the imported file.",
-          variant: "destructive",
-        });
+      if (e.target?.result) {
+        importAnnotations(e.target.result.toString());
       }
     };
     
     reader.readAsText(file);
     event.target.value = ''; // Reset file input
+  };
+
+  const playAudio = (audioUrl?: string) => {
+    if (!audioUrl) {
+      toast.error("No audio available for this entry");
+      return;
+    }
+    
+    const audio = new Audio(audioUrl);
+    audio.play().catch(err => {
+      console.error('Failed to play audio:', err);
+      toast.error("Failed to play audio");
+    });
   };
 
   const goToSimulation = () => {
@@ -120,7 +70,7 @@ const NotebookLmEntries = () => {
             <div className="animate-spin w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full mx-auto mb-4"></div>
             <p className="text-muted-foreground">Loading entries...</p>
           </div>
-        ) : entries.length === 0 ? (
+        ) : annotations.length === 0 ? (
           <div className="text-center py-8 space-y-4">
             <p className="text-muted-foreground">No Notebook LM entries found</p>
             <Button 
@@ -142,7 +92,7 @@ const NotebookLmEntries = () => {
         ) : (
           <div className="space-y-4">
             <div className="max-h-[300px] overflow-y-auto space-y-3 pr-1">
-              {entries.slice(0, 5).map((entry) => (
+              {annotations.filter(entry => entry.source === "notebook_lm").slice(0, 5).map((entry) => (
                 <div 
                   key={entry.id} 
                   className="p-3 rounded-md bg-purple-900/10 border border-purple-800/20"
@@ -157,7 +107,12 @@ const NotebookLmEntries = () => {
                   </div>
                   <p className="text-sm mb-2">{entry.text}</p>
                   {entry.audioUrl && (
-                    <Button variant="outline" size="sm" className="w-full mt-1">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="w-full mt-1"
+                      onClick={() => playAudio(entry.audioUrl)}
+                    >
                       <Play className="h-3 w-3 mr-1" />
                       Play Audio
                     </Button>

@@ -32,6 +32,12 @@ export interface Particle {
   lastInteraction: number;
   isPostInflation?: boolean;
   scale?: number;
+  // Adding the missing properties from particleUtils.Particle
+  intentDecayRate: number;
+  energy: number;
+  energyCapacity: number;
+  interactionCount: number;
+  adaptiveScore?: number;
 }
 
 export interface SimulationState {

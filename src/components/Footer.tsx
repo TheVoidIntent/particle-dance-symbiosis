@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Atom, Github, Mail, Twitter } from 'lucide-react';
+import { Atom, Github, Mail, Twitter, FileText } from 'lucide-react';
 
 const Footer: React.FC = () => {
   return (
@@ -26,6 +26,9 @@ const Footer: React.FC = () => {
             </a>
             <a href="mailto:info@intentSim.org" className="text-gray-400 hover:text-white transition-colors">
               <Mail className="h-5 w-5" />
+            </a>
+            <a href="/license" className="text-gray-400 hover:text-white transition-colors">
+              <FileText className="h-5 w-5" />
             </a>
           </div>
         </div>
@@ -62,7 +65,7 @@ const Footer: React.FC = () => {
       </div>
       
       <div className="max-w-7xl mx-auto mt-12 pt-6 border-t border-gray-800 text-center text-sm text-gray-500">
-        <p>© {new Date().getFullYear()} intentSim.org. All rights reserved.</p>
+        <p>© {new Date().getFullYear()} TheVoidIntent LLC. All rights reserved. Licensed for research purposes only.</p>
       </div>
     </footer>
   );

@@ -1,6 +1,7 @@
-### MIT License
 
-### Copyright (c) 2025 TheVoidIntent LLC
+# MIT License with Research-Only Restriction
+
+## Copyright (c) 2025 TheVoidIntent LLC
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -9,7 +10,7 @@ to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 copies of the Software, and to permit persons to whom the Software is
 furnished to do so, subject to the following conditions:
 
-### **Research-Only Clause:**
+## **Research-Only Clause:**
 This license is granted strictly for academic, scientific, and personal research purposes.
 Commercial use, sale, or redistribution of this Software or its derivatives
 is prohibited without prior written consent from TheVoidIntent LLC.

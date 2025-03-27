@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
@@ -8,7 +7,7 @@ import {
   Play, 
   Pause, 
   Download, 
-  Refresh,
+  RefreshCw,
   BarChart3, 
   CloudRain, 
   Zap,
@@ -91,7 +90,7 @@ const SimulationConfigPanel: React.FC<SimulationConfigPanelProps> = ({
             size="sm"
             onClick={handleResetSimulation}
           >
-            <Refresh size={16} />
+            <RefreshCw size={16} />
             <span className="ml-1">Reset</span>
           </Button>
         </div>

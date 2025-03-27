@@ -10,6 +10,7 @@ import HomePage from "./pages/HomePage";
 import UniverseSimulation from "./pages/UniverseSimulation";
 import DataAnalysis from "./pages/DataAnalysis";
 import Deployment from "./pages/Deployment";
+import License from "./pages/License";
 import NotFound from "./pages/NotFound";
 import React from "react";
 
@@ -41,6 +42,7 @@ const App: React.FC = () => {
                   <Route path="/simulation" element={<UniverseSimulation />} />
                   <Route path="/analysis" element={<DataAnalysis />} />
                   <Route path="/deployment" element={<Deployment />} />
+                  <Route path="/license" element={<License />} />
                   {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                   <Route path="*" element={<NotFound />} />
                 </Routes>

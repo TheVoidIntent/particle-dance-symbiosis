@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, Atom, DownloadCloud } from 'lucide-react';
+import { Menu, X, Atom, DownloadCloud, FileText } from 'lucide-react';
 
 const Navbar: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -23,6 +23,7 @@ const Navbar: React.FC = () => {
     { name: 'Universe Simulation', path: '/simulation' },
     { name: 'Data Analysis', path: '/analysis' },
     { name: 'Deployment', path: '/deployment' },
+    { name: 'License', path: '/license' },
   ];
 
   return (
@@ -37,6 +38,7 @@ const Navbar: React.FC = () => {
               <span className="text-xl font-semibold bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-purple-400">
                 intentSim.org
               </span>
+              <span className="ml-2 text-xs text-gray-400">by TheVoidIntent LLC</span>
             </Link>
           </div>
 

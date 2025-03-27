@@ -21,6 +21,13 @@ const Deployment: React.FC = () => {
         </div>
         
         <DeploymentGuide />
+        
+        <div className="mt-12 p-4 border border-gray-200 rounded-lg bg-gray-50">
+          <p className="text-center text-sm text-gray-500">
+            © {new Date().getFullYear()} TheVoidIntent LLC. All rights reserved. This software is licensed for research purposes only.
+            See LICENSE.md for details.
+          </p>
+        </div>
       </div>
     </div>
   );

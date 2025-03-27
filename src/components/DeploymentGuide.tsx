@@ -1,6 +1,5 @@
-
 import React from 'react';
-import { AlertCircle, CheckCircle, Code, Globe, Server, Shield } from 'lucide-react';
+import { AlertCircle, CheckCircle, Code, Globe, Server, Shield, FileText } from 'lucide-react';
 import {
   Alert,
   AlertDescription,
@@ -125,6 +124,25 @@ const DeploymentGuide: React.FC = () => {
             </div>
           </div>
         </div>
+        
+        <div className="bg-card rounded-lg p-5 border border-border">
+          <div className="flex items-start gap-4">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary">
+              <FileText size={18} />
+            </div>
+            <div>
+              <h3 className="font-medium mb-2">Step 6: License Requirements</h3>
+              <p className="text-sm text-muted-foreground mb-3">
+                Ensure the LICENSE.md file is included in your deployment and that all pages display proper copyright information:
+              </p>
+              <ul className="text-sm text-muted-foreground list-disc ml-5 space-y-1">
+                <li>IntentSim is © TheVoidIntent LLC and is licensed for research purposes only</li>
+                <li>Commercial use requires explicit written permission from TheVoidIntent LLC</li>
+                <li>All pages must display the appropriate copyright notice</li>
+              </ul>
+            </div>
+          </div>
+        </div>
       </div>
       
       <Alert>
@@ -137,6 +155,15 @@ const DeploymentGuide: React.FC = () => {
             <li>Check that your site is showing at intentSim.org and not at intentSim.org/index.html.</li>
             <li>Verify that the server configuration has index.html set as the directory index.</li>
           </ul>
+        </AlertDescription>
+      </Alert>
+      
+      <Alert variant="destructive">
+        <AlertCircle className="h-4 w-4" />
+        <AlertTitle>License Notice</AlertTitle>
+        <AlertDescription>
+          IntentSim is protected under copyright by TheVoidIntent LLC and is available for research purposes only.
+          Commercial use, sale, or redistribution requires explicit written permission.
         </AlertDescription>
       </Alert>
     </div>

@@ -9,6 +9,26 @@
     <animate attributeName="opacity" values="0.8;1;0.8" dur="4s" repeatCount="indefinite" />
   </circle>
   
+  <!-- Welcoming wavy arms -->
+  <path d="M 13,16 C 10,12 8,14 6,12" stroke="#a78bfa" stroke-width="0.7" fill="none">
+    <animate attributeName="d" values="M 13,16 C 10,12 8,14 6,12;M 13,16 C 10,13 7,15 5,13;M 13,16 C 10,12 8,14 6,12" dur="5s" repeatCount="indefinite" />
+  </path>
+  
+  <path d="M 19,16 C 22,12 24,14 26,12" stroke="#a78bfa" stroke-width="0.7" fill="none">
+    <animate attributeName="d" values="M 19,16 C 22,12 24,14 26,12;M 19,16 C 22,13 25,15 27,13;M 19,16 C 22,12 24,14 26,12" dur="5s" repeatCount="indefinite" />
+  </path>
+  
+  <!-- Swirling particles around arms -->
+  <circle cx="8" cy="13" r="1" fill="#c4b5fd">
+    <animateMotion path="M0,0 Q2,2 4,0 T8,0" dur="3s" repeatCount="indefinite" />
+    <animate attributeName="opacity" values="0.5;1;0.5" dur="2s" repeatCount="indefinite" />
+  </circle>
+  
+  <circle cx="24" cy="13" r="1" fill="#c4b5fd">
+    <animateMotion path="M0,0 Q-2,2 -4,0 T-8,0" dur="3s" repeatCount="indefinite" />
+    <animate attributeName="opacity" values="0.5;1;0.5" dur="2s" repeatCount="indefinite" />
+  </circle>
+  
   <!-- Intent field fluctuations -->
   <g opacity="0.8">
     <!-- Positive charge particles (more interactive) -->

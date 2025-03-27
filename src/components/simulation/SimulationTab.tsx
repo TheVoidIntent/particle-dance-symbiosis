@@ -3,6 +3,8 @@ import React from 'react';
 import { ParticleCanvas } from '@/components/ParticleCanvas';
 import SimulationStats from './SimulationStats';
 import { SimulationStats as StatsType } from '@/types/simulation';
+import { Button } from "@/components/ui/button";
+import { Download } from "lucide-react";
 
 interface SimulationTabProps {
   intentFluctuationRate: number;
@@ -76,6 +78,12 @@ const SimulationTab: React.FC<SimulationTabProps> = ({
       
       <div className="grid grid-cols-3 gap-4 mt-4">
         <SimulationStats stats={stats} />
+        <div className="col-span-3 flex justify-end">
+          <Button onClick={handleDownloadData} variant="outline">
+            <Download className="mr-2 h-4 w-4" />
+            Download Simulation Data
+          </Button>
+        </div>
       </div>
     </>
   );

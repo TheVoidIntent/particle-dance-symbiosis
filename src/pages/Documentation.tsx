@@ -15,6 +15,7 @@ import {
   Headphones,
   Download
 } from "lucide-react";
+import AudioFileUploader from "@/components/AudioFileUploader";
 
 const Documentation: React.FC = () => {
   const [activeTab, setActiveTab] = useState("overview");
@@ -27,7 +28,6 @@ const Documentation: React.FC = () => {
       </Helmet>
 
       <div className="min-h-screen pt-20 bg-gradient-to-b from-gray-900 via-gray-800 to-black text-white">
-        {/* Background particles */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-20">
           <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-500 rounded-full mix-blend-screen filter blur-[120px] animate-pulse" 
                style={{animationDuration: '15s'}}></div>
@@ -420,7 +420,9 @@ function handleParticleInteraction(p1, p2) {
                         Audio Resources
                       </h3>
                       
-                      <div className="space-y-4">
+                      <AudioFileUploader />
+                      
+                      <div className="space-y-4 mt-6">
                         <div className="bg-gray-900/60 rounded-lg p-4 border border-gray-700">
                           <div className="flex items-center">
                             <div className="bg-indigo-600 rounded-full p-2 mr-3">

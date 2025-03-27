@@ -2,8 +2,10 @@
 import React from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Video, Headphones, BookOpen, FileText, Download } from "lucide-react";
+import { Video, Headphones, BookOpen, FileText, Download, Upload, Music, ExternalLink } from "lucide-react";
 import AudioFileUploader from "@/components/AudioFileUploader";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const MediaTab: React.FC = () => {
   return (
@@ -15,8 +17,121 @@ const MediaTab: React.FC = () => {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="grid md:grid-cols-2 gap-8">
-          <div className="space-y-6">
+        <Tabs defaultValue="audio">
+          <TabsList className="w-full mb-6">
+            <TabsTrigger value="audio" className="flex-1">
+              <Headphones className="mr-2 h-4 w-4" />
+              Audio Resources
+            </TabsTrigger>
+            <TabsTrigger value="video" className="flex-1">
+              <Video className="mr-2 h-4 w-4" />
+              Video Resources
+            </TabsTrigger>
+            <TabsTrigger value="docs" className="flex-1">
+              <BookOpen className="mr-2 h-4 w-4" />
+              Documentation
+            </TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="audio" className="space-y-6">
+            <Alert className="bg-indigo-950/30 border-indigo-800">
+              <Music className="h-5 w-5 text-indigo-400" />
+              <AlertTitle>Adding Audio Files for Visitors</AlertTitle>
+              <AlertDescription>
+                <p className="mb-2">
+                  To make audio files available to visitors, place the following MP3 files in the 
+                  <code className="bg-gray-800 px-1 py-0.5 rounded mx-1">public/audio/</code> 
+                  directory:
+                </p>
+                <ul className="list-disc pl-5 space-y-1 text-sm">
+                  <li><code className="bg-gray-800 px-1 py-0.5 rounded">introduction-to-intent-theory.mp3</code></li>
+                  <li><code className="bg-gray-800 px-1 py-0.5 rounded">particle-interaction-dynamics.mp3</code></li>
+                  <li><code className="bg-gray-800 px-1 py-0.5 rounded">emergent-complexity-patterns.mp3</code></li>
+                  <li><code className="bg-gray-800 px-1 py-0.5 rounded">charge-knowledge-transfer.mp3</code></li>
+                  <li><code className="bg-gray-800 px-1 py-0.5 rounded">simulation-parameters-explained.mp3</code></li>
+                </ul>
+                <p className="mt-2">
+                  These files will automatically be served to visitors through the Audio Library component.
+                </p>
+              </AlertDescription>
+            </Alert>
+            
+            <h3 className="text-xl font-semibold flex items-center">
+              <Headphones className="mr-2 h-5 w-5 text-indigo-400" />
+              Audio Management
+            </h3>
+            
+            <AudioFileUploader />
+            
+            <div className="space-y-4 mt-6">
+              <h3 className="text-xl font-semibold flex items-center">
+                <Headphones className="mr-2 h-5 w-5 text-indigo-400" />
+                Featured Audio Resources
+              </h3>
+              
+              <div className="bg-gray-900/60 rounded-lg p-4 border border-gray-700">
+                <div className="flex items-center">
+                  <div className="bg-indigo-600 rounded-full p-2 mr-3">
+                    <Headphones className="h-5 w-5" />
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="text-white font-medium">Introduction to Intent Theory</h4>
+                    <p className="text-sm text-gray-400">45:12 • Conceptual overview</p>
+                  </div>
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    className="border-gray-600 hover:bg-gray-700"
+                    onClick={() => window.location.href = "/"}
+                  >
+                    Listen
+                  </Button>
+                </div>
+              </div>
+              
+              <div className="bg-gray-900/60 rounded-lg p-4 border border-gray-700">
+                <div className="flex items-center">
+                  <div className="bg-indigo-600 rounded-full p-2 mr-3">
+                    <Headphones className="h-5 w-5" />
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="text-white font-medium">Particle Interaction Dynamics</h4>
+                    <p className="text-sm text-gray-400">32:05 • Technical explanation</p>
+                  </div>
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    className="border-gray-600 hover:bg-gray-700"
+                    onClick={() => window.location.href = "/"}
+                  >
+                    Listen
+                  </Button>
+                </div>
+              </div>
+              
+              <div className="bg-gray-900/60 rounded-lg p-4 border border-gray-700">
+                <div className="flex items-center">
+                  <div className="bg-indigo-600 rounded-full p-2 mr-3">
+                    <Headphones className="h-5 w-5" />
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="text-white font-medium">Emergent Complexity Patterns</h4>
+                    <p className="text-sm text-gray-400">28:47 • Research findings</p>
+                  </div>
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    className="border-gray-600 hover:bg-gray-700"
+                    onClick={() => window.location.href = "/"}
+                  >
+                    Listen
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="video" className="space-y-6">
             <h3 className="text-xl font-semibold flex items-center">
               <Video className="mr-2 h-5 w-5 text-indigo-400" />
               Video Explanations
@@ -64,64 +179,10 @@ const MediaTab: React.FC = () => {
                 </div>
               </div>
             </div>
-          </div>
+          </TabsContent>
           
-          <div className="space-y-6">
+          <TabsContent value="docs" className="space-y-6">
             <h3 className="text-xl font-semibold flex items-center">
-              <Headphones className="mr-2 h-5 w-5 text-indigo-400" />
-              Audio Resources
-            </h3>
-            
-            <AudioFileUploader />
-            
-            <div className="space-y-4 mt-6">
-              <div className="bg-gray-900/60 rounded-lg p-4 border border-gray-700">
-                <div className="flex items-center">
-                  <div className="bg-indigo-600 rounded-full p-2 mr-3">
-                    <Headphones className="h-5 w-5" />
-                  </div>
-                  <div className="flex-1">
-                    <h4 className="text-white font-medium">Introduction to Intent Theory</h4>
-                    <p className="text-sm text-gray-400">45:12 • Conceptual overview</p>
-                  </div>
-                  <Button size="sm" variant="outline" className="border-gray-600 hover:bg-gray-700">
-                    Listen
-                  </Button>
-                </div>
-              </div>
-              
-              <div className="bg-gray-900/60 rounded-lg p-4 border border-gray-700">
-                <div className="flex items-center">
-                  <div className="bg-indigo-600 rounded-full p-2 mr-3">
-                    <Headphones className="h-5 w-5" />
-                  </div>
-                  <div className="flex-1">
-                    <h4 className="text-white font-medium">Particle Interaction Dynamics</h4>
-                    <p className="text-sm text-gray-400">32:05 • Technical explanation</p>
-                  </div>
-                  <Button size="sm" variant="outline" className="border-gray-600 hover:bg-gray-700">
-                    Listen
-                  </Button>
-                </div>
-              </div>
-              
-              <div className="bg-gray-900/60 rounded-lg p-4 border border-gray-700">
-                <div className="flex items-center">
-                  <div className="bg-indigo-600 rounded-full p-2 mr-3">
-                    <Headphones className="h-5 w-5" />
-                  </div>
-                  <div className="flex-1">
-                    <h4 className="text-white font-medium">Emergent Complexity Patterns</h4>
-                    <p className="text-sm text-gray-400">28:47 • Research findings</p>
-                  </div>
-                  <Button size="sm" variant="outline" className="border-gray-600 hover:bg-gray-700">
-                    Listen
-                  </Button>
-                </div>
-              </div>
-            </div>
-            
-            <h3 className="text-xl font-semibold flex items-center mt-8">
               <BookOpen className="mr-2 h-5 w-5 text-indigo-400" />
               Documentation
             </h3>
@@ -165,8 +226,8 @@ const MediaTab: React.FC = () => {
                 </div>
               </div>
             </div>
-          </div>
-        </div>
+          </TabsContent>
+        </Tabs>
       </CardContent>
     </Card>
   );

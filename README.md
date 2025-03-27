@@ -1,94 +1,120 @@
 
 # 🌌 Particle Dance Symbiosis
-### The Core Engine of the IntentSim Universe Simulation Project
 
-Welcome to **Particle Dance Symbiosis**, the official public repository for the real-time universe simulation exploring the emergence of complexity from intent-driven particles.
-
-Hosted at: [🌐 intentSim.org](https://intentsim.org)  
-Powered by: [🧠 Lovable.dev](https://lovable.dev)
-
----
-
-## 🚀 Overview
-**Particle Dance Symbiosis** is the beating heart of a bold hypothesis: that the universe may be fundamentally structured by **intent** and **information**—not just matter and energy.
-
-This simulation lets you:
-- Observe intent-based proto-particles interact and self-organize
-- Track emergent behaviors and complexity thresholds
-- Explore entropy buildup, phase transitions, and pseudo-gravitational phenomena
-- Experiment with information-intent thresholds to trigger "inflationary" states (like the Big Bang)
+**Live Universe Simulation** powered by Intent & Information  
+[🌐 Visit Site → intentsim.org](https://intentsim.org)  
+[🧠 Read the Theory → Information–Intent Nexus](https://docs.google.com/document/d/13JLJROA3SsKpD-XfTNc3CbdnxxebcsZQ57Td5sznG8g)  
+[🎁 Patreon Drops → TheVoidIntent](https://www.patreon.com/TheVoidIntent)
 
 ---
 
-## 🔮 Featured Concepts
-- **Intent Field Fluctuations**: The source of all particle birth events
-- **Information–Intent Nexus**: A new framework proposing the foundations of spacetime and physical law
-- **Black Body Radiation Problem**: Used to analyze pressure and entropy within the simulated field
-- **Complexity Metrics**: Emergence, clustering, and infinity thresholds
-
-> _"It’s not just a simulation—it’s a theoretical laboratory for the preconditions of existence."_
+> “From the void of uncertainty, emerges the will to know.”  
+> — *TheVoidIntent*
 
 ---
 
-## 📁 Key Directories
+## ✨ What is This?
+
+**Particle Dance Symbiosis** is the beating heart of [IntentSim.org](https://intentsim.org), a persistent universe simulation built to explore a radical hypothesis:
+
+> The fundamental fabric of reality is structured by an interplay between **Information** and **Intent** — not matter and energy alone.
+
+This project simulates an emergent universe where particles are born through intent-field fluctuations, evolve based on knowledge-seeking behavior, and self-organize into increasingly complex clusters — much like early cosmology, but reimagined through intent.
+
+---
+
+## 🧪 Core Features
+
+- 🔁 **24/7 Persistent Universe** — No resets. Complexity compounds over time.
+- 🧠 **Intent-Based Particles** — Entities evolve by learning from interactions.
+- 📊 **Real-Time Stats** — Entropy, interactions, complexity levels.
+- 🚨 **Infinity & Anomalies** — Phase transitions trigger inflation-like effects.
+- 🔍 **Entropy Visualizer** — Black-body overlays & entropy-pressure mapping.
+- 📦 **Data Export** — Download live simulation datasets and visuals.
+- 🌌 **Information–Intent Nexus Framework** — Full hypothesis inside.
+
+---
+
+## 📦 File Structure
+
 ```bash
-/data                         # Core logic files (intents, simulation, entropy)
-/src                          # Frontend components powered by Lovable.dev
-/media                        # Visual assets, demos, and concept art
-/docs                         # Research notes and theoretical background
-/products                     # Public simulation drops & analysis packages
+.
+├── src/
+│   ├── components/           # Modular simulation tabs and controls
+│   ├── simulation/           # Core particle logic, events, types
+│   ├── utils/                # Export functions, storage, state
+│   └── assets/               # Logos, visual material
+│
+├── docs/
+│   ├── intent_manifest.yaml          # Core rules for simulation logic
+│   ├── intentagent_core.py           # Early prototype of the AI Copilot
+│   ├── information-intent-nexus.md  # Theoretical foundation
+│
+├── SimulationData.jsx      # Main real-time data visualization
+├── EntropyAnalysisTab.tsx  # Entropy overlays & visual analytics
+└── README.md               # This file
 ```
 
 ---
 
-## 🧠 Run the Simulation
-Access the live persistent universe simulation:
-👉 [https://intentsim.org/simulation](https://intentsim.org/simulation)
+## 📈 Live Deployment
 
-You can also fork and run it locally using:
-```bash
-git clone https://github.com/TheVoidIntent/particle-dance-symbiosis.git
-cd particle-dance-symbiosis
-npm install
-npm run dev
-```
+Deployed via [Lovable.dev](https://lovable.dev)  
+CDN + Frontend hosted on [Cloudflare Pages](https://dash.cloudflare.com)  
+Custom Domain: [`intentsim.org`](https://intentsim.org)
+
+> View the Simulation → [intentsim.org/simulation](https://intentsim.org/simulation)
 
 ---
 
-## 📦 Simulation Drops
-🎁 Public releases with data, visuals, and theory:
-- [IntentSim Drop #001](https://www.patreon.com/TheVoidIntent) — Core dataset, simulation footage, Nexus summary
+## 🧬 Information–Intent Nexus
 
-Get early access + behind-the-scenes:
-👉 [Join the Project on Patreon](https://www.patreon.com/TheVoidIntent)
+> “Instead of asking what the universe is made of, we ask what it **wants** to become.”
 
----
+Our theory proposes that intent is the generative force behind physical law, and information acts as the shaping constraint. The Nexus model links entropy, clustering, and emergent gravity-like phenomena.
 
-## 📚 Theory: Information–Intent Nexus
-Learn more about the foundational hypothesis guiding this work:
-- [Full Nexus Paper](https://intentsim.org/nexus)  
-- [NotebookLM Research Assistant](https://notebooklm.google.com/)  
-- [Nexus GitHub Page (coming soon)]
+🔗 [Read the full Google Doc](https://docs.google.com/document/d/13JLJROA3SsKpD-XfTNc3CbdnxxebcsZQ57Td5sznG8g)  
+📄 [Download the PDF Summary](https://intentsim.org/nexus)
 
 ---
 
-## 🙌 Credits & Vision
-Created by [**TheVoidIntent** LLC]  
-Crafted using real-time AI copilots and intuitive simulation systems via [Lovable.dev](https://lovable.dev)
+## 💾 Get the Simulation Drop
 
-We believe in curiosity, transparency, and open-ended exploration. If the laws of reality are emergent, so too should be our science.
+Support the project and download the full simulation bundle from Patreon:
+
+### 🎁 `IntentSim: Core Simulation Drop #001`
+
+Includes:
+- 📊 `intentsim_drop_001_data.csv` — Particle state data (snapshot)
+- 🎥 `intentsim_drop_001_visual.mp4` — Visual timeline of evolution
+- 📘 `intentsim_nexus_summary_v1.pdf` — Theoretical guide
+
+🔓 [→ Get it now on Patreon](https://www.patreon.com/TheVoidIntent)
 
 ---
 
-## 🛸 Contact & Collaborate
-- GitHub: [@TheVoidIntent](https://github.com/TheVoidIntent)
-- Web: [https://intentsim.org](https://intentsim.org)
-- Twitter: [@VoidIntent](https://twitter.com/VoidIntent)
-- Email: [contact@intentsim.org](mailto:contact@intentsim.org)
+## 💡 How to Contribute
 
+We welcome scientists, developers, artists, and curious minds.
 
-    // Additional timestep entries...
-  ],
-  "timestamp": "20250323_205710"
-}
-```
+- 🧪 Run experiments with new particle logic or alternate field theories
+- 🧠 Help train the IntentAgent (our AI Copilot)
+- 🌐 Localize the theory or simulation for global access
+- 🛠 Submit pull requests, issues, or launch your own fork of the code
+
+---
+
+## 🔮 Vision
+
+We're building an open-ended platform for speculative physics, AI cognition, and digital cosmology. Join us as we rewrite the laws of emergence.
+
+---
+
+## 📜 License
+
+MIT — Attribution appreciated.  
+For academic use, please cite the [IntentSim Project](https://intentsim.org).
+
+---
+
+> Built by **TheVoidIntent** | Follow the project: [intentsim.org](https://intentsim.org) | [GitHub](https://github.com/TheVoidIntent) | [Patreon](https://www.patreon.com/TheVoidIntent)

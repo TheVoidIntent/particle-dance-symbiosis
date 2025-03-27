@@ -8,6 +8,19 @@ interface SimulationStatsProps {
 }
 
 const SimulationStats: React.FC<SimulationStatsProps> = ({ stats }) => {
+  if (!stats) {
+    return (
+      <Card className="col-span-3">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-xl">Particle Statistics</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-1 text-sm">
+          <div className="text-center text-gray-400">No simulation data available</div>
+        </CardContent>
+      </Card>
+    );
+  }
+  
   return (
     <Card className="col-span-3">
       <CardHeader className="pb-2">
@@ -45,13 +58,13 @@ const SimulationStats: React.FC<SimulationStatsProps> = ({ stats }) => {
           <div className="text-sm text-right">{stats.averageKnowledge ? stats.averageKnowledge.toFixed(2) : '0.00'}</div>
           
           <div className="text-sm text-gray-400">Complexity Index:</div>
-          <div className="text-sm text-right">{stats.complexityIndex.toFixed(2)}</div>
+          <div className="text-sm text-right">{stats.complexityIndex ? stats.complexityIndex.toFixed(2) : '0.00'}</div>
           
           <div className="text-sm text-gray-400">Cluster Count:</div>
-          <div className="text-sm text-right">{stats.clusterCount}</div>
+          <div className="text-sm text-right">{stats.clusterCount || 0}</div>
           
           <div className="text-sm text-gray-400">System Entropy:</div>
-          <div className="text-sm text-right">{stats.systemEntropy.toFixed(3)}</div>
+          <div className="text-sm text-right">{stats.systemEntropy ? stats.systemEntropy.toFixed(3) : '0.000'}</div>
         </div>
       </CardContent>
     </Card>

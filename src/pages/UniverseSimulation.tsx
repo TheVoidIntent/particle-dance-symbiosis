@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import SimulationTab from '@/components/simulation/SimulationTab';
@@ -47,7 +48,13 @@ const UniverseSimulation: React.FC = () => {
   const [stats, setStats] = useState<SimulationStats>(initialStats);
   const [activeTab, setActiveTab] = useState<string>("simulation");
 
+  // Debug output to track stats updates
+  useEffect(() => {
+    console.log("Current stats in UniverseSimulation:", stats);
+  }, [stats]);
+
   const handleStatsUpdate = (newStats: SimulationStats) => {
+    console.log("Stats update received:", newStats);
     setStats(newStats);
   };
 

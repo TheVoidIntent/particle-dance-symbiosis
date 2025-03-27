@@ -113,6 +113,9 @@ const SimulationTab: React.FC<SimulationTabProps> = ({
     window.open("https://notebooklm.google/", "_blank");
   };
 
+  // Debug output to help identify the issue
+  console.log("SimulationTab stats:", stats);
+
   return (
     <>
       <div className="relative">
@@ -133,7 +136,7 @@ const SimulationTab: React.FC<SimulationTabProps> = ({
         
         {/* Current Particle Count Display */}
         <div className="absolute top-2 right-2 bg-black/50 text-white px-3 py-2 rounded-md text-sm">
-          Particles: {stats.positiveParticles + stats.negativeParticles + stats.neutralParticles}
+          Particles: {stats ? (stats.positiveParticles + stats.negativeParticles + stats.neutralParticles) : 0}
         </div>
       </div>
       

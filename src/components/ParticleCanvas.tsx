@@ -1,3 +1,4 @@
+
 import React, { useRef, useEffect, useCallback, useState } from 'react';
 import { useParticleSimulation, InflationEvent } from '@/hooks/simulation';
 import { useSimulationData } from '@/hooks/useSimulationData';
@@ -87,23 +88,64 @@ export const ParticleCanvas: React.FC<ParticleCanvasProps> = ({
 
   const { renderSimulation } = useCanvasRenderer();
 
-  // Update particle count for UI display
+  // Update particle count for UI display and ensure stats processing
   useEffect(() => {
     if (particlesRef.current) {
       setParticleCount(particlesRef.current.length);
       
       // Make sure we're updating stats even if no simulation step has happened yet
-      if (particlesRef.current.length > 0 && !frameCountRef.current) {
-        processSimulationData(
+      if (particlesRef.current.length > 0) {
+        const stats = processSimulationData(
           particlesRef.current,
           intentFieldRef.current || [],
           interactionsRef.current || 0,
           frameCountRef.current || 0,
           simulationTimeRef.current || 0
         );
+        
+        // Force stats update at least once per second
+        onStatsUpdate(stats);
       }
     }
-  }, [particlesRef.current?.length, processSimulationData, intentFieldRef, interactionsRef, frameCountRef, simulationTimeRef]);
+  }, [
+    particlesRef.current?.length, 
+    processSimulationData, 
+    intentFieldRef, 
+    interactionsRef, 
+    frameCountRef, 
+    simulationTimeRef, 
+    onStatsUpdate
+  ]);
+
+  // Regular stats update on interval
+  useEffect(() => {
+    if (!isInitialized || !running) return;
+    
+    const statsUpdateInterval = setInterval(() => {
+      if (particlesRef.current && particlesRef.current.length > 0) {
+        const stats = processSimulationData(
+          particlesRef.current,
+          intentFieldRef.current || [],
+          interactionsRef.current || 0,
+          frameCountRef.current || 0,
+          simulationTimeRef.current || 0
+        );
+        onStatsUpdate(stats);
+      }
+    }, 500); // Update every 500ms
+    
+    return () => clearInterval(statsUpdateInterval);
+  }, [
+    isInitialized, 
+    running, 
+    particlesRef, 
+    intentFieldRef, 
+    interactionsRef, 
+    frameCountRef, 
+    simulationTimeRef, 
+    processSimulationData, 
+    onStatsUpdate
+  ]);
 
   // Handle inflation events
   function handleInflationDetected(event: InflationEvent) {
@@ -211,12 +253,31 @@ export const ParticleCanvas: React.FC<ParticleCanvasProps> = ({
       intentFieldRef.current = newField;
     }
     
+    // Reset stats
+    const emptyStats = processSimulationData(
+      particlesRef.current,
+      intentFieldRef.current || [],
+      interactionsRef.current || 0,
+      frameCountRef.current || 0,
+      simulationTimeRef.current || 0
+    );
+    onStatsUpdate(emptyStats);
+    
     toast({
       title: "Simulation Reset",
       description: "The simulation has been completely reset.",
       variant: "default",
     });
-  }, [toast, particlesRef, interactionsRef, frameCountRef, simulationTimeRef, intentFieldRef]);
+  }, [
+    toast, 
+    particlesRef, 
+    interactionsRef, 
+    frameCountRef, 
+    simulationTimeRef, 
+    intentFieldRef, 
+    processSimulationData, 
+    onStatsUpdate
+  ]);
 
   return (
     <div className="relative w-full h-full">

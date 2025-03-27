@@ -1,15 +1,21 @@
 
-import { Particle, AnomalyEvent } from '@/utils/particleUtils';
-
 export interface SimulationConfig {
   intentFluctuationRate: number;
   maxParticles: number;
   learningRate: number;
   particleCreationRate: number;
   viewMode: '2d' | '3d';
+  renderMode?: 'particles' | 'field' | 'density' | 'combined';
   useAdaptiveParticles?: boolean;
   energyConservation?: boolean;
   probabilisticIntent?: boolean;
+}
+
+export interface SimulationState {
+  particles: any[];
+  intentField: number[][][];
+  dimensions: { width: number; height: number };
+  originalDimensions: { width: number; height: number };
 }
 
 export interface InflationEvent {
@@ -19,15 +25,4 @@ export interface InflationEvent {
   particlesAfterInflation: number;
 }
 
-export interface SimulationState {
-  particles: Particle[];
-  intentField: number[][][];
-  dimensions: { width: number; height: number };
-  originalDimensions: { width: number; height: number };
-  interactions: number;
-  frameCount: number;
-  simulationTime: number;
-  isAnimating: boolean;
-  isInflated: boolean;
-  inflationTime: number | null;
-}
+export { SimulationConfig, SimulationState, InflationEvent };

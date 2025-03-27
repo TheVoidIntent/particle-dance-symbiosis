@@ -8,150 +8,174 @@ interface EntropyAnalysisTabProps {
 }
 
 const EntropyAnalysisTab: React.FC<EntropyAnalysisTabProps> = ({ stats }) => {
+  // Create some placeholder scale functions
+  const getScaleClass = (value: number, min = 0, max = 1) => {
+    const normalized = Math.min(Math.max((value - min) / (max - min), 0), 1);
+    if (normalized < 0.25) return "bg-blue-600";
+    if (normalized < 0.5) return "bg-green-600";
+    if (normalized < 0.75) return "bg-yellow-600";
+    return "bg-red-600";
+  };
+
+  const getScaleWidth = (value: number, min = 0, max = 1) => {
+    const normalized = Math.min(Math.max((value - min) / (max - min), 0), 1);
+    return `${normalized * 100}%`;
+  };
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Advanced Entropy & Emergence Analysis</CardTitle>
-        <CardDescription>
-          In-depth analysis of entropy patterns, clustering behaviors, and information-based emergent properties
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>Entropy Metrics</CardTitle>
+          <CardDescription>
+            Analysis of system order and information content
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
           <div className="space-y-4">
-            <h3 className="text-lg font-medium">Entropy Analysis</h3>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="bg-card border rounded-lg p-4 text-center">
-                <div className="text-sm text-muted-foreground mb-1">Shannon Entropy</div>
-                <div className="text-2xl font-bold">{stats.shannonEntropy?.toFixed(3) || "0.000"}</div>
-                <div className="text-xs mt-1">Particle Distribution Randomness</div>
+            <div>
+              <div className="flex justify-between mb-1">
+                <span className="text-sm font-medium">Shannon Entropy</span>
+                <span className="text-sm font-medium">{stats.shannonEntropy?.toFixed(3) || "0.000"}</span>
               </div>
-              <div className="bg-card border rounded-lg p-4 text-center">
-                <div className="text-sm text-muted-foreground mb-1">Spatial Entropy</div>
-                <div className="text-2xl font-bold">{stats.spatialEntropy?.toFixed(3) || "0.000"}</div>
-                <div className="text-xs mt-1">Position Distribution Randomness</div>
+              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
+                <div 
+                  className={`h-2.5 rounded-full ${getScaleClass(stats.shannonEntropy || 0, 0, 5)}`} 
+                  style={{ width: getScaleWidth(stats.shannonEntropy || 0, 0, 5) }}
+                ></div>
               </div>
-              <div className="bg-card border rounded-lg p-4 text-center">
-                <div className="text-sm text-muted-foreground mb-1">Field Order</div>
-                <div className="text-2xl font-bold">{stats.fieldOrderParameter?.toFixed(3) || "0.000"}</div>
-                <div className="text-xs mt-1">Intent Field Alignment (Higher = More Order)</div>
-              </div>
-              <div className="bg-card border rounded-lg p-4 text-center">
-                <div className="text-sm text-muted-foreground mb-1">Entropy Delta</div>
-                <div className={`text-2xl font-bold ${Number(stats.clusterEntropyDelta || 0) < 0 ? 'text-green-500' : 'text-red-500'}`}>
-                  {stats.clusterEntropyDelta?.toFixed(3) || "0.000"}
-                </div>
-                <div className="text-xs mt-1">Cluster vs. Non-Cluster Entropy Difference</div>
-              </div>
-            </div>
-            
-            <h3 className="text-lg font-medium mt-6">Clustering Behavior</h3>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="bg-card border rounded-lg p-4 text-center">
-                <div className="text-sm text-muted-foreground mb-1">Cluster Lifetime</div>
-                <div className="text-2xl font-bold">{stats.clusterLifetime?.toFixed(0) || "0"}</div>
-                <div className="text-xs mt-1">Stability of Particle Clusters</div>
-              </div>
-              <div className="bg-card border rounded-lg p-4 text-center">
-                <div className="text-sm text-muted-foreground mb-1">Information Density</div>
-                <div className="text-2xl font-bold">{stats.informationDensity?.toFixed(2) || "0.00"}</div>
-                <div className="text-xs mt-1">Knowledge Concentration in Clusters</div>
-              </div>
-              <div className="bg-card border rounded-lg p-4 text-center">
-                <div className="text-sm text-muted-foreground mb-1">Kolmogorov Complexity</div>
-                <div className="text-2xl font-bold">{stats.kolmogorovComplexity?.toFixed(3) || "0.000"}</div>
-                <div className="text-xs mt-1">System Pattern Complexity</div>
-              </div>
-              <div className="bg-card border rounded-lg p-4 text-center">
-                <div className="text-sm text-muted-foreground mb-1">Active Clusters</div>
-                <div className="text-2xl font-bold">{stats.clusterCount}</div>
-                <div className="text-xs mt-1">Number of Stable Particle Groups</div>
-              </div>
-            </div>
-          </div>
-          
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium">Interpretation Guide</h3>
-            <div className="bg-muted rounded-lg p-4 space-y-3">
-              <div>
-                <h4 className="font-medium">Shannon Entropy vs Spatial Entropy</h4>
-                <p className="text-sm">
-                  Shannon entropy measures disorder in particle types/charges, while spatial entropy measures
-                  evenness of particle distribution across space. Lower values indicate more ordered systems.
-                </p>
-              </div>
-              
-              <div>
-                <h4 className="font-medium">Negative Entropy Delta</h4>
-                <p className="text-sm">
-                  A negative entropy delta means clusters have lower entropy than unclustered particles,
-                  suggesting self-organization rather than random grouping. This indicates intent-driven
-                  pattern formation.
-                </p>
-              </div>
-              
-              <div>
-                <h4 className="font-medium">Information Density & Gravity-Like Effects</h4>
-                <p className="text-sm">
-                  High information density in clusters can create gravity-like effects, pulling in other particles.
-                  This demonstrates how knowledge/intent can behave similar to a physical force.
-                </p>
-              </div>
-              
-              <div>
-                <h4 className="font-medium">Field Order Parameter</h4>
-                <p className="text-sm">
-                  Values near 1 indicate an ordered, aligned intent field, while values near 0 indicate a more
-                  random, chaotic field. Phase transitions often correlate with sudden changes in this value.
-                </p>
-              </div>
-              
-              <div>
-                <h4 className="font-medium">Kolmogorov Complexity</h4>
-                <p className="text-sm">
-                  Measures how "compressible" the system's pattern is. Higher values indicate more
-                  complex, sophisticated patterns that can't be easily described with simple rules.
-                </p>
-              </div>
-            </div>
-            
-            <div className="border rounded-lg p-4 mt-6">
-              <h3 className="text-lg font-medium mb-2">Real-Time Analysis</h3>
-              <p className="text-sm mb-3">
-                Current system state assessment based on entropy metrics:
+              <p className="text-xs text-gray-500 mt-1">
+                Measures the unpredictability in the distribution of particle properties
               </p>
-              <div className="bg-card p-3 rounded text-sm">
-                {stats.shannonEntropy && stats.spatialEntropy && stats.fieldOrderParameter ? (
-                  stats.shannonEntropy < 0.3 && stats.fieldOrderParameter > 0.7 ? (
-                    <span className="text-green-500">
-                      Highly ordered system with strong intent field alignment. Structural stability is high.
-                    </span>
-                  ) : stats.shannonEntropy > 0.7 && stats.fieldOrderParameter < 0.3 ? (
-                    <span className="text-red-500">
-                      Highly chaotic system with minimal structure. Random interactions dominate.
-                    </span>
-                  ) : stats.clusterEntropyDelta && stats.clusterEntropyDelta < -0.2 ? (
-                    <span className="text-blue-500">
-                      Intent-driven self-organization detected. Clusters show significantly more order than surroundings.
-                    </span>
-                  ) : stats.informationDensity && stats.informationDensity > 5 ? (
-                    <span className="text-purple-500">
-                      High information gravity detected. Knowledge is concentrating in specific regions.
-                    </span>
-                  ) : (
-                    <span>
-                      Balanced system with moderate order and chaos. Normal evolution patterns.
-                    </span>
-                  )
-                ) : (
-                  <span>Gathering data for analysis...</span>
-                )}
+            </div>
+
+            <div>
+              <div className="flex justify-between mb-1">
+                <span className="text-sm font-medium">Spatial Entropy</span>
+                <span className="text-sm font-medium">{stats.spatialEntropy?.toFixed(3) || "0.000"}</span>
               </div>
+              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
+                <div 
+                  className={`h-2.5 rounded-full ${getScaleClass(stats.spatialEntropy || 0, 0, 4)}`} 
+                  style={{ width: getScaleWidth(stats.spatialEntropy || 0, 0, 4) }}
+                ></div>
+              </div>
+              <p className="text-xs text-gray-500 mt-1">
+                Quantifies the distribution and organization of particles in space
+              </p>
+            </div>
+
+            <div>
+              <div className="flex justify-between mb-1">
+                <span className="text-sm font-medium">Field Order Parameter</span>
+                <span className="text-sm font-medium">{stats.fieldOrderParameter?.toFixed(3) || "0.000"}</span>
+              </div>
+              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
+                <div 
+                  className={`h-2.5 rounded-full ${getScaleClass(stats.fieldOrderParameter || 0, 0, 1)}`} 
+                  style={{ width: getScaleWidth(stats.fieldOrderParameter || 0, 0, 1) }}
+                ></div>
+              </div>
+              <p className="text-xs text-gray-500 mt-1">
+                Indicates the degree of alignment within the intent field
+              </p>
+            </div>
+
+            <div>
+              <div className="flex justify-between mb-1">
+                <span className="text-sm font-medium">Kolmogorov Complexity</span>
+                <span className="text-sm font-medium">{stats.kolmogorovComplexity?.toFixed(3) || "0.000"}</span>
+              </div>
+              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
+                <div 
+                  className={`h-2.5 rounded-full ${getScaleClass(stats.kolmogorovComplexity || 0, 0, 3)}`} 
+                  style={{ width: getScaleWidth(stats.kolmogorovComplexity || 0, 0, 3) }}
+                ></div>
+              </div>
+              <p className="text-xs text-gray-500 mt-1">
+                Approximates the computational complexity of the system state
+              </p>
             </div>
           </div>
-        </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>System Dynamics</CardTitle>
+          <CardDescription>
+            Emergent patterns and cluster formation
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div>
+              <div className="flex justify-between mb-1">
+                <span className="text-sm font-medium">Cluster Count</span>
+                <span className="text-sm font-medium">{stats.clusterCount}</span>
+              </div>
+              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
+                <div 
+                  className={`h-2.5 rounded-full ${getScaleClass(stats.clusterCount, 0, 10)}`} 
+                  style={{ width: getScaleWidth(stats.clusterCount, 0, 10) }}
+                ></div>
+              </div>
+              <p className="text-xs text-gray-500 mt-1">
+                Number of detected particle clusters in the system
+              </p>
+            </div>
+
+            <div>
+              <div className="flex justify-between mb-1">
+                <span className="text-sm font-medium">Average Cluster Size</span>
+                <span className="text-sm font-medium">{stats.averageClusterSize.toFixed(1)}</span>
+              </div>
+              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
+                <div 
+                  className={`h-2.5 rounded-full ${getScaleClass(stats.averageClusterSize, 1, 20)}`} 
+                  style={{ width: getScaleWidth(stats.averageClusterSize, 1, 20) }}
+                ></div>
+              </div>
+              <p className="text-xs text-gray-500 mt-1">
+                Average number of particles per detected cluster
+              </p>
+            </div>
+
+            <div>
+              <div className="flex justify-between mb-1">
+                <span className="text-sm font-medium">Information Density</span>
+                <span className="text-sm font-medium">{stats.informationDensity?.toFixed(3) || "0.000"}</span>
+              </div>
+              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
+                <div 
+                  className={`h-2.5 rounded-full ${getScaleClass(stats.informationDensity || 0, 0, 2)}`} 
+                  style={{ width: getScaleWidth(stats.informationDensity || 0, 0, 2) }}
+                ></div>
+              </div>
+              <p className="text-xs text-gray-500 mt-1">
+                Quantity of information content per unit space in the simulation
+              </p>
+            </div>
+
+            <div>
+              <div className="flex justify-between mb-1">
+                <span className="text-sm font-medium">Cluster Lifetime</span>
+                <span className="text-sm font-medium">{stats.clusterLifetime?.toFixed(0) || "0"}</span>
+              </div>
+              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
+                <div 
+                  className={`h-2.5 rounded-full ${getScaleClass(stats.clusterLifetime || 0, 0, 1000)}`} 
+                  style={{ width: getScaleWidth(stats.clusterLifetime || 0, 0, 1000) }}
+                ></div>
+              </div>
+              <p className="text-xs text-gray-500 mt-1">
+                Average persistence time of particle clusters
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
 };
 

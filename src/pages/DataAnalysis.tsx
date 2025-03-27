@@ -1,327 +1,234 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
-import { Download, FileText, Upload, Filter, Database } from "lucide-react";
-import { toast } from "sonner";
-import { exportDataToCSV, exportDataToJSON, getSimulationData } from "@/utils/dataExportUtils";
+import { Download, Upload, BarChart4, FileText } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { getSimulationStats } from "@/utils/simulation/motherSimulation";
 
-const DataAnalysis = () => {
-  const [activeTab, setActiveTab] = useState("particles");
-  const [simulationData, setSimulationData] = useState<any[]>([]);
-  const [filterType, setFilterType] = useState("all");
-  const [timeRange, setTimeRange] = useState("all");
+const DataAnalysis: React.FC = () => {
+  const [uploadedData, setUploadedData] = useState<any>(null);
+  const { toast } = useToast();
   
-  useEffect(() => {
-    // Get data from the simulation
-    const data = getSimulationData();
-    setSimulationData(data);
-  }, []);
-  
-  const handleExportCSV = () => {
-    const url = exportDataToCSV();
-    if (url) {
-      toast.success("Data exported to CSV successfully");
-    } else {
-      toast.error("No data to export");
-    }
-  };
-  
-  const handleExportJSON = () => {
-    const url = exportDataToJSON();
-    if (url) {
-      toast.success("Data exported to JSON successfully");
-    } else {
-      toast.error("No data to export");
-    }
-  };
-  
-  const getFilteredData = () => {
-    let filteredData = [...simulationData];
+  // Get stats from the persistent mother simulation
+  const simulationStats = getSimulationStats();
+
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
     
-    // Apply time range filter
-    if (timeRange === "recent") {
-      filteredData = filteredData.slice(-50);
-    } else if (timeRange === "mid") {
-      const midPoint = Math.floor(filteredData.length / 2);
-      filteredData = filteredData.slice(midPoint - 25, midPoint + 25);
-    }
+    const reader = new FileReader();
     
-    // Apply particle type filter
-    if (filterType !== "all") {
-      filteredData = filteredData.filter(item => {
-        if (filterType === "positive") return item.particle_counts.positive > 0;
-        if (filterType === "negative") return item.particle_counts.negative > 0;
-        if (filterType === "neutral") return item.particle_counts.neutral > 0;
-        if (filterType === "composite") return item.particle_counts.composite > 0;
-        return true;
-      });
-    }
+    reader.onload = (e) => {
+      try {
+        const data = JSON.parse(e.target?.result as string);
+        setUploadedData(data);
+        
+        toast({
+          title: "Data Loaded Successfully",
+          description: `Loaded simulation data with ${data.history?.length || 0} data points.`,
+          variant: "default",
+        });
+      } catch (error) {
+        toast({
+          title: "Error Loading Data",
+          description: "The file could not be parsed as valid simulation data.",
+          variant: "destructive",
+        });
+      }
+    };
     
-    return filteredData;
+    reader.readAsText(file);
   };
-  
+
   return (
-    <div className="container mx-auto py-8">
-      <h1 className="text-3xl font-bold mb-8 text-center">Intent Simulation Analysis</h1>
-      
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <Card>
-          <CardHeader className="py-3">
-            <CardTitle className="text-sm">Data Points</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold">{simulationData.length}</p>
-          </CardContent>
-        </Card>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-12">
+      <div className="container mx-auto px-4 py-8">
+        <h1 className="text-4xl font-bold mb-8 text-center">Data Analysis</h1>
         
-        <Card>
-          <CardHeader className="py-3">
-            <CardTitle className="text-sm">Max Complexity</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold">
-              {simulationData.length > 0 
-                ? Math.max(...simulationData.map(d => d.max_complexity)).toFixed(2) 
-                : "0.00"}
-            </p>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="py-3">
-            <CardTitle className="text-sm">Total Interactions</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold">
-              {simulationData.length > 0 
-                ? simulationData[simulationData.length - 1]?.total_interactions.toLocaleString() 
-                : "0"}
-            </p>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="py-3">
-            <CardTitle className="text-sm">Avg Knowledge</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold">
-              {simulationData.length > 0 
-                ? simulationData[simulationData.length - 1]?.avg_knowledge.toFixed(3) 
-                : "0.000"}
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-      
-      <div className="flex flex-col md:flex-row gap-4 items-center mb-6">
-        <div className="flex-1 flex items-center gap-3">
-          <Select value={filterType} onValueChange={setFilterType}>
-            <SelectTrigger>
-              <div className="flex items-center gap-2">
-                <Filter className="h-4 w-4" />
-                <SelectValue placeholder="Filter particles" />
+        <div className="mb-8">
+          <Card>
+            <CardHeader>
+              <CardTitle>Simulation Data Explorer</CardTitle>
+              <CardDescription>
+                Analyze simulation data to discover patterns and insights
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-6">
+                <div className="flex flex-col md:flex-row gap-4">
+                  <div className="w-full md:w-1/2 p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+                    <h3 className="text-lg font-medium mb-4 flex items-center">
+                      <FileText className="mr-2 h-5 w-5 text-indigo-500" />
+                      Upload Saved Simulation Data
+                    </h3>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                      Upload a previously exported JSON file from the simulation to analyze its data.
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        className="relative"
+                        onClick={() => document.getElementById('file-upload')?.click()}
+                      >
+                        <Upload className="mr-2 h-4 w-4" />
+                        Choose File
+                        <input
+                          id="file-upload"
+                          type="file"
+                          accept=".json"
+                          className="absolute inset-0 opacity-0 cursor-pointer"
+                          onChange={handleFileUpload}
+                        />
+                      </Button>
+                      <span className="text-sm text-gray-500">
+                        {uploadedData 
+                          ? `${uploadedData.history?.length || 0} data points loaded` 
+                          : "No file selected"}
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <div className="w-full md:w-1/2 p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+                    <h3 className="text-lg font-medium mb-4 flex items-center">
+                      <BarChart4 className="mr-2 h-5 w-5 text-indigo-500" />
+                      Current Simulation Status
+                    </h3>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                      Statistics from the currently running persistent simulation.
+                    </p>
+                    <div className="grid grid-cols-2 gap-2 text-sm">
+                      <div>Running: <span className="font-medium">{simulationStats.isRunning ? "Yes" : "No"}</span></div>
+                      <div>Particles: <span className="font-medium">{simulationStats.particleCount}</span></div>
+                      <div>Interactions: <span className="font-medium">{simulationStats.interactionsCount}</span></div>
+                      <div>Frames: <span className="font-medium">{simulationStats.frameCount}</span></div>
+                    </div>
+                  </div>
+                </div>
+                
+                <Tabs defaultValue="charts">
+                  <TabsList className="grid w-full grid-cols-3">
+                    <TabsTrigger value="charts">Charts & Graphs</TabsTrigger>
+                    <TabsTrigger value="raw">Raw Data</TabsTrigger>
+                    <TabsTrigger value="export">Export Options</TabsTrigger>
+                  </TabsList>
+                  
+                  <TabsContent value="charts">
+                    <div className="p-6 bg-card rounded-lg border border-gray-200 dark:border-gray-700">
+                      <div className="text-center py-12 text-gray-500">
+                        <p className="mb-2">Select data visualization type:</p>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
+                          {['Particle Population', 'Complexity Over Time', 'Entropy Analysis', 'Interaction Patterns'].map((chart) => (
+                            <Button key={chart} variant="outline" className="h-20">
+                              {chart}
+                            </Button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </TabsContent>
+                  
+                  <TabsContent value="raw">
+                    <div className="p-6 bg-card rounded-lg border border-gray-200 dark:border-gray-700 max-h-96 overflow-auto">
+                      {uploadedData ? (
+                        <pre className="text-xs">{JSON.stringify(uploadedData, null, 2)}</pre>
+                      ) : (
+                        <div className="text-center py-10 text-gray-500">
+                          <p>Upload a data file to view raw data</p>
+                        </div>
+                      )}
+                    </div>
+                  </TabsContent>
+                  
+                  <TabsContent value="export">
+                    <div className="p-6 bg-card rounded-lg border border-gray-200 dark:border-gray-700">
+                      <div className="space-y-4">
+                        <h3 className="text-lg font-medium">Export Options</h3>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                          Export your data in various formats for further analysis
+                        </p>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+                          <Button variant="outline" className="flex items-center gap-2">
+                            <Download className="h-4 w-4" />
+                            Export as JSON
+                          </Button>
+                          <Button variant="outline" className="flex items-center gap-2">
+                            <Download className="h-4 w-4" />
+                            Export as CSV
+                          </Button>
+                          <Button variant="outline" className="flex items-center gap-2">
+                            <Download className="h-4 w-4" />
+                            Export Chart Image
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </TabsContent>
+                </Tabs>
               </div>
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Particles</SelectItem>
-              <SelectItem value="positive">Positive Charge</SelectItem>
-              <SelectItem value="negative">Negative Charge</SelectItem>
-              <SelectItem value="neutral">Neutral Charge</SelectItem>
-              <SelectItem value="composite">Composite</SelectItem>
-            </SelectContent>
-          </Select>
-          
-          <Select value={timeRange} onValueChange={setTimeRange}>
-            <SelectTrigger>
-              <SelectValue placeholder="Time range" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Time</SelectItem>
-              <SelectItem value="recent">Recent (Last 50)</SelectItem>
-              <SelectItem value="mid">Mid Simulation</SelectItem>
-            </SelectContent>
-          </Select>
+            </CardContent>
+          </Card>
         </div>
         
-        <div className="flex items-center gap-2">
-          <Button variant="outline" onClick={handleExportCSV}>
-            <FileText className="h-4 w-4 mr-2" />
-            Export CSV
-          </Button>
-          <Button variant="default" onClick={handleExportJSON}>
-            <Download className="h-4 w-4 mr-2" />
-            Export JSON
-          </Button>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Research Notes</CardTitle>
+              <CardDescription>
+                Documentation and theoretical background
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <p>
+                  The Intent Simulation Explorer models how a proto-universe can evolve through intent field fluctuations.
+                  Key concepts include:
+                </p>
+                <ul className="list-disc pl-5 space-y-2">
+                  <li>Intent fields as the primordial substrate of reality</li>
+                  <li>Charge differentiation based on field fluctuation character</li>
+                  <li>Knowledge acquisition through particle interactions</li>
+                  <li>Emergent complexity from simple rules</li>
+                </ul>
+                <Button variant="outline" className="w-full mt-4">
+                  Download Research Paper
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader>
+              <CardTitle>Statistical Analysis</CardTitle>
+              <CardDescription>
+                Advanced metrics and calculations
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-6">
+                <div className="space-y-2">
+                  <h4 className="text-sm font-medium uppercase text-muted-foreground">Entropy Patterns</h4>
+                  <div className="h-20 bg-gray-100 dark:bg-gray-800 rounded-md flex items-center justify-center">
+                    <p className="text-sm text-gray-500">Shannon entropy visualization</p>
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <h4 className="text-sm font-medium uppercase text-muted-foreground">Complexity Growth</h4>
+                  <div className="h-20 bg-gray-100 dark:bg-gray-800 rounded-md flex items-center justify-center">
+                    <p className="text-sm text-gray-500">Kolmogorov complexity chart</p>
+                  </div>
+                </div>
+                
+                <Button variant="outline" className="w-full mt-4">
+                  Run Advanced Analysis
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
-      
-      <Card className="w-full mb-8">
-        <CardHeader>
-          <CardTitle>Simulation Data Analysis</CardTitle>
-          <CardDescription>
-            Visualization of particle behavior and universe complexity
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="particles">Particle Types</TabsTrigger>
-              <TabsTrigger value="complexity">Complexity</TabsTrigger>
-              <TabsTrigger value="knowledge">Knowledge & Interactions</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="particles" className="h-[400px]">
-              <ChartContainer
-                config={{
-                  positive: { label: "Positive", color: "#4CAF50" },
-                  negative: { label: "Negative", color: "#F44336" },
-                  neutral: { label: "Neutral", color: "#9E9E9E" },
-                  composite: { label: "Composite", color: "#2196F3" }
-                }}
-              >
-                <LineChart
-                  data={getFilteredData()}
-                  margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="timestamp" label={{ value: 'Time', position: 'insideBottomRight', offset: -10 }} />
-                  <YAxis label={{ value: 'Count', angle: -90, position: 'insideLeft' }} />
-                  <ChartTooltip content={<ChartTooltipContent />} />
-                  <Legend />
-                  <Line type="monotone" dataKey="particle_counts.positive" name="Positive" stroke="#4CAF50" />
-                  <Line type="monotone" dataKey="particle_counts.negative" name="Negative" stroke="#F44336" />
-                  <Line type="monotone" dataKey="particle_counts.neutral" name="Neutral" stroke="#9E9E9E" />
-                  <Line type="monotone" dataKey="particle_counts.composite" name="Composite" stroke="#2196F3" strokeWidth={2} />
-                </LineChart>
-              </ChartContainer>
-            </TabsContent>
-            
-            <TabsContent value="complexity" className="h-[400px]">
-              <ChartContainer
-                config={{
-                  complexity_index: { label: "Complexity Index", color: "#9C27B0" },
-                  avg_complexity: { label: "Avg Complexity", color: "#FF9800" },
-                  max_complexity: { label: "Max Complexity", color: "#E91E63" }
-                }}
-              >
-                <LineChart
-                  data={getFilteredData()}
-                  margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="timestamp" label={{ value: 'Time', position: 'insideBottomRight', offset: -10 }} />
-                  <YAxis label={{ value: 'Value', angle: -90, position: 'insideLeft' }} />
-                  <ChartTooltip content={<ChartTooltipContent />} />
-                  <Legend />
-                  <Line type="monotone" dataKey="complexity_index" name="Complexity Index" stroke="#9C27B0" strokeWidth={2} />
-                  <Line type="monotone" dataKey="avg_complexity" name="Avg Complexity" stroke="#FF9800" />
-                  <Line type="monotone" dataKey="max_complexity" name="Max Complexity" stroke="#E91E63" />
-                </LineChart>
-              </ChartContainer>
-            </TabsContent>
-            
-            <TabsContent value="knowledge" className="h-[400px]">
-              <ChartContainer
-                config={{
-                  avg_knowledge: { label: "Avg Knowledge", color: "#FF5722" },
-                  total_interactions: { label: "Total Interactions", color: "#607D8B" }
-                }}
-              >
-                <LineChart
-                  data={getFilteredData()}
-                  margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="timestamp" label={{ value: 'Time', position: 'insideBottomRight', offset: -10 }} />
-                  <YAxis label={{ value: 'Value', angle: -90, position: 'insideLeft' }} />
-                  <ChartTooltip content={<ChartTooltipContent />} />
-                  <Legend />
-                  <Line type="monotone" dataKey="avg_knowledge" name="Avg Knowledge" stroke="#FF5722" strokeWidth={2} />
-                  <Line type="monotone" dataKey="total_interactions" name="Total Interactions" stroke="#607D8B" />
-                </LineChart>
-              </ChartContainer>
-            </TabsContent>
-          </Tabs>
-        </CardContent>
-      </Card>
-      
-      <Card className="w-full">
-        <CardHeader>
-          <CardTitle>Advanced Particle Metrics</CardTitle>
-          <CardDescription>
-            In-depth analysis of particle behavior and interactions
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Card>
-              <CardHeader className="py-2">
-                <CardTitle className="text-sm">System Entropy</CardTitle>
-              </CardHeader>
-              <CardContent className="h-[200px]">
-                <ChartContainer
-                  config={{
-                    system_entropy: { label: "System Entropy", color: "#0288D1" }
-                  }}
-                >
-                  <LineChart
-                    data={getFilteredData()}
-                    margin={{ top: 10, right: 20, left: 20, bottom: 10 }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="timestamp" />
-                    <YAxis />
-                    <ChartTooltip content={<ChartTooltipContent />} />
-                    <Line type="monotone" dataKey="system_entropy" name="System Entropy" stroke="#0288D1" strokeWidth={2} />
-                  </LineChart>
-                </ChartContainer>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader className="py-2">
-                <CardTitle className="text-sm">Cluster Analysis</CardTitle>
-              </CardHeader>
-              <CardContent className="h-[200px]">
-                <ChartContainer
-                  config={{
-                    cluster_count: { label: "Cluster Count", color: "#7B1FA2" },
-                    average_cluster_size: { label: "Avg Cluster Size", color: "#00796B" }
-                  }}
-                >
-                  <LineChart
-                    data={getFilteredData()}
-                    margin={{ top: 10, right: 20, left: 20, bottom: 10 }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="timestamp" />
-                    <YAxis />
-                    <ChartTooltip content={<ChartTooltipContent />} />
-                    <Line 
-                      type="monotone" 
-                      dataKey="cluster_analysis.cluster_count" 
-                      name="Cluster Count" 
-                      stroke="#7B1FA2" 
-                    />
-                    <Line 
-                      type="monotone" 
-                      dataKey="cluster_analysis.average_cluster_size" 
-                      name="Avg Cluster Size" 
-                      stroke="#00796B" 
-                    />
-                  </LineChart>
-                </ChartContainer>
-              </CardContent>
-            </Card>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 };

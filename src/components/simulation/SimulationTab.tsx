@@ -4,9 +4,10 @@ import { ParticleCanvas } from '@/components/ParticleCanvas';
 import SimulationStats from './SimulationStats';
 import { SimulationStats as StatsType } from '@/types/simulation';
 import { Button } from "@/components/ui/button";
-import { Download, NotebookText, FileText, Upload, BookOpen, ExternalLink } from "lucide-react";
+import { Download, NotebookText, FileText, Upload, BookOpen, ExternalLink, Zap } from "lucide-react";
 import { toast } from "sonner";
 import { useNotebookIntegration } from '@/hooks/useNotebookIntegration';
+import { useInflationEvents } from '@/hooks/useInflationEvents';
 
 interface SimulationTabProps {
   intentFluctuationRate: number;
@@ -66,6 +67,10 @@ const SimulationTab: React.FC<SimulationTabProps> = ({
     importAnnotations, 
     exportForNotebookLM 
   } = useNotebookIntegration();
+  
+  const {
+    exportInflationEventsData
+  } = useInflationEvents();
 
   const handleAddQuickAnnotation = () => {
     const text = prompt("Enter a quick observation about the current simulation:");
@@ -175,6 +180,16 @@ const SimulationTab: React.FC<SimulationTabProps> = ({
           >
             <NotebookText className="mr-2 h-4 w-4" />
             Export for Notebook LM
+          </Button>
+          
+          {/* New button for exporting inflation events */}
+          <Button 
+            onClick={exportInflationEventsData} 
+            variant="outline" 
+            className="bg-purple-900/10"
+          >
+            <Zap className="mr-2 h-4 w-4" />
+            Export Inflation Events
           </Button>
           
           <Button 

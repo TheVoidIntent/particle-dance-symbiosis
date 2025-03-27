@@ -1,4 +1,3 @@
-
 // Field analysis utilities
 
 export function analyzeIntentField(intentField: number[][][]) {
@@ -75,4 +74,20 @@ export function analyzeIntentField(intentField: number[][][]) {
     gradientStrength,
     fieldEnergy
   };
+}
+
+// Extract inflation events from localStorage for analysis
+export function getInflationEventsData() {
+  if (typeof window === 'undefined') return [];
+  
+  try {
+    const storedEvents = localStorage.getItem('inflationEvents');
+    if (storedEvents) {
+      return JSON.parse(storedEvents);
+    }
+  } catch (error) {
+    console.error('Error retrieving inflation events data:', error);
+  }
+  
+  return [];
 }

@@ -21,7 +21,7 @@ const Footer: React.FC = () => {
             <a href="https://twitter.com/intentSim" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors">
               <Twitter className="h-5 w-5" />
             </a>
-            <a href="https://github.com/intentSim" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors">
+            <a href="https://github.com/TheVoidInent" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors">
               <Github className="h-5 w-5" />
             </a>
             <a href="mailto:info@intentSim.org" className="text-gray-400 hover:text-white transition-colors">

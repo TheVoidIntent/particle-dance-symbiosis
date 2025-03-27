@@ -59,7 +59,7 @@ const Navbar: React.FC = () => {
                 </Link>
               ))}
               <Button variant="default" size="sm" className="ml-4 bg-indigo-600 hover:bg-indigo-700">
-                <a href="https://github.com/intentSim" target="_blank" rel="noopener noreferrer">
+                <a href="https://github.com/TheVoidInent" target="_blank" rel="noopener noreferrer">
                   GitHub
                 </a>
               </Button>
@@ -100,7 +100,7 @@ const Navbar: React.FC = () => {
             </Link>
           ))}
           <a
-            href="https://github.com/intentSim"
+            href="https://github.com/TheVoidInent"
             target="_blank"
             rel="noopener noreferrer"
             className="block px-3 py-2 rounded-md text-base font-medium text-white bg-indigo-600 hover:bg-indigo-700 mt-2"

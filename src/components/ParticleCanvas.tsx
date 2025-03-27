@@ -1,6 +1,6 @@
 
-import React, { useRef, useEffect, useCallback } from 'react';
-import { useParticleSimulation } from '@/hooks/useParticleSimulation';
+import React, { useRef, useEffect, useCallback, useState } from 'react';
+import { useParticleSimulation, InflationEvent } from '@/hooks/useParticleSimulation';
 import { useSimulationData } from '@/hooks/useSimulationData';
 import { useCanvasRenderer } from '@/hooks/useCanvasRenderer';
 import { useAnimationLoop } from '@/hooks/useAnimationLoop';
@@ -40,6 +40,8 @@ export const ParticleCanvas: React.FC<ParticleCanvasProps> = ({
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const { toast } = useToast();
+  const [showInflationBanner, setShowInflationBanner] = useState(false);
+  const [latestInflation, setLatestInflation] = useState<InflationEvent | null>(null);
 
   // Initialize simulation hooks
   const {
@@ -51,6 +53,8 @@ export const ParticleCanvas: React.FC<ParticleCanvasProps> = ({
     simulationTimeRef,
     isInitialized,
     isAnimatingRef,
+    isInflatedRef,
+    inflationTimeRef,
     initializeSimulation,
     updateParticles,
     createNewParticles,
@@ -67,7 +71,8 @@ export const ParticleCanvas: React.FC<ParticleCanvasProps> = ({
       probabilisticIntent
     },
     running,
-    onAnomalyDetected
+    onAnomalyDetected,
+    handleInflationDetected
   );
 
   const {
@@ -79,6 +84,24 @@ export const ParticleCanvas: React.FC<ParticleCanvasProps> = ({
   } = useSimulationData(onStatsUpdate);
 
   const { renderSimulation } = useCanvasRenderer();
+
+  // Handle inflation events
+  function handleInflationDetected(event: InflationEvent) {
+    setLatestInflation(event);
+    setShowInflationBanner(true);
+    
+    // Show toast notification
+    toast({
+      title: "Universe Inflation Detected!",
+      description: `The simulation space has expanded with ${event.particlesAfterInflation - event.particlesBeforeInflation} new particles`,
+      variant: "default",
+    });
+    
+    // Hide banner after 5 seconds
+    setTimeout(() => {
+      setShowInflationBanner(false);
+    }, 5000);
+  }
 
   // Initialize canvas and start simulation
   useEffect(() => {
@@ -179,6 +202,13 @@ export const ParticleCanvas: React.FC<ParticleCanvasProps> = ({
         ref={canvasRef} 
         className="w-full h-full bg-black/90"
       />
+      
+      {/* Inflation Banner */}
+      {showInflationBanner && (
+        <div className="absolute top-0 left-0 right-0 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white font-bold py-2 text-center animate-pulse z-10">
+          🌌 Universe Inflation Event Detected! 🌌
+        </div>
+      )}
       
       <SimulationControlButtons 
         dataCollectionActive={dataCollectionActiveRef.current}

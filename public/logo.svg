@@ -3,27 +3,37 @@
   <!-- Background (transparent) -->
   <rect width="200" height="200" fill="transparent"/>
   
-  <!-- Central neuron/brain structure -->
-  <circle cx="100" cy="100" r="30" fill="#9b87f5"/>
+  <!-- Central intent field -->
+  <circle cx="100" cy="100" r="30" fill="#6d28d9"/>
   
-  <!-- Connection lines -->
-  <path d="M100,70 C70,40 40,50 20,30" stroke="#9b87f5" fill="none" stroke-width="3" stroke-linecap="round"/>
-  <path d="M100,70 C130,40 160,50 180,30" stroke="#9b87f5" fill="none" stroke-width="3" stroke-linecap="round"/>
-  <path d="M100,130 C70,160 40,150 20,170" stroke="#9b87f5" fill="none" stroke-width="3" stroke-linecap="round"/>
-  <path d="M100,130 C130,160 160,150 180,170" stroke="#9b87f5" fill="none" stroke-width="3" stroke-linecap="round"/>
+  <!-- Intent field fluctuations -->
+  <path d="M100,70 C70,40 40,50 20,30" stroke="#a78bfa" fill="none" stroke-width="3" stroke-linecap="round"/>
+  <path d="M100,70 C130,40 160,50 180,30" stroke="#8b5cf6" fill="none" stroke-width="3" stroke-linecap="round"/>
+  <path d="M100,130 C70,160 40,150 20,170" stroke="#7c3aed" fill="none" stroke-width="3" stroke-linecap="round"/>
+  <path d="M100,130 C130,160 160,150 180,170" stroke="#6d28d9" fill="none" stroke-width="3" stroke-linecap="round"/>
   
-  <!-- Particles/nodes -->
-  <circle cx="30" cy="40" r="8" fill="#9b87f5"/>
-  <circle cx="170" cy="40" r="8" fill="#9b87f5"/>
-  <circle cx="30" cy="160" r="8" fill="#9b87f5"/>
-  <circle cx="170" cy="160" r="8" fill="#9b87f5"/>
+  <!-- Positive charge particles -->
+  <circle cx="30" cy="40" r="8" fill="#c4b5fd">
+    <animate attributeName="opacity" values="0.7;1;0.7" dur="3s" repeatCount="indefinite" />
+  </circle>
+  <circle cx="170" cy="40" r="8" fill="#c4b5fd">
+    <animate attributeName="opacity" values="0.7;1;0.7" dur="2.5s" repeatCount="indefinite" />
+  </circle>
   
-  <!-- Smaller nodes -->
-  <circle cx="60" cy="60" r="6" fill="#9b87f5"/>
-  <circle cx="140" cy="60" r="6" fill="#9b87f5"/>
-  <circle cx="60" cy="140" r="6" fill="#9b87f5"/>
-  <circle cx="140" cy="140" r="6" fill="#9b87f5"/>
+  <!-- Negative charge particles -->
+  <circle cx="30" cy="160" r="8" fill="#4c1d95">
+    <animate attributeName="opacity" values="0.7;1;0.7" dur="4s" repeatCount="indefinite" />
+  </circle>
+  <circle cx="170" cy="160" r="8" fill="#4c1d95">
+    <animate attributeName="opacity" values="0.7;1;0.7" dur="3.5s" repeatCount="indefinite" />
+  </circle>
+  
+  <!-- Neutral particles -->
+  <circle cx="60" cy="60" r="6" fill="#8b5cf6"/>
+  <circle cx="140" cy="60" r="6" fill="#8b5cf6"/>
+  <circle cx="60" cy="140" r="6" fill="#8b5cf6"/>
+  <circle cx="140" cy="140" r="6" fill="#8b5cf6"/>
   
   <!-- Text -->
-  <text x="100" y="180" font-family="Arial, sans-serif" font-size="18" font-weight="bold" text-anchor="middle" fill="#9b87f5">intentSim.org</text>
+  <text x="100" y="180" font-family="Arial, sans-serif" font-size="18" font-weight="bold" text-anchor="middle" fill="#8b5cf6">intentSim.org</text>
 </svg>

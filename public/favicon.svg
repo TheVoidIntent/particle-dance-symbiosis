@@ -3,24 +3,24 @@
   <!-- Background (transparent) -->
   <rect width="32" height="32" fill="transparent"/>
   
-  <!-- Central neuron/brain structure -->
-  <circle cx="16" cy="16" r="6" fill="#9b87f5"/>
+  <!-- Central particle/intent field -->
+  <circle cx="16" cy="16" r="6" fill="#6d28d9"/>
   
-  <!-- Connection lines -->
-  <path d="M16,10 C13,6 8,8 4,5" stroke="#9b87f5" fill="none" stroke-width="1" stroke-linecap="round"/>
-  <path d="M16,10 C19,6 24,8 28,5" stroke="#9b87f5" fill="none" stroke-width="1" stroke-linecap="round"/>
-  <path d="M16,22 C13,26 8,24 4,27" stroke="#9b87f5" fill="none" stroke-width="1" stroke-linecap="round"/>
-  <path d="M16,22 C19,26 24,24 28,27" stroke="#9b87f5" fill="none" stroke-width="1" stroke-linecap="round"/>
+  <!-- Intent field fluctuations -->
+  <path d="M16,10 C13,6 8,8 4,5" stroke="#a78bfa" fill="none" stroke-width="1" stroke-linecap="round"/>
+  <path d="M16,10 C19,6 24,8 28,5" stroke="#8b5cf6" fill="none" stroke-width="1" stroke-linecap="round"/>
+  <path d="M16,22 C13,26 8,24 4,27" stroke="#7c3aed" fill="none" stroke-width="1" stroke-linecap="round"/>
+  <path d="M16,22 C19,26 24,24 28,27" stroke="#6d28d9" fill="none" stroke-width="1" stroke-linecap="round"/>
   
-  <!-- Particles/nodes -->
-  <circle cx="6" cy="6" r="1.5" fill="#9b87f5"/>
-  <circle cx="26" cy="6" r="1.5" fill="#9b87f5"/>
-  <circle cx="6" cy="26" r="1.5" fill="#9b87f5"/>
-  <circle cx="26" cy="26" r="1.5" fill="#9b87f5"/>
+  <!-- Particles with different charges -->
+  <circle cx="6" cy="6" r="1.5" fill="#c4b5fd"/>  <!-- +charge -->
+  <circle cx="26" cy="6" r="1.5" fill="#4c1d95"/> <!-- -charge -->
+  <circle cx="6" cy="26" r="1.5" fill="#4c1d95"/> <!-- -charge -->
+  <circle cx="26" cy="26" r="1.5" fill="#c4b5fd"/> <!-- +charge -->
   
-  <!-- Smaller nodes -->
-  <circle cx="10" cy="10" r="1" fill="#9b87f5"/>
-  <circle cx="22" cy="10" r="1" fill="#9b87f5"/>
-  <circle cx="10" cy="22" r="1" fill="#9b87f5"/>
-  <circle cx="22" cy="22" r="1" fill="#9b87f5"/>
+  <!-- Neutral particles -->
+  <circle cx="10" cy="10" r="1" fill="#8b5cf6"/>
+  <circle cx="22" cy="10" r="1" fill="#8b5cf6"/>
+  <circle cx="10" cy="22" r="1" fill="#8b5cf6"/>
+  <circle cx="22" cy="22" r="1" fill="#8b5cf6"/>
 </svg>

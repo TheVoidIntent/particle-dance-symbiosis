@@ -3,27 +3,57 @@
   <!-- Background (transparent) -->
   <rect width="200" height="200" fill="transparent"/>
   
-  <!-- Central neuron/brain structure -->
-  <circle cx="100" cy="100" r="30" fill="#9b87f5"/>
+  <!-- Central intent field with pulsing animation -->
+  <circle cx="100" cy="100" r="30" fill="#6d28d9">
+    <animate attributeName="r" values="28;32;28" dur="5s" repeatCount="indefinite" />
+  </circle>
   
-  <!-- Connection lines -->
-  <path d="M100,70 C70,40 40,50 20,30" stroke="#9b87f5" fill="none" stroke-width="3" stroke-linecap="round"/>
-  <path d="M100,70 C130,40 160,50 180,30" stroke="#9b87f5" fill="none" stroke-width="3" stroke-linecap="round"/>
-  <path d="M100,130 C70,160 40,150 20,170" stroke="#9b87f5" fill="none" stroke-width="3" stroke-linecap="round"/>
-  <path d="M100,130 C130,160 160,150 180,170" stroke="#9b87f5" fill="none" stroke-width="3" stroke-linecap="round"/>
+  <!-- Intent field fluctuations -->
+  <path d="M100,70 C70,40 40,50 20,30" stroke="#a78bfa" fill="none" stroke-width="3" stroke-linecap="round">
+    <animate attributeName="d" values="M100,70 C70,40 40,50 20,30;M100,70 C65,35 40,45 15,25;M100,70 C70,40 40,50 20,30" dur="10s" repeatCount="indefinite" />
+  </path>
+  <path d="M100,70 C130,40 160,50 180,30" stroke="#8b5cf6" fill="none" stroke-width="3" stroke-linecap="round">
+    <animate attributeName="d" values="M100,70 C130,40 160,50 180,30;M100,70 C135,45 165,55 185,35;M100,70 C130,40 160,50 180,30" dur="12s" repeatCount="indefinite" />
+  </path>
+  <path d="M100,130 C70,160 40,150 20,170" stroke="#7c3aed" fill="none" stroke-width="3" stroke-linecap="round">
+    <animate attributeName="d" values="M100,130 C70,160 40,150 20,170;M100,130 C65,165 35,155 15,175;M100,130 C70,160 40,150 20,170" dur="11s" repeatCount="indefinite" />
+  </path>
+  <path d="M100,130 C130,160 160,150 180,170" stroke="#6d28d9" fill="none" stroke-width="3" stroke-linecap="round">
+    <animate attributeName="d" values="M100,130 C130,160 160,150 180,170;M100,130 C135,165 165,155 185,175;M100,130 C130,160 160,150 180,170" dur="9s" repeatCount="indefinite" />
+  </path>
   
-  <!-- Particles/nodes -->
-  <circle cx="30" cy="40" r="8" fill="#9b87f5"/>
-  <circle cx="170" cy="40" r="8" fill="#9b87f5"/>
-  <circle cx="30" cy="160" r="8" fill="#9b87f5"/>
-  <circle cx="170" cy="160" r="8" fill="#9b87f5"/>
+  <!-- Particles with charge behaviors -->
+  <circle cx="30" cy="40" r="8" fill="#c4b5fd">
+    <animate attributeName="cx" values="30;32;30" dur="8s" repeatCount="indefinite" />
+    <animate attributeName="cy" values="40;38;40" dur="7s" repeatCount="indefinite" />
+  </circle>
+  <circle cx="170" cy="40" r="8" fill="#c4b5fd">
+    <animate attributeName="cx" values="170;168;170" dur="6s" repeatCount="indefinite" />
+    <animate attributeName="cy" values="40;42;40" dur="9s" repeatCount="indefinite" />
+  </circle>
+  <circle cx="30" cy="160" r="8" fill="#4c1d95">
+    <animate attributeName="cx" values="30;28;30" dur="10s" repeatCount="indefinite" />
+    <animate attributeName="cy" values="160;162;160" dur="7s" repeatCount="indefinite" />
+  </circle>
+  <circle cx="170" cy="160" r="8" fill="#4c1d95">
+    <animate attributeName="cx" values="170;172;170" dur="8s" repeatCount="indefinite" />
+    <animate attributeName="cy" values="160;158;160" dur="9s" repeatCount="indefinite" />
+  </circle>
   
-  <!-- Smaller nodes -->
-  <circle cx="60" cy="60" r="6" fill="#9b87f5"/>
-  <circle cx="140" cy="60" r="6" fill="#9b87f5"/>
-  <circle cx="60" cy="140" r="6" fill="#9b87f5"/>
-  <circle cx="140" cy="140" r="6" fill="#9b87f5"/>
+  <!-- Neutral particles -->
+  <circle cx="60" cy="60" r="6" fill="#8b5cf6">
+    <animate attributeName="r" values="6;5.5;6" dur="4s" repeatCount="indefinite" />
+  </circle>
+  <circle cx="140" cy="60" r="6" fill="#8b5cf6">
+    <animate attributeName="r" values="6;6.5;6" dur="5s" repeatCount="indefinite" />
+  </circle>
+  <circle cx="60" cy="140" r="6" fill="#8b5cf6">
+    <animate attributeName="r" values="6;5.5;6" dur="6s" repeatCount="indefinite" />
+  </circle>
+  <circle cx="140" cy="140" r="6" fill="#8b5cf6">
+    <animate attributeName="r" values="6;6.5;6" dur="3s" repeatCount="indefinite" />
+  </circle>
   
-  <!-- Text -->
-  <text x="100" y="180" font-family="Arial, sans-serif" font-size="18" font-weight="bold" text-anchor="middle" fill="#9b87f5">intentSim.org</text>
+  <!-- Text with universe intent theme -->
+  <text x="100" y="180" font-family="Arial, sans-serif" font-size="18" font-weight="bold" text-anchor="middle" fill="#8b5cf6">intentSim.org</text>
 </svg>

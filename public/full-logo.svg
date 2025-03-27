@@ -3,31 +3,27 @@
   <!-- Background (transparent) -->
   <rect width="200" height="200" fill="transparent"/>
   
-  <!-- Stylized "I" with head -->
-  <circle cx="100" cy="50" r="15" fill="#005270"/>
-  <rect x="90" y="65" width="20" height="70" fill="#005270"/>
+  <!-- Central neuron/brain structure -->
+  <circle cx="100" cy="100" r="30" fill="#9b87f5"/>
   
-  <!-- Arms with wave pattern -->
-  <path d="M100,65 L70,60 C60,58 55,70 45,68 C35,66 30,75 20,73" stroke="#005270" fill="none" stroke-width="3" stroke-linecap="round"/>
-  <path d="M100,65 L130,60 C140,58 145,70 155,68 C165,66 170,75 180,73" stroke="#005270" fill="none" stroke-width="3" stroke-linecap="round"/>
+  <!-- Connection lines -->
+  <path d="M100,70 C70,40 40,50 20,30" stroke="#9b87f5" fill="none" stroke-width="3" stroke-linecap="round"/>
+  <path d="M100,70 C130,40 160,50 180,30" stroke="#9b87f5" fill="none" stroke-width="3" stroke-linecap="round"/>
+  <path d="M100,130 C70,160 40,150 20,170" stroke="#9b87f5" fill="none" stroke-width="3" stroke-linecap="round"/>
+  <path d="M100,130 C130,160 160,150 180,170" stroke="#9b87f5" fill="none" stroke-width="3" stroke-linecap="round"/>
   
-  <!-- Particles (dots) -->
-  <circle cx="25" cy="73" r="3" fill="#005270"/>
-  <circle cx="35" cy="65" r="3" fill="#005270"/>
-  <circle cx="42" cy="70" r="2" fill="#005270"/>
-  <circle cx="50" cy="60" r="4" fill="#005270"/>
-  <circle cx="58" cy="65" r="3" fill="#005270"/>
-  <circle cx="65" cy="55" r="2" fill="#005270"/>
-  <circle cx="72" cy="62" r="3" fill="#005270"/>
+  <!-- Particles/nodes -->
+  <circle cx="30" cy="40" r="8" fill="#9b87f5"/>
+  <circle cx="170" cy="40" r="8" fill="#9b87f5"/>
+  <circle cx="30" cy="160" r="8" fill="#9b87f5"/>
+  <circle cx="170" cy="160" r="8" fill="#9b87f5"/>
   
-  <circle cx="175" cy="73" r="3" fill="#005270"/>
-  <circle cx="165" cy="65" r="3" fill="#005270"/>
-  <circle cx="158" cy="70" r="2" fill="#005270"/>
-  <circle cx="150" cy="60" r="4" fill="#005270"/>
-  <circle cx="142" cy="65" r="3" fill="#005270"/>
-  <circle cx="135" cy="55" r="2" fill="#005270"/>
-  <circle cx="128" cy="62" r="3" fill="#005270"/>
+  <!-- Smaller nodes -->
+  <circle cx="60" cy="60" r="6" fill="#9b87f5"/>
+  <circle cx="140" cy="60" r="6" fill="#9b87f5"/>
+  <circle cx="60" cy="140" r="6" fill="#9b87f5"/>
+  <circle cx="140" cy="140" r="6" fill="#9b87f5"/>
   
   <!-- Text -->
-  <text x="100" y="160" font-family="Arial, sans-serif" font-size="24" font-weight="bold" text-anchor="middle" fill="#005270">IntentSim.org</text>
+  <text x="100" y="180" font-family="Arial, sans-serif" font-size="18" font-weight="bold" text-anchor="middle" fill="#9b87f5">intentSim.org</text>
 </svg>

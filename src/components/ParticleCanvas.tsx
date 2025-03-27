@@ -1,4 +1,3 @@
-
 import React, { useRef, useEffect, useCallback, useState } from 'react';
 import { useParticleSimulation, InflationEvent } from '@/hooks/simulation';
 import { useSimulationData } from '@/hooks/useSimulationData';
@@ -92,8 +91,19 @@ export const ParticleCanvas: React.FC<ParticleCanvasProps> = ({
   useEffect(() => {
     if (particlesRef.current) {
       setParticleCount(particlesRef.current.length);
+      
+      // Make sure we're updating stats even if no simulation step has happened yet
+      if (particlesRef.current.length > 0 && !frameCountRef.current) {
+        processSimulationData(
+          particlesRef.current,
+          intentFieldRef.current || [],
+          interactionsRef.current || 0,
+          frameCountRef.current || 0,
+          simulationTimeRef.current || 0
+        );
+      }
     }
-  }, [particlesRef.current?.length]);
+  }, [particlesRef.current?.length, processSimulationData, intentFieldRef, interactionsRef, frameCountRef, simulationTimeRef]);
 
   // Handle inflation events
   function handleInflationDetected(event: InflationEvent) {

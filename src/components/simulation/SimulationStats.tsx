@@ -9,102 +9,49 @@ interface SimulationStatsProps {
 
 const SimulationStats: React.FC<SimulationStatsProps> = ({ stats }) => {
   return (
-    <Card className="p-4">
-      <CardHeader className="p-0 pb-2">
+    <Card className="col-span-3">
+      <CardHeader className="pb-2">
         <CardTitle className="text-xl">Particle Statistics</CardTitle>
       </CardHeader>
-      <CardContent className="p-0 space-y-1 text-sm">
-        <div className="flex justify-between">
-          <span>Positive Particles:</span>
-          <span>{stats.positiveParticles}</span>
-        </div>
-        <div className="flex justify-between">
-          <span>Negative Particles:</span>
-          <span>{stats.negativeParticles}</span>
-        </div>
-        <div className="flex justify-between">
-          <span>Neutral Particles:</span>
-          <span>{stats.neutralParticles}</span>
-        </div>
-        <div className="flex justify-between">
-          <span className="text-yellow-500">High-Energy Particles:</span>
-          <span>{stats.highEnergyParticles}</span>
-        </div>
-        <div className="flex justify-between">
-          <span className="text-purple-500">Quantum Particles:</span>
-          <span>{stats.quantumParticles}</span>
-        </div>
-        <div className="flex justify-between">
-          <span className="text-blue-400">Composite Particles:</span>
-          <span>{stats.compositeParticles || 0}</span>
-        </div>
-        <div className="flex justify-between">
-          <span className="text-pink-400">Adaptive Particles:</span>
-          <span>{stats.adaptiveParticles || 0}</span>
-        </div>
-        <div className="border-t border-gray-200 dark:border-gray-800 my-1"></div>
-        <div className="flex justify-between">
-          <span>Total Interactions:</span>
-          <span>{stats.totalInteractions}</span>
-        </div>
-        <div className="flex justify-between">
-          <span>Complexity Index:</span>
-          <span>{stats.complexityIndex.toFixed(2)}</span>
-        </div>
-        <div className="flex justify-between">
-          <span>Avg. Knowledge:</span>
-          <span>{stats.averageKnowledge ? stats.averageKnowledge.toFixed(2) : '0.00'}</span>
-        </div>
-        <div className="flex justify-between">
-          <span>Max Complexity:</span>
-          <span>{stats.maxComplexity ? stats.maxComplexity.toFixed(1) : '1.0'}</span>
-        </div>
-        <div className="border-t border-gray-200 dark:border-gray-800 my-1"></div>
-        <div className="flex justify-between">
-          <span>Cluster Count:</span>
-          <span>{stats.clusterCount}</span>
-        </div>
-        <div className="flex justify-between">
-          <span>Avg. Cluster Size:</span>
-          <span>{stats.averageClusterSize.toFixed(1)}</span>
-        </div>
-        <div className="flex justify-between">
-          <span>System Entropy:</span>
-          <span>{stats.systemEntropy.toFixed(3)}</span>
-        </div>
-        <div className="flex justify-between">
-          <span>Field Complexity:</span>
-          <span>{stats.intentFieldComplexity.toFixed(3)}</span>
-        </div>
-        
-        <div className="border-t border-gray-200 dark:border-gray-800 my-1"></div>
-        <div className="flex justify-between text-emerald-500">
-          <span>Shannon Entropy:</span>
-          <span>{stats.shannonEntropy?.toFixed(3) || "0.000"}</span>
-        </div>
-        <div className="flex justify-between text-emerald-500">
-          <span>Spatial Entropy:</span>
-          <span>{stats.spatialEntropy?.toFixed(3) || "0.000"}</span>
-        </div>
-        <div className="flex justify-between text-emerald-500">
-          <span>Field Order:</span>
-          <span>{stats.fieldOrderParameter?.toFixed(3) || "0.000"}</span>
-        </div>
-        <div className="flex justify-between text-emerald-500">
-          <span>Cluster Lifetime:</span>
-          <span>{stats.clusterLifetime?.toFixed(0) || "0"}</span>
-        </div>
-        <div className="flex justify-between text-emerald-500">
-          <span>Info Density:</span>
-          <span>{stats.informationDensity?.toFixed(3) || "0.000"}</span>
-        </div>
-        <div className="flex justify-between text-emerald-500">
-          <span>Kolmogorov:</span>
-          <span>{stats.kolmogorovComplexity?.toFixed(3) || "0.000"}</span>
-        </div>
-        <div className="flex justify-between text-emerald-500">
-          <span>Entropy Delta:</span>
-          <span>{stats.clusterEntropyDelta?.toFixed(3) || "0.000"}</span>
+      <CardContent className="space-y-1 text-sm">
+        <div className="grid grid-cols-2 gap-x-4 gap-y-1">
+          <div className="text-sm text-gray-400">Positive Particles:</div>
+          <div className="text-sm text-right">{stats.positiveParticles || 0}</div>
+          
+          <div className="text-sm text-gray-400">Negative Particles:</div>
+          <div className="text-sm text-right">{stats.negativeParticles || 0}</div>
+          
+          <div className="text-sm text-gray-400">Neutral Particles:</div>
+          <div className="text-sm text-right">{stats.neutralParticles || 0}</div>
+          
+          <div className="text-sm text-gray-400">High-Energy Particles:</div>
+          <div className="text-sm text-right">{stats.highEnergyParticles || 0}</div>
+          
+          <div className="text-sm text-gray-400">Quantum Particles:</div>
+          <div className="text-sm text-right">{stats.quantumParticles || 0}</div>
+          
+          <div className="text-sm text-gray-400">Composite Particles:</div>
+          <div className="text-sm text-right">{stats.compositeParticles || 0}</div>
+          
+          <div className="text-sm text-gray-400">Adaptive Particles:</div>
+          <div className="text-sm text-right">{stats.adaptiveParticles || 0}</div>
+          
+          <div className="border-t border-gray-200 dark:border-gray-800 col-span-2 my-1"></div>
+          
+          <div className="text-sm text-gray-400">Total Interactions:</div>
+          <div className="text-sm text-right">{stats.totalInteractions || 0}</div>
+          
+          <div className="text-sm text-gray-400">Average Knowledge:</div>
+          <div className="text-sm text-right">{stats.averageKnowledge ? stats.averageKnowledge.toFixed(2) : '0.00'}</div>
+          
+          <div className="text-sm text-gray-400">Complexity Index:</div>
+          <div className="text-sm text-right">{stats.complexityIndex.toFixed(2)}</div>
+          
+          <div className="text-sm text-gray-400">Cluster Count:</div>
+          <div className="text-sm text-right">{stats.clusterCount}</div>
+          
+          <div className="text-sm text-gray-400">System Entropy:</div>
+          <div className="text-sm text-right">{stats.systemEntropy.toFixed(3)}</div>
         </div>
       </CardContent>
     </Card>

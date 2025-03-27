@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { ParticleCanvas } from '@/components/ParticleCanvas';
 import SimulationStats from './SimulationStats';
@@ -114,20 +115,27 @@ const SimulationTab: React.FC<SimulationTabProps> = ({
 
   return (
     <>
-      <ParticleCanvas 
-        intentFluctuationRate={intentFluctuationRate} 
-        maxParticles={maxParticles}
-        learningRate={learningRate}
-        particleCreationRate={particleCreationRate}
-        viewMode={viewMode}
-        renderMode={renderMode}
-        useAdaptiveParticles={useAdaptiveParticles}
-        energyConservation={energyConservation}
-        probabilisticIntent={probabilisticIntent}
-        running={running}
-        onStatsUpdate={onStatsUpdate}
-        onAnomalyDetected={onAnomalyDetected}
-      />
+      <div className="relative">
+        <ParticleCanvas 
+          intentFluctuationRate={intentFluctuationRate} 
+          maxParticles={maxParticles}
+          learningRate={learningRate}
+          particleCreationRate={particleCreationRate}
+          viewMode={viewMode}
+          renderMode={renderMode}
+          useAdaptiveParticles={useAdaptiveParticles}
+          energyConservation={energyConservation}
+          probabilisticIntent={probabilisticIntent}
+          running={running}
+          onStatsUpdate={onStatsUpdate}
+          onAnomalyDetected={onAnomalyDetected}
+        />
+        
+        {/* Current Particle Count Display */}
+        <div className="absolute top-2 right-2 bg-black/50 text-white px-3 py-2 rounded-md text-sm">
+          Particles: {stats.positiveParticles + stats.negativeParticles + stats.neutralParticles}
+        </div>
+      </div>
       
       <div className="grid grid-cols-3 gap-4 mt-4">
         <SimulationStats stats={stats} />

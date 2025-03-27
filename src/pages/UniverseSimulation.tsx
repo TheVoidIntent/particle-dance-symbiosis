@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Helmet } from 'react-helmet';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -24,7 +23,14 @@ const initialStats: SimulationStats = {
   clusterCount: 0,
   averageClusterSize: 0,
   systemEntropy: 0,
-  intentFieldComplexity: 0
+  intentFieldComplexity: 0,
+  shannonEntropy: 0,
+  spatialEntropy: 0,
+  fieldOrderParameter: 0,
+  clusterLifetime: 0,
+  clusterEntropyDelta: 0,
+  informationDensity: 0,
+  kolmogorovComplexity: 0
 };
 
 const UniverseSimulation: React.FC = () => {

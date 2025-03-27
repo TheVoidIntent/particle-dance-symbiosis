@@ -3,37 +3,97 @@
   <!-- Background (transparent) -->
   <rect width="200" height="200" fill="transparent"/>
   
-  <!-- Central intent field -->
-  <circle cx="100" cy="100" r="30" fill="#6d28d9"/>
-  
-  <!-- Intent field fluctuations -->
-  <path d="M100,70 C70,40 40,50 20,30" stroke="#a78bfa" fill="none" stroke-width="3" stroke-linecap="round"/>
-  <path d="M100,70 C130,40 160,50 180,30" stroke="#8b5cf6" fill="none" stroke-width="3" stroke-linecap="round"/>
-  <path d="M100,130 C70,160 40,150 20,170" stroke="#7c3aed" fill="none" stroke-width="3" stroke-linecap="round"/>
-  <path d="M100,130 C130,160 160,150 180,170" stroke="#6d28d9" fill="none" stroke-width="3" stroke-linecap="round"/>
-  
-  <!-- Positive charge particles -->
-  <circle cx="30" cy="40" r="8" fill="#c4b5fd">
-    <animate attributeName="opacity" values="0.7;1;0.7" dur="3s" repeatCount="indefinite" />
-  </circle>
-  <circle cx="170" cy="40" r="8" fill="#c4b5fd">
-    <animate attributeName="opacity" values="0.7;1;0.7" dur="2.5s" repeatCount="indefinite" />
+  <!-- Central intent field (proto-universe) -->
+  <circle cx="100" cy="100" r="35" fill="#6d28d9">
+    <animate attributeName="r" values="33;37;33" dur="5s" repeatCount="indefinite" />
+    <animate attributeName="opacity" values="0.8;1;0.8" dur="5s" repeatCount="indefinite" />
   </circle>
   
-  <!-- Negative charge particles -->
-  <circle cx="30" cy="160" r="8" fill="#4c1d95">
-    <animate attributeName="opacity" values="0.7;1;0.7" dur="4s" repeatCount="indefinite" />
-  </circle>
-  <circle cx="170" cy="160" r="8" fill="#4c1d95">
-    <animate attributeName="opacity" values="0.7;1;0.7" dur="3.5s" repeatCount="indefinite" />
+  <!-- Intent field gradients and fluctuations -->
+  <defs>
+    <radialGradient id="intentGradient" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
+      <stop offset="10%" stop-color="#9333ea" stop-opacity="0.8"/>
+      <stop offset="90%" stop-color="#6d28d9" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  
+  <!-- Intent field aura -->
+  <circle cx="100" cy="100" r="60" fill="url(#intentGradient)">
+    <animate attributeName="r" values="55;65;55" dur="10s" repeatCount="indefinite" />
   </circle>
   
-  <!-- Neutral particles -->
-  <circle cx="60" cy="60" r="6" fill="#8b5cf6"/>
-  <circle cx="140" cy="60" r="6" fill="#8b5cf6"/>
-  <circle cx="60" cy="140" r="6" fill="#8b5cf6"/>
-  <circle cx="140" cy="140" r="6" fill="#8b5cf6"/>
+  <!-- Particle system -->
+  <g>
+    <!-- Positive charge particles (more interactive) -->
+    <circle cx="50" cy="50" r="10" fill="#c4b5fd">
+      <animate attributeName="cx" values="50;55;50" dur="7s" repeatCount="indefinite" />
+      <animate attributeName="cy" values="50;45;50" dur="7s" repeatCount="indefinite" />
+      <animate attributeName="opacity" values="0.7;1;0.7" dur="4s" repeatCount="indefinite" />
+    </circle>
+    <circle cx="150" cy="150" r="10" fill="#c4b5fd">
+      <animate attributeName="cx" values="150;145;150" dur="8s" repeatCount="indefinite" />
+      <animate attributeName="cy" values="150;155;150" dur="8s" repeatCount="indefinite" />
+      <animate attributeName="opacity" values="0.7;1;0.7" dur="5s" repeatCount="indefinite" />
+    </circle>
+    
+    <!-- Negative charge particles (less interactive) -->
+    <circle cx="150" cy="50" r="10" fill="#4c1d95">
+      <animate attributeName="cx" values="150;152;150" dur="12s" repeatCount="indefinite" />
+      <animate attributeName="cy" values="50;48;50" dur="12s" repeatCount="indefinite" />
+      <animate attributeName="opacity" values="0.7;0.9;0.7" dur="6s" repeatCount="indefinite" />
+    </circle>
+    <circle cx="50" cy="150" r="10" fill="#4c1d95">
+      <animate attributeName="cx" values="50;48;50" dur="11s" repeatCount="indefinite" />
+      <animate attributeName="cy" values="150;152;150" dur="11s" repeatCount="indefinite" />
+      <animate attributeName="opacity" values="0.7;0.9;0.7" dur="7s" repeatCount="indefinite" />
+    </circle>
+    
+    <!-- Neutral particles -->
+    <circle cx="100" cy="40" r="7" fill="#8b5cf6">
+      <animate attributeName="cy" values="40;38;40" dur="9s" repeatCount="indefinite" />
+      <animate attributeName="opacity" values="0.6;0.9;0.6" dur="5s" repeatCount="indefinite" />
+    </circle>
+    <circle cx="100" cy="160" r="7" fill="#8b5cf6">
+      <animate attributeName="cy" values="160;162;160" dur="9s" repeatCount="indefinite" />
+      <animate attributeName="opacity" values="0.6;0.9;0.6" dur="6s" repeatCount="indefinite" />
+    </circle>
+    <circle cx="40" cy="100" r="7" fill="#8b5cf6">
+      <animate attributeName="cx" values="40;38;40" dur="9s" repeatCount="indefinite" />
+      <animate attributeName="opacity" values="0.6;0.9;0.6" dur="7s" repeatCount="indefinite" />
+    </circle>
+    <circle cx="160" cy="100" r="7" fill="#8b5cf6">
+      <animate attributeName="cx" values="160;162;160" dur="9s" repeatCount="indefinite" />
+      <animate attributeName="opacity" values="0.6;0.9;0.6" dur="8s" repeatCount="indefinite" />
+    </circle>
+  </g>
+  
+  <!-- Connection lines representing intent to know/explore -->
+  <g stroke-width="1.5" stroke-linecap="round" opacity="0.5">
+    <line x1="100" y1="100" x2="50" y2="50" stroke="#a78bfa">
+      <animate attributeName="x2" values="50;55;50" dur="7s" repeatCount="indefinite" />
+      <animate attributeName="y2" values="50;45;50" dur="7s" repeatCount="indefinite" />
+      <animate attributeName="opacity" values="0.3;0.7;0.3" dur="7s" repeatCount="indefinite" />
+    </line>
+    <line x1="100" y1="100" x2="150" y2="150" stroke="#a78bfa">
+      <animate attributeName="x2" values="150;145;150" dur="8s" repeatCount="indefinite" />
+      <animate attributeName="y2" values="150;155;150" dur="8s" repeatCount="indefinite" />
+      <animate attributeName="opacity" values="0.3;0.7;0.3" dur="8s" repeatCount="indefinite" />
+    </line>
+    <line x1="100" y1="100" x2="150" y2="50" stroke="#4c1d95">
+      <animate attributeName="x2" values="150;152;150" dur="12s" repeatCount="indefinite" />
+      <animate attributeName="y2" values="50;48;50" dur="12s" repeatCount="indefinite" />
+      <animate attributeName="opacity" values="0.2;0.5;0.2" dur="10s" repeatCount="indefinite" />
+    </line>
+    <line x1="100" y1="100" x2="50" y2="150" stroke="#4c1d95">
+      <animate attributeName="x2" values="50;48;50" dur="11s" repeatCount="indefinite" />
+      <animate attributeName="y2" values="150;152;150" dur="11s" repeatCount="indefinite" />
+      <animate attributeName="opacity" values="0.2;0.5;0.2" dur="9s" repeatCount="indefinite" />
+    </line>
+  </g>
   
   <!-- Text -->
-  <text x="100" y="180" font-family="Arial, sans-serif" font-size="18" font-weight="bold" text-anchor="middle" fill="#8b5cf6">intentSim.org</text>
+  <text x="100" y="180" font-family="Arial, sans-serif" font-size="18" font-weight="bold" text-anchor="middle" fill="#8b5cf6">
+    intentSim.org
+    <animate attributeName="fill" values="#8b5cf6;#a78bfa;#8b5cf6" dur="5s" repeatCount="indefinite" />
+  </text>
 </svg>

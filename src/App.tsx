@@ -8,6 +8,7 @@ import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import HomePage from "./pages/HomePage";
 import UniverseSimulation from "./pages/UniverseSimulation";
+import UniverseSimulator from "./pages/UniverseSimulator";
 import DataAnalysis from "./pages/DataAnalysis";
 import Deployment from "./pages/Deployment";
 import License from "./pages/License";
@@ -41,6 +42,7 @@ const App: React.FC = () => {
                   <Route path="/" element={<HomePage />} />
                   <Route path="/index" element={<Navigate to="/" replace />} />
                   <Route path="/simulation" element={<UniverseSimulation />} />
+                  <Route path="/simulator" element={<UniverseSimulator />} />
                   <Route path="/analysis" element={<DataAnalysis />} />
                   <Route path="/deployment" element={<Deployment />} />
                   <Route path="/documentation" element={<Documentation />} />

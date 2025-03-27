@@ -1,77 +1,97 @@
-import React, { useState, useEffect } from 'react';
+
+import React, { useState } from "react";
+import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, DownloadCloud, FileText, BookOpen } from 'lucide-react';
+import { Menu, X, Github, Atom } from "lucide-react";
 
 const Navbar: React.FC = () => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const location = useLocation();
   
-  useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 20);
-    };
-    
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-  
-  const links = [
-    { name: 'Home', path: '/' },
-    { name: 'Universe Simulation', path: '/simulation' },
-    { name: 'Data Analysis', path: '/analysis' },
-    { name: 'Documentation', path: '/documentation' },
-    { name: 'Deployment', path: '/deployment' },
-    { name: 'License', path: '/license' },
-  ];
+  const isActive = (path: string) => {
+    return location.pathname === path;
+  };
 
   return (
-    <nav className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${
-      scrolled ? 'bg-gray-900/90 backdrop-blur-md shadow-md' : 'bg-transparent'
-    }`}>
+    <nav className="bg-gray-900 border-b border-gray-800 sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16 md:h-20">
+        <div className="flex justify-between h-16">
           <div className="flex items-center">
-            <Link to="/" className="flex items-center">
-              <img src="/logo.svg" alt="IntentSim Logo" className="h-10 w-auto mr-2" />
-              <span className="text-xl font-semibold bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-purple-400">
-                intentSim.org
-              </span>
-              <span className="ml-2 text-xs text-gray-400">by TheVoidIntent LLC</span>
+            <Link to="/" className="flex-shrink-0 flex items-center">
+              <Atom className="h-8 w-8 text-indigo-400" />
+              <span className="ml-2 text-xl font-bold text-white">IntentSim</span>
             </Link>
-          </div>
-
-          <div className="hidden md:block">
-            <div className="flex items-center space-x-4">
-              {links.map((link) => (
-                <Link
-                  key={link.name}
-                  to={link.path}
-                  className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                    location.pathname === link.path
-                      ? 'text-white bg-indigo-600/20'
-                      : 'text-gray-300 hover:text-white hover:bg-indigo-600/10'
-                  }`}
-                >
-                  {link.name}
-                </Link>
-              ))}
-              <Button variant="default" size="sm" className="ml-4 bg-indigo-600 hover:bg-indigo-700">
-                <a href="https://github.com/TheVoidInent" target="_blank" rel="noopener noreferrer">
-                  GitHub
-                </a>
-              </Button>
+            <div className="hidden md:ml-8 md:flex md:space-x-4">
+              <Link
+                to="/"
+                className={`px-3 py-2 rounded-md text-sm font-medium ${
+                  isActive("/")
+                    ? "bg-gray-800 text-white"
+                    : "text-gray-300 hover:bg-gray-700 hover:text-white"
+                }`}
+              >
+                Home
+              </Link>
+              <Link
+                to="/simulation"
+                className={`px-3 py-2 rounded-md text-sm font-medium ${
+                  isActive("/simulation")
+                    ? "bg-gray-800 text-white"
+                    : "text-gray-300 hover:bg-gray-700 hover:text-white"
+                }`}
+              >
+                Simulation
+              </Link>
+              <Link
+                to="/simulator"
+                className={`px-3 py-2 rounded-md text-sm font-medium ${
+                  isActive("/simulator")
+                    ? "bg-gray-800 text-white"
+                    : "text-gray-300 hover:bg-gray-700 hover:text-white"
+                }`}
+              >
+                Simulator
+              </Link>
+              <Link
+                to="/analysis"
+                className={`px-3 py-2 rounded-md text-sm font-medium ${
+                  isActive("/analysis")
+                    ? "bg-gray-800 text-white"
+                    : "text-gray-300 hover:bg-gray-700 hover:text-white"
+                }`}
+              >
+                Analysis
+              </Link>
+              <Link
+                to="/documentation"
+                className={`px-3 py-2 rounded-md text-sm font-medium ${
+                  isActive("/documentation")
+                    ? "bg-gray-800 text-white"
+                    : "text-gray-300 hover:bg-gray-700 hover:text-white"
+                }`}
+              >
+                Documentation
+              </Link>
             </div>
           </div>
-
-          <div className="flex md:hidden">
+          <div className="hidden md:flex items-center">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-gray-300 hover:bg-gray-700 hover:text-white"
+              onClick={() => window.open("https://github.com/yourusername/intent-universe", "_blank")}
+            >
+              <Github className="h-5 w-5 mr-1" />
+              GitHub
+            </Button>
+          </div>
+          <div className="flex items-center md:hidden">
             <button
-              className="inline-flex items-center justify-center p-2 rounded-md text-gray-300 hover:text-white hover:bg-gray-800 focus:outline-none"
-              onClick={() => setIsOpen(!isOpen)}
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              className="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-white hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"
             >
               <span className="sr-only">Open main menu</span>
-              {isOpen ? (
+              {isMenuOpen ? (
                 <X className="block h-6 w-6" aria-hidden="true" />
               ) : (
                 <Menu className="block h-6 w-6" aria-hidden="true" />
@@ -82,33 +102,76 @@ const Navbar: React.FC = () => {
       </div>
 
       {/* Mobile menu */}
-      <div className={`md:hidden ${isOpen ? 'block' : 'hidden'}`}>
-        <div className="px-2 pt-2 pb-3 space-y-1 bg-gray-900/95 backdrop-blur-md shadow-lg">
-          {links.map((link) => (
+      {isMenuOpen && (
+        <div className="md:hidden">
+          <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
             <Link
-              key={link.name}
-              to={link.path}
+              to="/"
               className={`block px-3 py-2 rounded-md text-base font-medium ${
-                location.pathname === link.path
-                  ? 'text-white bg-indigo-600/20'
-                  : 'text-gray-300 hover:text-white hover:bg-indigo-600/10'
+                isActive("/")
+                  ? "bg-gray-800 text-white"
+                  : "text-gray-300 hover:bg-gray-700 hover:text-white"
               }`}
-              onClick={() => setIsOpen(false)}
+              onClick={() => setIsMenuOpen(false)}
             >
-              {link.name}
+              Home
             </Link>
-          ))}
-          <a
-            href="https://github.com/TheVoidInent"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="block px-3 py-2 rounded-md text-base font-medium text-white bg-indigo-600 hover:bg-indigo-700 mt-2"
-            onClick={() => setIsOpen(false)}
-          >
-            GitHub
-          </a>
+            <Link
+              to="/simulation"
+              className={`block px-3 py-2 rounded-md text-base font-medium ${
+                isActive("/simulation")
+                  ? "bg-gray-800 text-white"
+                  : "text-gray-300 hover:bg-gray-700 hover:text-white"
+              }`}
+              onClick={() => setIsMenuOpen(false)}
+            >
+              Simulation
+            </Link>
+            <Link
+              to="/simulator"
+              className={`block px-3 py-2 rounded-md text-base font-medium ${
+                isActive("/simulator")
+                  ? "bg-gray-800 text-white"
+                  : "text-gray-300 hover:bg-gray-700 hover:text-white"
+              }`}
+              onClick={() => setIsMenuOpen(false)}
+            >
+              Simulator
+            </Link>
+            <Link
+              to="/analysis"
+              className={`block px-3 py-2 rounded-md text-base font-medium ${
+                isActive("/analysis")
+                  ? "bg-gray-800 text-white"
+                  : "text-gray-300 hover:bg-gray-700 hover:text-white"
+              }`}
+              onClick={() => setIsMenuOpen(false)}
+            >
+              Analysis
+            </Link>
+            <Link
+              to="/documentation"
+              className={`block px-3 py-2 rounded-md text-base font-medium ${
+                isActive("/documentation")
+                  ? "bg-gray-800 text-white"
+                  : "text-gray-300 hover:bg-gray-700 hover:text-white"
+              }`}
+              onClick={() => setIsMenuOpen(false)}
+            >
+              Documentation
+            </Link>
+            <a
+              href="https://github.com/yourusername/intent-universe"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:bg-gray-700 hover:text-white"
+              onClick={() => setIsMenuOpen(false)}
+            >
+              GitHub
+            </a>
+          </div>
         </div>
-      </div>
+      )}
     </nav>
   );
 };

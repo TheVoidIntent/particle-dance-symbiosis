@@ -46,6 +46,19 @@
     </circle>
   </g>
   
+  <!-- Lowercase "i" in the center -->
+  <g transform="translate(16, 14) scale(0.4)">
+    <!-- Dot of the i -->
+    <circle cx="0" cy="-5" r="2" fill="#a78bfa">
+      <animate attributeName="opacity" values="0.7;1;0.7" dur="3s" repeatCount="indefinite" />
+    </circle>
+    
+    <!-- Stem of the i -->
+    <rect x="-1.5" y="-3" width="3" height="10" rx="1.5" fill="#a78bfa">
+      <animate attributeName="opacity" values="0.8;1;0.8" dur="3s" repeatCount="indefinite" />
+    </rect>
+  </g>
+  
   <!-- Connection lines representing intent to know/explore -->
   <g stroke-width="0.5" stroke-linecap="round" opacity="0.6">
     <line x1="16" y1="16" x2="8" y2="8" stroke="#a78bfa">

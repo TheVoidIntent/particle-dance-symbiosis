@@ -91,6 +91,21 @@
     </line>
   </g>
   
+  <!-- Lowercase "i" for intentSim -->
+  <g transform="translate(85, 180)">
+    <!-- Dot of the i -->
+    <circle cx="0" cy="-25" r="3" fill="#a78bfa">
+      <animate attributeName="opacity" values="0.7;1;0.7" dur="3s" repeatCount="indefinite" />
+      <animate attributeName="r" values="3;3.5;3" dur="4s" repeatCount="indefinite" />
+    </circle>
+    
+    <!-- Stem of the i -->
+    <rect x="-2" y="-22" width="4" height="16" rx="2" fill="#a78bfa">
+      <animate attributeName="height" values="16;15;16" dur="4s" repeatCount="indefinite" />
+      <animate attributeName="opacity" values="0.8;1;0.8" dur="3s" repeatCount="indefinite" />
+    </rect>
+  </g>
+  
   <!-- Text -->
   <text x="100" y="180" font-family="Arial, sans-serif" font-size="18" font-weight="bold" text-anchor="middle" fill="#8b5cf6">
     intentSim.org

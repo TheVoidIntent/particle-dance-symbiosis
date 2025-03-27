@@ -11,8 +11,31 @@ export interface SimulationConfig {
   probabilisticIntent?: boolean;
 }
 
+export interface Particle {
+  id: string;
+  x: number;
+  y: number;
+  z: number;
+  vx: number;
+  vy: number;
+  vz: number;
+  radius: number;
+  mass: number;
+  charge: 'positive' | 'negative' | 'neutral';
+  type: 'standard' | 'high-energy' | 'quantum' | 'composite' | 'adaptive';
+  color: string;
+  knowledge: number;
+  complexity: number;
+  intent: number;
+  age: number;
+  interactions: number;
+  lastInteraction: number;
+  isPostInflation?: boolean;
+  scale?: number;
+}
+
 export interface SimulationState {
-  particles: any[];
+  particles: Particle[];
   intentField: number[][][];
   dimensions: { width: number; height: number };
   originalDimensions: { width: number; height: number };

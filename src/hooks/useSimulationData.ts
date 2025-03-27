@@ -12,7 +12,7 @@ import {
   analyzeParticleClusters, 
   calculateSystemEntropy 
 } from '@/utils/particleUtils';
-import { analyzeIntentField } from '@/utils/fieldUtils';
+import { analyzeIntentField } from '@/utils/fields';
 
 export interface SimulationStats {
   positiveParticles: number;
@@ -107,6 +107,10 @@ export function useSimulationData(
     
     // Field analysis
     const fieldAnalysis = analyzeIntentField(intentField);
+    
+    // Use the appropriate field property based on which analyzeIntentField implementation is used
+    // This fixes the TypeScript error by using property that actually exists
+    const intentFieldComplexity = fieldAnalysis.gradientStrength || 0;
 
     // Create stats object with all metrics
     const stats: SimulationStats = {
@@ -124,7 +128,7 @@ export function useSimulationData(
       clusterCount: clusterAnalysis.clusterCount,
       averageClusterSize: clusterAnalysis.averageClusterSize,
       systemEntropy: entropyAnalysis.systemEntropy,
-      intentFieldComplexity: fieldAnalysis.patternComplexity,
+      intentFieldComplexity,
       // New enhanced metrics
       shannonEntropy: entropyAnalysis.shannonEntropy,
       spatialEntropy: entropyAnalysis.spatialEntropy,

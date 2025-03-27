@@ -9,7 +9,7 @@ const Footer: React.FC = () => {
       <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-10 md:gap-6">
         <div className="space-y-4">
           <div className="flex items-center">
-            <Atom className="h-6 w-6 text-indigo-400 mr-2" />
+            <img src="/logo.svg" alt="IntentSim Logo" className="h-8 w-auto mr-2" />
             <span className="text-xl font-semibold bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-purple-400">
               intentSim.org
             </span>

@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Helmet } from "react-helmet";
 import { Link } from "react-router-dom";
@@ -28,7 +27,7 @@ const HomePage: React.FC = () => {
         <section className="relative pt-20 md:pt-36 px-6 md:px-12 max-w-7xl mx-auto">
           <div className="flex flex-col items-center text-center">
             <div className="mb-8">
-              <img src="/logo.svg" alt="IntentSim Logo" className="h-32 w-32 mx-auto" />
+              <img src="/logo.svg" alt="IntentSim Logo" className="h-40 w-auto mx-auto" />
             </div>
             
             <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-6 bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400">

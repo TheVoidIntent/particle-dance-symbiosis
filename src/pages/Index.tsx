@@ -25,7 +25,7 @@ const Index = () => {
 
   const handleGoToUploader = () => {
     // Find the tab trigger element and cast it to HTMLElement to use click()
-    const uploadTab = document.querySelector('[data-state="inactive"][value="upload"]') as HTMLElement;
+    const uploadTab = document.querySelector('[data-state="inactive"][value="upload"]') as HTMLElement | null;
     if (uploadTab) {
       uploadTab.click();
     }
@@ -157,6 +157,12 @@ const Index = () => {
       <Features />
       <Testimonials />
       <ContactSection />
+      
+      {/* Footer with copyright - no navigation links that send back to top */}
+      <footer className="py-6 px-4 bg-gray-900 text-center text-gray-400 text-sm">
+        <p>© 2025 TheVoidIntent LLC. All rights reserved.</p>
+        <p>Licensed for research purposes only.</p>
+      </footer>
     </div>
   );
 };

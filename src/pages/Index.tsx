@@ -12,9 +12,10 @@ import AudioFileUploader from '@/components/AudioFileUploader';
 import DiscordIntegration from '@/components/DiscordIntegration';
 import { toast } from 'sonner';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { FileAudio, InfoIcon, Upload } from 'lucide-react';
+import { FileAudio, InfoIcon, Upload, BookOpen, BookText } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
+import Footer from '@/components/Footer';
 
 const Index = () => {
   const handleDiscordConnect = (discordId: string) => {
@@ -39,6 +40,28 @@ const Index = () => {
       </Helmet>
       
       <Hero />
+      
+      {/* Notebook Integration Banner */}
+      <section className="py-8 px-4 bg-gradient-to-r from-indigo-900/40 to-purple-900/40">
+        <div className="max-w-5xl mx-auto text-center">
+          <div className="inline-flex items-center gap-2 bg-indigo-900/50 px-3 py-1 rounded-full text-sm text-indigo-200 mb-4">
+            <BookOpen className="h-4 w-4" />
+            <span>New Feature</span>
+          </div>
+          <h2 className="text-2xl md:text-3xl font-bold mb-3 text-white">
+            Interactive Intent Notebook
+          </h2>
+          <p className="text-indigo-200 max-w-2xl mx-auto mb-6">
+            Explore our research notes with audio annotations. Learn about intent field theory through guided discussions and simulations.
+          </p>
+          <Link to="/notebook">
+            <Button variant="default" size="lg" className="bg-indigo-600 hover:bg-indigo-700 font-medium">
+              Open Notebook
+              <BookOpen className="ml-2 h-4 w-4" />
+            </Button>
+          </Link>
+        </div>
+      </section>
       
       {/* Audio Resource Management Section */}
       <section className="py-12 px-4 bg-gradient-to-b from-gray-900 to-gray-800">
@@ -158,11 +181,7 @@ const Index = () => {
       <Testimonials />
       <ContactSection />
       
-      {/* Footer with copyright - no navigation links that send back to top */}
-      <footer className="py-6 px-4 bg-gray-900 text-center text-gray-400 text-sm">
-        <p>© 2025 TheVoidIntent LLC. All rights reserved.</p>
-        <p>Licensed for research purposes only.</p>
-      </footer>
+      <Footer />
     </div>
   );
 };

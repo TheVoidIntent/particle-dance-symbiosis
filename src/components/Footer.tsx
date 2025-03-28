@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Atom, Github, Mail, Twitter, FileText } from 'lucide-react';
+import { Github, Mail, Twitter, FileText } from 'lucide-react';
 
 const Footer: React.FC = () => {
   return (
@@ -38,6 +38,7 @@ const Footer: React.FC = () => {
           <ul className="space-y-2 text-gray-400">
             <li><a href="#" className="hover:text-white transition-colors">Team</a></li>
             <li><a href="#" className="hover:text-white transition-colors">Contact</a></li>
+            <li><Link to="/notebook" className="hover:text-white transition-colors">Notebook</Link></li>
             <li><a href="#" className="hover:text-white transition-colors">Privacy</a></li>
             <li><a href="#" className="hover:text-white transition-colors">Terms</a></li>
           </ul>

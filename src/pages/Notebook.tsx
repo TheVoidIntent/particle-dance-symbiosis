@@ -4,7 +4,7 @@ import { Helmet } from 'react-helmet';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Pause, Play, FileText, BookOpen, HelpCircle, Timeline, Plus, ThumbsUp, ThumbsDown, Share, MoreVertical, Info } from "lucide-react";
+import { Pause, Play, FileText, BookOpen, HelpCircle, BarChart, Plus, ThumbsUp, ThumbsDown, Share, MoreVertical, Info } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import Footer from "@/components/Footer";
 import { toast } from "sonner";
@@ -120,7 +120,7 @@ const Notebook: React.FC = () => {
                       FAQ
                     </Button>
                     <Button variant="outline" className="flex items-center justify-center gap-2">
-                      <Timeline className="h-4 w-4" />
+                      <BarChart className="h-4 w-4" />
                       Timeline
                     </Button>
                   </div>

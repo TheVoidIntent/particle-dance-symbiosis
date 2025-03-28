@@ -134,7 +134,7 @@ export function useParticleSimulation(
           type: anomaly.type,
           timestamp: anomaly.timestamp,
           description: anomaly.description,
-          particlesInvolved: anomaly.particlesInvolved,
+          affectedParticles: anomaly.affectedParticles,
           severity: anomaly.severity
         });
       }

@@ -23,6 +23,14 @@ const Index = () => {
     });
   };
 
+  const handleGoToUploader = () => {
+    // Find the tab trigger element and cast it to HTMLElement to use click()
+    const uploadTab = document.querySelector('[data-state="inactive"][value="upload"]') as HTMLElement;
+    if (uploadTab) {
+      uploadTab.click();
+    }
+  };
+
   return (
     <div className="bg-gray-50 dark:bg-gray-950 min-h-screen">
       <Helmet>
@@ -67,7 +75,7 @@ const Index = () => {
                       Use the uploader in the "Upload Audio Files" tab to directly add MP3 files through your browser.
                       This is the easiest method and allows you to manage all files through this interface.
                     </p>
-                    <Button onClick={() => document.querySelector('[data-state="inactive"][value="upload"]')?.click()}>
+                    <Button onClick={handleGoToUploader}>
                       <Upload className="mr-2 h-4 w-4" />
                       Go to File Uploader
                     </Button>

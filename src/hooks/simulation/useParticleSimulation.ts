@@ -13,7 +13,8 @@ export function useParticleSimulation(
   config: SimulationConfig,
   running: boolean,
   onAnomalyDetected?: (anomaly: AnomalyEvent) => void,
-  onInflationDetected?: (event: InflationEvent) => void
+  onInflationDetected?: (event: InflationEvent) => void,
+  onDiscordEvent?: (eventType: string, data: any) => void
 ) {
   // Initialize state refs
   const {
@@ -51,7 +52,18 @@ export function useParticleSimulation(
   // Update particlesRef with the latest particles
   useEffect(() => {
     particlesRef.current = particles;
-  }, [particles, particlesRef]);
+    
+    // If Discord integration is enabled, send event when particles change significantly
+    if (onDiscordEvent && particles.length % 5 === 0 && particles.length > 0) {
+      onDiscordEvent('particle_update', {
+        count: particles.length,
+        positiveCharge: particles.filter(p => p.charge === 'positive').length,
+        negativeCharge: particles.filter(p => p.charge === 'negative').length,
+        neutralCharge: particles.filter(p => p.charge === 'neutral').length,
+        averageIntent: particles.reduce((sum, p) => sum + p.intent, 0) / particles.length
+      });
+    }
+  }, [particles, particlesRef, onDiscordEvent]);
 
   // Handle inflation
   const { checkInflationConditions, resetInflation } = useInflationHandler(
@@ -73,7 +85,22 @@ export function useParticleSimulation(
         }
       }
     },
-    onInflationDetected
+    (event) => {
+      // Call the original callback
+      if (onInflationDetected) {
+        onInflationDetected(event);
+      }
+      
+      // Send to Discord if integration is enabled
+      if (onDiscordEvent) {
+        onDiscordEvent('inflation_event', {
+          timestamp: event.timestamp,
+          particlesBeforeInflation: event.particlesBeforeInflation,
+          particlesAfterInflation: event.particlesAfterInflation,
+          intentInformation: event.intentInformation
+        });
+      }
+    }
   );
 
   // Update particles
@@ -95,7 +122,23 @@ export function useParticleSimulation(
     isInitialized,
     particlesRef,
     frameCountRef,
-    onAnomalyDetected
+    (anomaly) => {
+      // Call the original callback
+      if (onAnomalyDetected) {
+        onAnomalyDetected(anomaly);
+      }
+      
+      // Send to Discord if integration is enabled
+      if (onDiscordEvent) {
+        onDiscordEvent('anomaly_detected', {
+          type: anomaly.type,
+          timestamp: anomaly.timestamp,
+          description: anomaly.description,
+          particlesInvolved: anomaly.particlesInvolved,
+          severity: anomaly.severity
+        });
+      }
+    }
   );
 
   // Gradually return to original dimensions if inflated (after 5 seconds)
@@ -126,7 +169,7 @@ export function useParticleSimulation(
     inflationTimeRef,
     initializeSimulation,
     updateParticles,
-    createNewParticles,  // Expose this function
+    createNewParticles,
     detectSimulationAnomalies
   };
 }

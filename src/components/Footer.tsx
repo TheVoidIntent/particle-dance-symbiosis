@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Github, Mail, Twitter, FileText, Instagram } from 'lucide-react';
+import { Github, Mail, Twitter, FileText, Instagram, Facebook } from 'lucide-react';
 
 const Footer: React.FC = () => {
   return (
@@ -20,6 +20,9 @@ const Footer: React.FC = () => {
           <div className="flex space-x-4 pt-2">
             <a href="https://twitter.com/intentSim" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors">
               <Twitter className="h-5 w-5" />
+            </a>
+            <a href="https://www.facebook.com/profile.php?id=61574833319107" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors">
+              <Facebook className="h-5 w-5" />
             </a>
             <a href="https://instagram.com/TheVoidIntent" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors">
               <Instagram className="h-5 w-5" />

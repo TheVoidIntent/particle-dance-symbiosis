@@ -15,6 +15,27 @@ import { Toaster } from './components/ui/toaster';
 import { Toaster as SonnerToaster } from "sonner";
 
 function App() {
+  // Remove any Lovable badge that might be added automatically
+  React.useEffect(() => {
+    // Look for any elements with Lovable-related classes and remove them
+    const removeBadge = () => {
+      const badges = document.querySelectorAll('[class*="lovable"], [id*="lovable"], [class*="gpte"], [id*="gpte"]');
+      badges.forEach(badge => {
+        if (badge.parentNode) {
+          badge.parentNode.removeChild(badge);
+        }
+      });
+    };
+    
+    // Run on first load
+    removeBadge();
+    
+    // Also set an interval to catch any dynamically added badges
+    const interval = setInterval(removeBadge, 1000);
+    
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <Router>
       <div className="min-h-screen">

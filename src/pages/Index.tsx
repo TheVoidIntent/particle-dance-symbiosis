@@ -2,35 +2,12 @@
 import React from 'react';
 import { Helmet } from 'react-helmet';
 import { Link } from 'react-router-dom';
-import Features from '@/components/Features';
-import Testimonials from '@/components/Testimonials';
-import ContactSection from '@/components/ContactSection';
-import NotebookLmEntries from '@/components/NotebookLmEntries';
-import SharedAudioLibrary from '@/components/SharedAudioLibrary';
-import AudioFileUploader from '@/components/AudioFileUploader';
-import DiscordIntegration from '@/components/DiscordIntegration';
-import { toast } from 'sonner';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { FileAudio, InfoIcon, Upload, BookOpen, BookText, ArrowRight, Brain, Share2, Zap } from 'lucide-react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ArrowRight, BookOpen, Brain, Share2, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Footer from '@/components/Footer';
+import SimulationPreview from '@/components/simulation/SimulationPreview';
 
 const Index = () => {
-  const handleDiscordConnect = (discordId: string) => {
-    toast.success(`Connected to Discord as @${discordId}`, {
-      description: "You'll now receive simulation events in Discord."
-    });
-  };
-
-  const handleGoToUploader = () => {
-    // Find the tab trigger element and cast it to HTMLElement to use click()
-    const uploadTab = document.querySelector('[data-state="inactive"][value="upload"]') as HTMLElement | null;
-    if (uploadTab) {
-      uploadTab.click();
-    }
-  };
-
   return (
     <div className="bg-gray-50 dark:bg-gray-950 min-h-screen">
       <Helmet>
@@ -61,31 +38,12 @@ const Index = () => {
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </Link>
-            <Link to="/analysis">
-              <Button size="lg" variant="outline" className="border-gray-600 text-gray-300 hover:bg-gray-800 px-6 py-6 h-auto">
-                View Data Analysis
-              </Button>
-            </Link>
           </div>
         </div>
         
-        {/* Cosmic Universe Image */}
-        <div className="flex justify-center my-16 animate-float">
-          <div className="relative group">
-            <div className="absolute -inset-0.5 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-3xl blur opacity-75 group-hover:opacity-100 transition duration-1000 group-hover:duration-200 animate-pulse"></div>
-            <div className="relative">
-              <img 
-                src="/lovable-uploads/be1b6633-26f7-4b05-83a6-6a1c4d0b90ad.png" 
-                alt="Cosmic Universe Diagram" 
-                className="rounded-2xl shadow-2xl max-w-full md:max-w-xl mx-auto transform transition-transform duration-500 hover:scale-105"
-              />
-              <div className="absolute inset-0 rounded-2xl bg-black bg-opacity-40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                <p className="text-white text-lg font-medium px-6 text-center">
-                  Universe Intent Model: The fundamental structure of particle creation from intent field fluctuations
-                </p>
-              </div>
-            </div>
-          </div>
+        {/* Simulation Preview */}
+        <div className="my-16">
+          <SimulationPreview />
         </div>
         
         {/* Feature highlights */}
@@ -116,128 +74,34 @@ const Index = () => {
         </div>
       </section>
       
-      {/* Notebook Integration Banner */}
-      <section className="py-8 px-4 bg-gradient-to-r from-indigo-900/40 to-purple-900/40">
-        <div className="max-w-5xl mx-auto text-center">
-          <div className="inline-flex items-center gap-2 bg-indigo-900/50 px-3 py-1 rounded-full text-sm text-indigo-200 mb-4">
-            <BookOpen className="h-4 w-4" />
-            <span>New Feature</span>
-          </div>
-          <h2 className="text-2xl md:text-3xl font-bold mb-3 text-white">
-            Interactive Intent Notebook
-          </h2>
-          <p className="text-indigo-200 max-w-2xl mx-auto mb-6">
-            Explore our research notes with audio annotations. Learn about intent field theory through guided discussions and simulations.
-          </p>
-          <Link to="/notebook">
-            <Button variant="default" size="lg" className="bg-indigo-600 hover:bg-indigo-700 font-medium">
-              Open Notebook
-              <BookOpen className="ml-2 h-4 w-4" />
-            </Button>
-          </Link>
-        </div>
-      </section>
-      
-      {/* Audio Resource Management Section */}
+      {/* About the Simulation */}
       <section className="py-12 px-4 bg-gradient-to-b from-gray-900 to-gray-800">
         <div className="max-w-5xl mx-auto">
           <h2 className="text-3xl font-bold text-center mb-8 bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-purple-400">
-            Audio Resource Management
+            About the Simulation
           </h2>
           
-          <Tabs defaultValue="upload" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 mb-6">
-              <TabsTrigger value="upload" className="text-md">Upload Audio Files</TabsTrigger>
-              <TabsTrigger value="instructions" className="text-md">How To Add Files</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="upload" className="space-y-4">
-              <AudioFileUploader />
-            </TabsContent>
-            
-            <TabsContent value="instructions">
-              <Card className="border border-indigo-800/50 bg-gray-800/50">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <FileAudio className="h-5 w-5 text-indigo-400" />
-                    Adding Audio Files for Visitors
-                  </CardTitle>
-                  <CardDescription>
-                    There are two ways to add audio files to the IntentSim platform
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div>
-                    <h3 className="text-lg font-medium mb-2 text-white">Option 1: Upload Through Browser</h3>
-                    <p className="text-gray-300 mb-4">
-                      Use the uploader in the "Upload Audio Files" tab to directly add MP3 files through your browser.
-                      This is the easiest method and allows you to manage all files through this interface.
-                    </p>
-                    <Button onClick={handleGoToUploader}>
-                      <Upload className="mr-2 h-4 w-4" />
-                      Go to File Uploader
-                    </Button>
-                  </div>
-                  
-                  <div className="border-t border-gray-700 pt-6">
-                    <h3 className="text-lg font-medium mb-2 text-white">Option 2: Place Files in Public Directory</h3>
-                    <p className="text-gray-300 mb-2">
-                      Place the following MP3 files in the <code className="bg-gray-900 px-1 py-0.5 rounded">public/audio/</code> directory:
-                    </p>
-                    <ul className="list-disc pl-6 space-y-1 text-gray-300">
-                      <li><code className="bg-gray-900 px-1 py-0.5 rounded">introduction-to-intent-theory.mp3</code></li>
-                      <li><code className="bg-gray-900 px-1 py-0.5 rounded">particle-interaction-dynamics.mp3</code></li>
-                      <li><code className="bg-gray-900 px-1 py-0.5 rounded">emergent-complexity-patterns.mp3</code></li>
-                      <li><code className="bg-gray-900 px-1 py-0.5 rounded">charge-knowledge-transfer.mp3</code></li>
-                      <li><code className="bg-gray-900 px-1 py-0.5 rounded">simulation-parameters-explained.mp3</code></li>
-                    </ul>
-                    <p className="text-gray-300 mt-4">
-                      These files will automatically be served to visitors through the Audio Library component.
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
-        </div>
-      </section>
-      
-      {/* Add Discord Integration section */}
-      <section className="py-12 px-4 bg-gradient-to-b from-gray-950 to-gray-900">
-        <div className="max-w-5xl mx-auto">
-          <h2 className="text-3xl font-bold text-center mb-8 bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600">
-            Connect & Share
-          </h2>
-          <div className="grid md:grid-cols-2 gap-8">
-            <DiscordIntegration onConnect={handleDiscordConnect} />
-            <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-xl p-6">
-              <h3 className="text-xl font-semibold mb-4 text-white">Why Connect?</h3>
-              <ul className="space-y-3">
-                <li className="flex items-start">
-                  <span className="inline-flex items-center justify-center bg-indigo-900/40 text-indigo-400 rounded-full h-6 w-6 mr-3 text-xs mt-0.5">1</span>
-                  <div>
-                    <span className="block font-medium text-white mb-1">Real-time Notifications</span>
-                    <span className="text-sm text-gray-400">Receive alerts about inflation events, anomalies, and discoveries directly in Discord.</span>
-                  </div>
-                </li>
-                <li className="flex items-start">
-                  <span className="inline-flex items-center justify-center bg-indigo-900/40 text-indigo-400 rounded-full h-6 w-6 mr-3 text-xs mt-0.5">2</span>
-                  <div>
-                    <span className="block font-medium text-white mb-1">Share Discoveries</span>
-                    <span className="text-sm text-gray-400">Export your simulation findings and share them with the IntentSim community.</span>
-                  </div>
-                </li>
-                <li className="flex items-start">
-                  <span className="inline-flex items-center justify-center bg-indigo-900/40 text-indigo-400 rounded-full h-6 w-6 mr-3 text-xs mt-0.5">3</span>
-                  <div>
-                    <span className="block font-medium text-white mb-1">Join The Conversation</span>
-                    <span className="text-sm text-gray-400">Participate in discussions about intent theory and quantum mechanics with like-minded researchers.</span>
-                  </div>
-                </li>
-              </ul>
-              <div className="mt-6 p-3 bg-black/30 rounded-lg border border-gray-700">
-                <p className="text-xs text-gray-400 italic">
-                  "Breaking the Quantum!" — Join our community of over 500 researchers exploring the Information-Intent Nexus theory.
+          <div className="mt-8 max-w-4xl mx-auto bg-gray-800/50 border border-gray-700 rounded-lg p-6">
+            <p className="text-gray-300 mb-4">
+              This simulation explores the emergence of particles from fluctuations in an intent field - a theoretical construct representing the universe's inherent drive to know itself.
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+              <div className="bg-gray-700/50 p-3 rounded-md">
+                <h3 className="font-medium text-indigo-400 mb-1">Positive Charge</h3>
+                <p className="text-gray-300">
+                  Particles with positive charge have a higher tendency to interact and exchange information, representing the "inquisitive" aspect of the intent.
+                </p>
+              </div>
+              <div className="bg-gray-700/50 p-3 rounded-md">
+                <h3 className="font-medium text-purple-400 mb-1">Negative Charge</h3>
+                <p className="text-gray-300">
+                  Particles with negative charge are less inclined to interact, representing the "withdrawn" aspect of the intent field.
+                </p>
+              </div>
+              <div className="bg-gray-700/50 p-3 rounded-md">
+                <h3 className="font-medium text-green-400 mb-1">Neutral Charge</h3>
+                <p className="text-gray-300">
+                  Neutral particles have moderate interaction behaviors, balancing between exploration and preservation of information.
                 </p>
               </div>
             </div>
@@ -245,16 +109,41 @@ const Index = () => {
         </div>
       </section>
       
-      {/* Add Notebook LM Entries component */}
-      <section className="py-12 px-4">
-        <div className="max-w-5xl mx-auto">
-          <NotebookLmEntries />
+      {/* Social Links */}
+      <section className="py-12 px-4 bg-gray-900">
+        <div className="max-w-4xl mx-auto text-center">
+          <h2 className="text-2xl font-bold mb-6 text-white">Connect With Us</h2>
+          <div className="flex justify-center space-x-6">
+            <a href="https://facebook.com/intentuniverse" target="_blank" rel="noopener noreferrer" className="p-3 bg-blue-600 rounded-full hover:bg-blue-700 transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-white">
+                <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path>
+              </svg>
+            </a>
+            <a href="https://instagram.com/thevoidintent" target="_blank" rel="noopener noreferrer" className="p-3 bg-pink-600 rounded-full hover:bg-pink-700 transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-white">
+                <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+                <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+                <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+              </svg>
+            </a>
+            <a href="https://threads.net/@thevoidintent" target="_blank" rel="noopener noreferrer" className="p-3 bg-gray-700 rounded-full hover:bg-gray-600 transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" className="text-white">
+                <path d="M17.7 16.5c-.6.9-1.4 1.5-2.2 1.5-1.3 0-1.7-1.2-1.7-3.3v-5.2h4.3c.3 0 .5-.2.5-.5V6.5c0-.3-.2-.5-.5-.5h-4.3V1.6c0-.2-.1-.3-.3-.3h-3c-.2 0-.3.1-.3.3V6H7.6c-.3 0-.5.2-.5.5v2.5c0 .3.2.5.5.5h2.6v5.6c0 4.1 2.4 5 4.7 5 1.9 0 3.4-.8 4.2-1.4.1-.1.1-.3 0-.4l-1.4-2.3z" />
+              </svg>
+            </a>
+            <a href="https://discord.gg/intentuniverse" target="_blank" rel="noopener noreferrer" className="p-3 bg-indigo-600 rounded-full hover:bg-indigo-700 transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" className="text-white">
+                <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z" />
+              </svg>
+            </a>
+            <a href="https://github.com/intent-universe" target="_blank" rel="noopener noreferrer" className="p-3 bg-gray-800 rounded-full hover:bg-gray-700 transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-white">
+                <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
+              </svg>
+            </a>
+          </div>
         </div>
       </section>
-      
-      <Features />
-      <Testimonials />
-      <ContactSection />
       
       <Footer />
     </div>

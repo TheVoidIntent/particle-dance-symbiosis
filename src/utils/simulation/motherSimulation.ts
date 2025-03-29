@@ -106,7 +106,7 @@ export function isMotherSimulationRunning() {
 
 // Initialize when this module loads
 if (typeof window !== 'undefined') {
-  // Initialize automatically
+  // Initialize automatically with a delay to ensure the DOM is ready
   setTimeout(() => {
     console.log("⚡ Auto-initializing mother simulation...");
     initializeMotherSimulation();

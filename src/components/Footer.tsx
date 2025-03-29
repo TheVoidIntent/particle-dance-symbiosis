@@ -24,7 +24,7 @@ const Footer: React.FC = () => {
             <a href="https://www.facebook.com/profile.php?id=61574833319107" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors">
               <Facebook className="h-5 w-5" />
             </a>
-            <a href="https://instagram.com/TheVoidIntent" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors">
+            <a href="https://instagram.com/thevoidintent" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors">
               <Instagram className="h-5 w-5" />
             </a>
             <a href="https://github.com/thevoidintent" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors">

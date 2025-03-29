@@ -43,7 +43,11 @@ export function startMotherSimulation() {
   // Set up auto-restart checks in case simulation stops
   setupAutoRestart();
   
-  console.log("✅ Mother simulation is now running");
+  console.log("✅ Mother simulation is now running", {
+    particles: simulationState.particles.length,
+    intentField: simulationState.intentField.length > 0 ? 
+      `${simulationState.intentField.length}x${simulationState.intentField[0].length}` : 'not initialized'
+  });
   
   return {
     stop: stopMotherSimulation
@@ -104,6 +108,7 @@ export function isMotherSimulationRunning() {
 if (typeof window !== 'undefined') {
   // Initialize automatically
   setTimeout(() => {
+    console.log("⚡ Auto-initializing mother simulation...");
     initializeMotherSimulation();
     startMotherSimulation();
     simulationActive = true;

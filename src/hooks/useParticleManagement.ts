@@ -70,59 +70,42 @@ export function useParticleManagement({
     onInflationDetected
   );
 
-  // Update particle count for UI display
+  // Update particle count for UI display - fixed to avoid infinite updates
   useEffect(() => {
-    if (particlesRef.current) {
-      setParticleCount(particlesRef.current.length);
-      
-      // Make sure we're updating stats even if no simulation step has happened yet
-      if (particlesRef.current.length > 0) {
-        // Force stats update at least once per second
-        onStatsUpdate({
-          particleCount: particlesRef.current.length,
-          intentField: intentFieldRef.current || [],
-          interactions: interactionsRef.current || 0,
-          frame: frameCountRef.current || 0,
-          time: simulationTimeRef.current || 0
-        });
-      }
-    }
-  }, [
-    particlesRef.current?.length, 
-    intentFieldRef, 
-    interactionsRef, 
-    frameCountRef, 
-    simulationTimeRef, 
-    onStatsUpdate
-  ]);
-
-  // Regular stats update on interval
-  useEffect(() => {
-    if (!isInitialized || !running) return;
-    
-    const statsUpdateInterval = setInterval(() => {
-      if (particlesRef.current && particlesRef.current.length > 0) {
-        onStatsUpdate({
-          particleCount: particlesRef.current.length,
-          intentField: intentFieldRef.current || [],
-          interactions: interactionsRef.current || 0,
-          frame: frameCountRef.current || 0,
-          time: simulationTimeRef.current || 0
-        });
+    const updateInterval = setInterval(() => {
+      if (particlesRef.current) {
+        setParticleCount(particlesRef.current.length);
+        
+        // Make sure we're updating stats even if no simulation step has happened yet
+        if (particlesRef.current.length > 0) {
+          onStatsUpdate({
+            particleCount: particlesRef.current.length,
+            positiveParticles: particlesRef.current.filter(p => p.charge === 'positive').length,
+            negativeParticles: particlesRef.current.filter(p => p.charge === 'negative').length,
+            neutralParticles: particlesRef.current.filter(p => p.charge === 'neutral').length,
+            highEnergyParticles: particlesRef.current.filter(p => p.type === 'high-energy').length,
+            quantumParticles: particlesRef.current.filter(p => p.type === 'quantum').length,
+            compositeParticles: particlesRef.current.filter(p => p.type === 'composite').length,
+            adaptiveParticles: particlesRef.current.filter(p => p.type === 'adaptive').length,
+            intentField: intentFieldRef.current || [],
+            interactions: interactionsRef.current || 0,
+            totalInteractions: interactionsRef.current || 0,
+            frame: frameCountRef.current || 0,
+            time: simulationTimeRef.current || 0,
+            averageKnowledge: particlesRef.current.length > 0 
+              ? particlesRef.current.reduce((sum, p) => sum + (p.knowledge || 0), 0) / particlesRef.current.length 
+              : 0,
+            complexityIndex: particlesRef.current.length > 0
+              ? particlesRef.current.reduce((sum, p) => sum + (p.complexity || 1), 0) / particlesRef.current.length
+              : 0,
+            systemEntropy: 0.1 + Math.random() * 0.4 // Simple placeholder until real calculation is implemented
+          });
+        }
       }
     }, 500); // Update every 500ms
     
-    return () => clearInterval(statsUpdateInterval);
-  }, [
-    isInitialized, 
-    running, 
-    particlesRef, 
-    intentFieldRef, 
-    interactionsRef, 
-    frameCountRef, 
-    simulationTimeRef, 
-    onStatsUpdate
-  ]);
+    return () => clearInterval(updateInterval);
+  }, [onStatsUpdate, particlesRef, intentFieldRef, interactionsRef, frameCountRef, simulationTimeRef]);
 
   // Initialize canvas and start simulation
   const handleCanvasReady = useCallback((canvas: HTMLCanvasElement) => {

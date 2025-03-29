@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import Footer from "@/components/Footer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { setupDailyDataExport, getNearestExportTime } from '@/utils/dailyDataExport';
+import { getSimulationStats } from '@/utils/simulation/state';
 
 const initialStats: StatsType = {
   positiveParticles: 0,
@@ -63,14 +64,49 @@ const UniverseSimulation: React.FC = () => {
     updateNextExportTime();
     const timeInterval = setInterval(updateNextExportTime, 60000); // Update every minute
 
+    // Regularly fetch current simulation stats even if ParticleCanvas doesn't update them
+    const statsInterval = setInterval(() => {
+      const motherStats = getSimulationStats();
+      if (motherStats && motherStats.particleCount > 0) {
+        setStats(prevStats => ({
+          ...prevStats,
+          positiveParticles: motherStats.particleTypes.positive,
+          negativeParticles: motherStats.particleTypes.negative,
+          neutralParticles: motherStats.particleTypes.neutral,
+          highEnergyParticles: motherStats.particleTypes.highEnergy,
+          quantumParticles: motherStats.particleTypes.quantum,
+          compositeParticles: motherStats.particleTypes.composite,
+          adaptiveParticles: motherStats.particleTypes.adaptive,
+          totalInteractions: motherStats.interactionsCount
+        }));
+      }
+    }, 1000);
+
     return () => {
       clearInterval(timeInterval);
+      clearInterval(statsInterval);
       if (exportSchedule.cleanup) exportSchedule.cleanup();
     };
   }, []);
 
-  const handleStatsUpdate = (newStats: StatsType) => {
-    setStats(newStats);
+  const handleStatsUpdate = (newStats: any) => {
+    // Combine new stats with existing ones to prevent losing data
+    setStats(prevStats => ({
+      ...prevStats,
+      ...newStats,
+      // These specific fields should be directly updated from newStats if present
+      positiveParticles: newStats.positiveParticles ?? prevStats.positiveParticles,
+      negativeParticles: newStats.negativeParticles ?? prevStats.negativeParticles,
+      neutralParticles: newStats.neutralParticles ?? prevStats.neutralParticles,
+      highEnergyParticles: newStats.highEnergyParticles ?? prevStats.highEnergyParticles,
+      quantumParticles: newStats.quantumParticles ?? prevStats.quantumParticles,
+      compositeParticles: newStats.compositeParticles ?? prevStats.compositeParticles,
+      adaptiveParticles: newStats.adaptiveParticles ?? prevStats.adaptiveParticles,
+      totalInteractions: newStats.totalInteractions ?? prevStats.totalInteractions,
+      averageKnowledge: newStats.averageKnowledge ?? prevStats.averageKnowledge,
+      complexityIndex: newStats.complexityIndex ?? prevStats.complexityIndex,
+      systemEntropy: newStats.systemEntropy ?? prevStats.systemEntropy
+    }));
   };
 
   const handleDownloadCurrentData = () => {

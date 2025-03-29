@@ -58,6 +58,11 @@ export function updateSimulation() {
   // Update particles (positions, interactions, etc.)
   simulationState.particles = updateParticles();
   
+  // Log info occasionally to check if simulation is running
+  if (simulationState.frameCount % 1000 === 0) {
+    console.log(`🔄 Simulation running: Frame ${simulationState.frameCount}, ${simulationState.particles.length} particles, ${simulationState.interactionsCount} interactions`);
+  }
+  
   // Collect data periodically
   if (simulationState.frameCount % 30 === 0) {
     const clusterAnalysis = analyzeParticleClusters(simulationState.particles);
@@ -125,25 +130,43 @@ export function updateIntentFieldPeriodically() {
   );
   
   if (simulationState.frameCount % 100 === 0) {
-    const particleField = createFieldFromParticles(
-      simulationState.particles, 
-      { 
-        width: simulationDimensions.width, 
-        height: simulationDimensions.height, 
-        depth: 10 
-      },
-      simulationDimensions.width / simulationState.intentField[0][0].length
-    );
-    
-    const blendedField = simulationState.intentField.map((plane, z) => 
-      plane.map((row, y) => 
-        row.map((value, x) => 
-          value * 0.7 + particleField[z][y][x] * 0.3
-        )
-      )
-    );
-    
-    simulationState.intentField = blendedField;
+    // Only blend with particle field occasionally to prevent performance issues
+    try {
+      const particleField = createFieldFromParticles(
+        simulationState.particles, 
+        { 
+          width: simulationDimensions.width, 
+          height: simulationDimensions.height, 
+          depth: 10 
+        },
+        simulationDimensions.width / simulationState.intentField[0][0].length
+      );
+      
+      // Make sure we got a valid field back
+      if (particleField && 
+          particleField.length > 0 && 
+          particleField[0].length > 0 && 
+          particleField[0][0].length > 0) {
+        
+        const blendedField = simulationState.intentField.map((plane, z) => 
+          plane.map((row, y) => 
+            row.map((value, x) => {
+              // Make sure coordinates are valid
+              if (z < particleField.length && 
+                  y < particleField[z].length && 
+                  x < particleField[z][y].length) {
+                return value * 0.7 + particleField[z][y][x] * 0.3;
+              }
+              return value;
+            })
+          )
+        );
+        
+        simulationState.intentField = blendedField;
+      }
+    } catch (error) {
+      console.error("Error blending fields:", error);
+    }
   }
 }
 
@@ -152,12 +175,17 @@ export function maybeCreateParticles() {
   if (simulationState.particles.length >= defaultConfig.maxParticles) return;
   
   const numToCreate = Math.floor(Math.random() * 3) + 1;
+  console.log(`🌱 Creating ${numToCreate} new particles`);
   
   for (let i = 0; i < numToCreate; i++) {
     if (simulationState.particles.length >= defaultConfig.maxParticles) break;
     
     const newParticle = createNewParticle(i);
     simulationState.particles.push(newParticle);
+    
+    // Occasionally log particle creation for debugging
+    if (Math.random() < 0.1) {
+      console.log(`Created particle ${newParticle.id}: ${newParticle.charge} charge`);
+    }
   }
 }
-

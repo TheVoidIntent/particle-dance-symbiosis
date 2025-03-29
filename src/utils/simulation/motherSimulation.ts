@@ -3,6 +3,12 @@ import { simulationState, saveState, getSimulationStats } from './state';
 import { initializeMotherSimulation } from './initialization';
 import { updateSimulation, updateIntentFieldPeriodically, maybeCreateParticles } from './updater';
 
+// Flag to track simulation status
+let simulationActive = false;
+let particleCreationInterval: number | null = null;
+let intentUpdateInterval: number | null = null;
+let autoRestartInterval: number | null = null;
+
 // Start the mother simulation
 export function startMotherSimulation() {
   if (simulationState.isRunning) return;
@@ -14,12 +20,12 @@ export function startMotherSimulation() {
   }
   
   // Create new particles occasionally
-  const particleCreationInterval = setInterval(() => {
+  particleCreationInterval = window.setInterval(() => {
     maybeCreateParticles();
   }, 2000);
   
   // Update intent field periodically
-  const intentUpdateInterval = setInterval(() => {
+  intentUpdateInterval = window.setInterval(() => {
     updateIntentFieldPeriodically();
   }, 1000);
   
@@ -29,41 +35,64 @@ export function startMotherSimulation() {
   }, 100); // Run 10 times per second for better performance
   
   simulationState.isRunning = true;
+  simulationActive = true;
   
   // Clean up on page unload
   window.addEventListener('beforeunload', saveState);
   
-  // Clean up the intervals if the window is closed
-  window.addEventListener('beforeunload', () => {
-    if (simulationState.intervalId !== null) clearInterval(simulationState.intervalId);
-    clearInterval(particleCreationInterval);
-    clearInterval(intentUpdateInterval);
-  });
+  // Set up auto-restart checks in case simulation stops
+  setupAutoRestart();
   
   console.log("✅ Mother simulation is now running");
   
   return {
-    stop: () => {
-      if (simulationState.intervalId !== null) {
-        clearInterval(simulationState.intervalId);
-        clearInterval(particleCreationInterval);
-        clearInterval(intentUpdateInterval);
-        simulationState.isRunning = false;
-        console.log("⏹️ Mother simulation stopped");
-      }
-    }
+    stop: stopMotherSimulation
   };
 }
 
-// Stop the mother simulation
+// Stop the mother simulation - BUT only temporarily for maintenance
 export function stopMotherSimulation() {
   if (simulationState.intervalId !== null) {
     clearInterval(simulationState.intervalId);
     simulationState.intervalId = null;
+    
+    if (particleCreationInterval !== null) {
+      clearInterval(particleCreationInterval);
+      particleCreationInterval = null;
+    }
+    
+    if (intentUpdateInterval !== null) {
+      clearInterval(intentUpdateInterval);
+      intentUpdateInterval = null;
+    }
+    
     simulationState.isRunning = false;
     saveState(); // Save state on stop
-    console.log("⏹️ Mother simulation stopped");
+    console.log("⏸️ Mother simulation temporarily paused");
+    
+    // Auto-restart after 5 seconds
+    setTimeout(() => {
+      if (!simulationState.isRunning && simulationActive) {
+        console.log("🔄 Auto-restarting mother simulation...");
+        startMotherSimulation();
+      }
+    }, 5000);
   }
+}
+
+// Setup auto-restart to ensure the simulation never truly stops
+function setupAutoRestart() {
+  if (autoRestartInterval !== null) {
+    clearInterval(autoRestartInterval);
+  }
+  
+  // Check every 30 seconds if the simulation is still running
+  autoRestartInterval = window.setInterval(() => {
+    if (!simulationState.isRunning && simulationActive) {
+      console.log("🔄 Auto-restarting mother simulation after detection of stoppage...");
+      startMotherSimulation();
+    }
+  }, 30000);
 }
 
 // Get whether the simulation is running
@@ -73,13 +102,22 @@ export function isMotherSimulationRunning() {
 
 // Initialize when this module loads
 if (typeof window !== 'undefined') {
-  // Initialize but don't start automatically
+  // Initialize automatically
   setTimeout(() => {
     initializeMotherSimulation();
+    startMotherSimulation();
+    simulationActive = true;
   }, 1000);
+  
+  // Handle visibility changes to prevent simulation from stopping when tab is inactive
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && simulationActive && !simulationState.isRunning) {
+      console.log("🔄 Resuming mother simulation after tab becomes visible...");
+      startMotherSimulation();
+    }
+  });
 }
 
 // Re-export the necessary functions from other modules for backward compatibility
 export { initializeMotherSimulation } from './initialization';
 export { getSimulationStats } from './state';
-

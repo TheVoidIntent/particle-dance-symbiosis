@@ -1,55 +1,91 @@
-
 /**
- * Utilities for handling JSON data with special values like Infinity
+ * Utility functions for handling JSON serialization/deserialization
+ * with support for special values like Infinity
  */
 
-/**
- * Parse JSON text while handling Infinity values
- * @param text The JSON text to parse
- * @returns Parsed JSON object
- */
-export const parseJsonWithInfinity = (text: string): any => {
-  // Replace Infinity values with strings before parsing
-  const processedText = text
-    .replace(/"avg_knowledge":\s*Infinity/g, '"avg_knowledge": "Infinity"')
-    .replace(/"complexity_index":\s*Infinity/g, '"complexity_index": "Infinity"')
-    .replace(/"value":\s*Infinity/g, '"value": "Infinity"')
-    .replace(/"max_complexity":\s*Infinity/g, '"max_complexity": "Infinity"');
-  
-  return JSON.parse(processedText);
-};
+// Stringify an object with support for Infinity and other non-standard JSON values
+export function stringifyWithInfinity(obj: any): string {
+  return JSON.stringify(obj, (key, value) => {
+    // Handle special number values
+    if (typeof value === 'number') {
+      if (value === Infinity) return "Infinity";
+      if (value === -Infinity) return "-Infinity";
+      if (Number.isNaN(value)) return "NaN";
+    }
+    return value;
+  });
+}
 
-/**
- * Stringify an object while handling Infinity values
- * @param data The data to stringify
- * @param space Number of spaces for indentation
- * @returns JSON string
- */
-export const stringifyWithInfinity = (data: any, space: number = 2): string => {
-  // Convert Infinity values to strings before JSON stringification
-  const processData = (obj: any): any => {
-    if (obj === null || obj === undefined) return obj;
+// Parse JSON with support for Infinity and other non-standard JSON values
+export function parseJsonWithInfinity(json: string): any {
+  return JSON.parse(json, (key, value) => {
+    // Convert string representations back to their special number values
+    if (value === "Infinity") return Infinity;
+    if (value === "-Infinity") return -Infinity;
+    if (value === "NaN") return NaN;
+    return value;
+  });
+}
+
+// Compress large JSON data for storage efficiency
+export function compressJson(jsonString: string): string {
+  // This is a simple placeholder - for real compression, you'd want to use
+  // a library like pako or lz-string, but to keep dependencies minimal,
+  // we're just using this method
+  try {
+    return btoa(encodeURIComponent(jsonString));
+  } catch (e) {
+    console.error("JSON compression failed", e);
+    return jsonString;
+  }
+}
+
+// Decompress JSON data
+export function decompressJson(compressed: string): string {
+  try {
+    return decodeURIComponent(atob(compressed));
+  } catch (e) {
+    console.error("JSON decompression failed", e);
+    return compressed;
+  }
+}
+
+// For large datasets, consider compression
+export function storeCompressedJson(key: string, data: any): boolean {
+  try {
+    const jsonString = stringifyWithInfinity(data);
     
-    if (typeof obj === 'number') {
-      if (!isFinite(obj)) return obj.toString(); // Convert Infinity to string
-      return obj;
+    // Only compress if the data is large
+    const shouldCompress = jsonString.length > 100000;
+    const valueToStore = shouldCompress 
+      ? `compressed:${compressJson(jsonString)}`
+      : jsonString;
+    
+    localStorage.setItem(key, valueToStore);
+    return true;
+  } catch (e) {
+    console.error(`Failed to store data for key ${key}:`, e);
+    return false;
+  }
+}
+
+// Retrieve and potentially decompress stored data
+export function retrieveCompressedJson(key: string): any | null {
+  try {
+    const stored = localStorage.getItem(key);
+    if (!stored) return null;
+    
+    // Check if data is compressed
+    if (stored.startsWith('compressed:')) {
+      const compressed = stored.substring(11);
+      const decompressed = decompressJson(compressed);
+      return parseJsonWithInfinity(decompressed);
     }
     
-    if (Array.isArray(obj)) {
-      return obj.map(item => processData(item));
-    }
-    
-    if (typeof obj === 'object') {
-      const processed: Record<string, any> = {};
-      for (const key in obj) {
-        processed[key] = processData(obj[key]);
-      }
-      return processed;
-    }
-    
-    return obj;
-  };
-  
-  const processedData = processData(data);
-  return JSON.stringify(processedData, null, space);
-};
+    // Not compressed
+    return parseJsonWithInfinity(stored);
+  } catch (e) {
+    console.error(`Failed to retrieve data for key ${key}:`, e);
+    return null;
+  }
+}

@@ -18,4 +18,4 @@ jobs:
           python-version: '3.x'
 
       - name: Run organization script
-        run: python Data_Digest2.py
+        run: python data_digest2.py

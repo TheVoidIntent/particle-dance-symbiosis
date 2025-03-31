@@ -1,10 +1,11 @@
+import os
 import pygame
 import random
 import math
 import pandas as pd
 import uproot
 import google.generativeai as genai
-import os
+from datetime import datetime
 
 # Configure Gemini API
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
@@ -33,6 +34,15 @@ learning_rate = 0.1
 
 # Camera properties
 camera_z = -200
+
+# Data directory
+data_dir = "data"
+
+# Create a directory for the current date and time
+now = datetime.now()
+date_time_str = now.strftime("%Y%m%d_%H%M%S")
+current_data_dir = os.path.join(data_dir, date_time_str)
+os.makedirs(current_data_dir, exist_ok=True)
 
 # --- ATLAS Data Integration ---
 # Replace these paths with the actual paths to your downloaded ATLAS datasets
@@ -181,3 +191,12 @@ except KeyboardInterrupt:
     print("Simulation interrupted by user.")
 finally:
     pygame.quit()
+
+    # Save particle data to a CSV file
+    particle_data_file = os.path.join(current_data_dir, "particle_data.csv")
+    particle_data = [
+        {"x": p.x, "y": p.y, "z": p.z, "type": p.particle_type, "momentum_x": p.momentum[0], "momentum_y": p.momentum[1], "momentum_z": p.momentum[2]} for p in particles
+    ]
+    particle_df = pd.DataFrame(particle_data)
+    particle_df.to_csv(particle_data_file, index=False)
+    print(f"Particle data saved to {particle_data_file}")

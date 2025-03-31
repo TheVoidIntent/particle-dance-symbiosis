@@ -1,12 +1,8 @@
-name: Data Digest Workflow
+name: Upload Data Workflow
 
 on:
-  push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
+  schedule:
+    - cron: '0 0 * * *'  # This will run the workflow daily at midnight
 
 jobs:
   build:
@@ -24,7 +20,41 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install pandas pygame
+        pip install pandas pygame pdfkit
 
-    - name: Run script
+    - name: Run Data Digest script
       run: python Data_Digest2.py
+
+    - name: Convert data to PDF
+      run: |
+        python -c "
+        import pdfkit
+        pdfkit.from_file('data_output.html', 'data_output.pdf')
+        "
+
+    - name: Checkout IntentSim repository
+      uses: actions/checkout@v2
+      with:
+        repository: TheVoidIntent/IntentSim
+        token: ${{ secrets.GITHUB_TOKEN }}
+        path: IntentSim
+
+    - name: Copy data to IntentSim repository
+      run: |
+        cp data_output.html IntentSim/
+        cp data_output.pdf IntentSim/
+
+    - name: Commit and push original data
+      run: |
+        cd IntentSim
+        git add data_output.html
+        git commit -m 'Upload original data'
+        git push
+
+    - name: Commit and push PDF data
+      run: |
+        cd IntentSim
+        git add data_output.pdf
+        git commit -m 'Upload PDF data'
+        git push
+

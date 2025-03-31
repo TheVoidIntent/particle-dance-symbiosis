@@ -17,5 +17,8 @@ jobs:
         with:
           python-version: '3.x'
 
+      - name: Install dependencies
+        run: pip install shutil
+
       - name: Run organization script
         run: python organize_files.py

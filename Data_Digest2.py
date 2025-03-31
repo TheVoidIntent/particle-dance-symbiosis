@@ -7,8 +7,11 @@ import google.generativeai as genai
 import os
 
 # Configure Gemini API
-GOOGLE_API_KEY = "AIzaSyCDt0NTTiVIC_NhRZXkDsuOFaH6BSntZ8U"  # Replace with your API key
-genai.configure(api_key=GOOGLE_API_KEY)
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
+if GOOGLE_API_KEY:
+    genai.configure(api_key=GOOGLE_API_KEY)
+else:
+    print("Error: GOOGLE_API_KEY is not set. Please configure the environment variable.")
 
 # Screen dimensions
 width, height = 800, 600

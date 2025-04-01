@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet';
 import { Card, CardContent } from "@/components/ui/card";
@@ -44,11 +43,20 @@ const VisitorSimulator: React.FC = () => {
     setShowIntro(false);
   };
 
+  // Define floating animation styles
+  const floatKeyframes = `
+    @keyframes float {
+      0%, 100% { transform: translate(0, 0); }
+      50% { transform: translate(${Math.random() * 30 - 15}px, ${Math.random() * 30 - 15}px); }
+    }
+  `;
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 text-white p-4 md:p-8">
       <Helmet>
         <title>Simulation Explorer | IntentSim</title>
         <meta name="description" content="Explore how particles emerge from intent field fluctuations in this simplified simulation." />
+        <style>{floatKeyframes}</style>
       </Helmet>
       
       <h1 className="text-3xl md:text-4xl font-bold text-center mb-6 bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400">
@@ -115,13 +123,6 @@ const VisitorSimulator: React.FC = () => {
                     />
                   ))}
                 </div>
-                
-                <style jsx>{`
-                  @keyframes float {
-                    0%, 100% { transform: translate(0, 0); }
-                    50% { transform: translate(${Math.random() * 30 - 15}px, ${Math.random() * 30 - 15}px); }
-                  }
-                `}</style>
                 
                 {!running && (
                   <div className="absolute inset-0 bg-black/70 flex items-center justify-center">

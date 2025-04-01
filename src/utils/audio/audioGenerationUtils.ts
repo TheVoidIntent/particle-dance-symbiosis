@@ -46,7 +46,7 @@ export const createFallbackAudioIfNeeded = () => {
 };
 
 // Generate a sample audio for testing
-export const generateSampleAudio = (duration = 1, type = 'sine', frequency = 440) => {
+export const generateSampleAudio = (duration = 1, type = 'sine', frequency = 440, volume = 0.2) => {
   try {
     if (!window.AudioContext && !(window as any).webkitAudioContext) {
       console.error("Web Audio API not supported in this browser");
@@ -63,7 +63,7 @@ export const generateSampleAudio = (duration = 1, type = 'sine', frequency = 440
     
     // Create gain node
     const gainNode = audioContext.createGain();
-    gainNode.gain.value = 0.2;
+    gainNode.gain.value = volume;
     
     // Connect the nodes
     oscillator.connect(gainNode);
@@ -71,7 +71,7 @@ export const generateSampleAudio = (duration = 1, type = 'sine', frequency = 440
     
     // Envelope
     gainNode.gain.setValueAtTime(0, audioContext.currentTime);
-    gainNode.gain.linearRampToValueAtTime(0.2, audioContext.currentTime + 0.1);
+    gainNode.gain.linearRampToValueAtTime(volume, audioContext.currentTime + 0.1);
     gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + duration);
     
     // Start and stop

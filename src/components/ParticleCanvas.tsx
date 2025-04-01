@@ -44,21 +44,17 @@ export const ParticleCanvas: React.FC<ParticleCanvasProps> = ({
 }) => {
   const { toast } = useToast();
   
-  // Setup inflation handling
   const { 
     showInflationBanner, 
     latestInflation, 
     handleInflationDetected 
   } = useInflationEvents();
 
-  // Handle audio events for anomalies and inflation
   const handleAnomalyWithAudio = useCallback((anomaly: AnomalyEvent) => {
-    // Call the original callback
     if (onAnomalyDetected) {
       onAnomalyDetected(anomaly);
     }
     
-    // Play anomaly sound
     playSimulationEvent('anomaly_detected', {
       severity: anomaly.severity || 0.5,
       type: anomaly.type
@@ -66,10 +62,8 @@ export const ParticleCanvas: React.FC<ParticleCanvasProps> = ({
   }, [onAnomalyDetected]);
   
   const handleInflationWithAudio = useCallback((event: InflationEvent) => {
-    // Call the original handler
     handleInflationDetected(event);
     
-    // Play inflation sound
     playSimulationEvent('inflation_event', {
       timestamp: event.timestamp,
       particlesBeforeInflation: event.particlesBeforeInflation,
@@ -77,7 +71,6 @@ export const ParticleCanvas: React.FC<ParticleCanvasProps> = ({
     });
   }, [handleInflationDetected]);
 
-  // Setup particle management
   const {
     canvasRef,
     particleCount,
@@ -108,7 +101,6 @@ export const ParticleCanvas: React.FC<ParticleCanvasProps> = ({
     onStatsUpdate
   });
 
-  // Setup data collection
   const {
     dataCollectionActiveRef,
     dataExportOptions,
@@ -117,10 +109,8 @@ export const ParticleCanvas: React.FC<ParticleCanvasProps> = ({
     toggleDataCollection
   } = useSimulationData(onStatsUpdate);
 
-  // Setup rendering
   const { renderSimulation } = useCanvasRenderer();
 
-  // Setup animation loop
   useAnimationLoop({
     running,
     isInitialized,
@@ -144,7 +134,6 @@ export const ParticleCanvas: React.FC<ParticleCanvasProps> = ({
     handleExportData
   });
 
-  // Reset simulation state
   const resetSimulation = useCallback(() => {
     clearPersistedState();
     clearSimulationData();
@@ -177,7 +166,6 @@ export const ParticleCanvas: React.FC<ParticleCanvasProps> = ({
       intentFieldRef.current = newField;
     }
     
-    // Reset stats
     const emptyStats = processSimulationData(
       particlesRef.current,
       intentFieldRef.current || [],
@@ -193,7 +181,6 @@ export const ParticleCanvas: React.FC<ParticleCanvasProps> = ({
       variant: "default",
     });
     
-    // Return empty array to satisfy TypeScript
     return [];
   }, [
     toast, 
@@ -206,7 +193,6 @@ export const ParticleCanvas: React.FC<ParticleCanvasProps> = ({
     onStatsUpdate
   ]);
 
-  // Calculate stats for audio controls
   const currentStats = processSimulationData(
     particlesRef.current || [],
     intentFieldRef.current || [],
@@ -225,7 +211,6 @@ export const ParticleCanvas: React.FC<ParticleCanvasProps> = ({
         onCanvasReady={handleCanvasReady}
       />
       
-      {/* Audio Controls Panel */}
       <div className="absolute top-4 right-4 bg-black/60 backdrop-blur-sm p-3 rounded-lg w-80 z-10">
         <SimulationAudioControls 
           particles={particlesRef.current || []} 

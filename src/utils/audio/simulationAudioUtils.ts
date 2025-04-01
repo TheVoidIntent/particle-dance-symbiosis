@@ -1,4 +1,3 @@
-
 import { toast } from "sonner";
 import { Particle, SimulationStats } from "@/types/simulation";
 import { generateSampleAudio } from './audioGenerationUtils';

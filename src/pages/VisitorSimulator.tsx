@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Play, Pause, Download, Info, Music2 } from "lucide-react";
 import { toast } from "sonner";
 import AudioOptionsSection from '@/components/simulation/AudioOptionsSection';
+import { playAudioWithErrorHandling } from '@/utils/audio/audioPlaybackUtils';
+import { getAvailableAudioFiles } from '@/utils/audio/audioFileUtils';
 
 interface Particle {
   x: number;
@@ -27,14 +29,17 @@ const VisitorSimulator: React.FC = () => {
   const [positiveParticles, setPositiveParticles] = useState(0);
   const [negativeParticles, setNegativeParticles] = useState(0);
   const [neutralParticles, setNeutralParticles] = useState(0);
-  
+  const [audioFiles, setAudioFiles] = useState<string[]>([]);
+  const [backgroundAudioActive, setBackgroundAudioActive] = useState(false);
+  const audioPlayerRef = useRef<HTMLAudioElement | null>(null);
+
   // Canvas and animation references
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationRef = useRef<number | null>(null);
   const particlesRef = useRef<Particle[]>([]);
   const intentFieldRef = useRef<number[][]>([]);
   
-  // Initialize simulation
+  // Initialize simulation and load audio files
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -67,19 +72,89 @@ const VisitorSimulator: React.FC = () => {
       }
     };
     
+    // Load available audio files
+    const loadAudioFiles = async () => {
+      try {
+        // Get all audio files from the public/audio directory
+        const files = await getAvailableAudioFiles('/audio');
+        setAudioFiles(files);
+        console.log("Loaded audio files:", files);
+        
+        // Initialize audio element for background audio
+        if (!audioPlayerRef.current) {
+          audioPlayerRef.current = new Audio();
+          audioPlayerRef.current.volume = 0.2;
+          audioPlayerRef.current.onended = () => {
+            // Play next random audio when current one ends
+            if (backgroundAudioActive) {
+              playRandomBackgroundAudio();
+            }
+          };
+        }
+      } catch (error) {
+        console.error("Error loading audio files:", error);
+      }
+    };
+    
     window.addEventListener('resize', resizeCanvas);
     resizeCanvas();
     
     // Initial particles
     initializeParticles();
     
+    // Load audio files
+    loadAudioFiles();
+    
     return () => {
       window.removeEventListener('resize', resizeCanvas);
       if (animationRef.current) {
         cancelAnimationFrame(animationRef.current);
       }
+      // Stop audio when component unmounts
+      if (audioPlayerRef.current) {
+        audioPlayerRef.current.pause();
+      }
     };
   }, []);
+  
+  // Play random background audio
+  const playRandomBackgroundAudio = () => {
+    if (!audioFiles.length || !audioPlayerRef.current) return;
+    
+    // Select a random audio file
+    const randomIndex = Math.floor(Math.random() * audioFiles.length);
+    const randomAudioFile = audioFiles[randomIndex];
+    
+    // Set the audio source and play
+    audioPlayerRef.current.src = `/audio/${randomAudioFile}`;
+    audioPlayerRef.current.play().catch(error => {
+      console.error("Error playing audio:", error);
+      // Try next file if this one fails
+      if (backgroundAudioActive) {
+        setTimeout(playRandomBackgroundAudio, 1000);
+      }
+    });
+    
+    console.log("Now playing:", randomAudioFile);
+  };
+  
+  // Toggle background audio
+  const toggleBackgroundAudio = () => {
+    const newState = !backgroundAudioActive;
+    setBackgroundAudioActive(newState);
+    
+    if (newState) {
+      // Start playing random audio
+      playRandomBackgroundAudio();
+      toast.success("Background audio enabled");
+    } else {
+      // Stop the audio
+      if (audioPlayerRef.current) {
+        audioPlayerRef.current.pause();
+      }
+      toast.info("Background audio disabled");
+    }
+  };
   
   // Initialize particles
   const initializeParticles = () => {
@@ -163,6 +238,14 @@ const VisitorSimulator: React.FC = () => {
       // Update intent field (occasionally)
       if (Math.random() < intentFluctuationRate) {
         updateIntentField();
+        
+        // Occasionally play a random field fluctuation sound
+        if (Math.random() < 0.05 && backgroundAudioActive) {
+          // Play a short audio clip for field fluctuation
+          const shortClip = new Audio('/audio/intentsim_page/field_fluctuation.mp3');
+          shortClip.volume = 0.1;
+          shortClip.play().catch(e => console.error("Error playing fluctuation sound:", e));
+        }
       }
       
       // Update particles
@@ -185,6 +268,20 @@ const VisitorSimulator: React.FC = () => {
         
         particlesRef.current.push(createParticle(type, width, height));
         updateParticleCounts();
+        
+        // Play particle creation sound occasionally
+        if (Math.random() < 0.2 && backgroundAudioActive) {
+          // Different sounds for different particle types
+          const soundFile = type === 'positive' 
+            ? '/audio/intentsim_page/positive_particle_birth.mp3'
+            : type === 'negative'
+            ? '/audio/intentsim_page/negative_particle_birth.mp3'
+            : '/audio/intentsim_page/neutral_particle_birth.mp3';
+            
+          const particleSound = new Audio(soundFile);
+          particleSound.volume = 0.15;
+          particleSound.play().catch(e => console.error("Error playing particle sound:", e));
+        }
       }
       
       // Continue animation loop
@@ -198,7 +295,7 @@ const VisitorSimulator: React.FC = () => {
         cancelAnimationFrame(animationRef.current);
       }
     };
-  }, [running, intentFluctuationRate, maxParticles]);
+  }, [running, intentFluctuationRate, maxParticles, backgroundAudioActive]);
   
   // Update intent field with fluctuations
   const updateIntentField = () => {
@@ -338,7 +435,16 @@ const VisitorSimulator: React.FC = () => {
             <p className="mb-4 text-gray-300">
               In this model, positive charges seek interaction, negative charges avoid it, and neutral particles follow their own path - all born from the universe's intent to know itself.
             </p>
-            <Button onClick={dismissIntro}>Got it</Button>
+            <div className="flex justify-between items-center">
+              <Button onClick={dismissIntro}>Got it</Button>
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-300">Enable Audio Experience</span>
+                <Switch 
+                  checked={backgroundAudioActive} 
+                  onCheckedChange={toggleBackgroundAudio} 
+                />
+              </div>
+            </div>
           </CardContent>
         </Card>
       )}
@@ -366,6 +472,14 @@ const VisitorSimulator: React.FC = () => {
                 Particles: {Math.floor(positiveParticles + negativeParticles + neutralParticles)}
               </div>
               
+              {/* Audio Status Display */}
+              {backgroundAudioActive && (
+                <div className="absolute top-2 left-2 bg-black/50 text-white px-3 py-2 rounded-md text-sm flex items-center gap-2">
+                  <Music2 className="h-4 w-4 text-indigo-400 animate-pulse" />
+                  <span>Audio On</span>
+                </div>
+              )}
+              
               {/* Simulation controls bar */}
               <div className="p-4 border-t border-gray-700 flex justify-between items-center">
                 <Button 
@@ -378,7 +492,17 @@ const VisitorSimulator: React.FC = () => {
                   {running ? 'Pause' : 'Resume'}
                 </Button>
                 
-                <div className="flex items-center space-x-4">
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={toggleBackgroundAudio}
+                    className={`bg-gray-700/50 ${backgroundAudioActive ? 'border-indigo-400' : ''}`}
+                  >
+                    <Music2 className={`h-4 w-4 mr-1 ${backgroundAudioActive ? 'text-indigo-400' : ''}`} />
+                    {backgroundAudioActive ? 'Audio On' : 'Audio Off'}
+                  </Button>
+                  
                   <Button
                     variant="outline"
                     size="sm"

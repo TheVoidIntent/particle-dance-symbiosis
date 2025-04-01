@@ -8,6 +8,14 @@ export * from './audio/audioFileUtils';
 // Provide a simplified API for common audio operations
 import { playAudioWithErrorHandling } from './audio/audioPlaybackUtils';
 import { generateSampleAudio } from './audio/audioGenerationUtils';
+import { checkAudioFileExists } from './audio/audioFileUtils';
+
+// Re-export explicitly to avoid ambiguity
+export {
+  playAudioWithErrorHandling,
+  generateSampleAudio,
+  checkAudioFileExists
+};
 
 // Export common audio utility functions
 export const playSound = (url: string): Promise<void> => {

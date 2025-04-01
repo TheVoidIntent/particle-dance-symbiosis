@@ -49,3 +49,51 @@ export const playAudioWithErrorHandling = (url: string): Promise<void> => {
     });
   });
 };
+
+// Play audio in a continuous loop
+let loopAudioElement: HTMLAudioElement | null = null;
+
+export const playLoopingAudio = (url: string, volume: number = 0.5): void => {
+  // Stop any existing audio loop
+  if (loopAudioElement) {
+    loopAudioElement.pause();
+    loopAudioElement.src = '';
+    loopAudioElement = null;
+  }
+  
+  try {
+    const audio = new Audio(url);
+    audio.loop = true;
+    audio.volume = volume;
+    audio.autoplay = true;
+    
+    // Store the element for later control
+    loopAudioElement = audio;
+    
+    audio.play().catch(error => {
+      console.error(`Error looping audio from ${url}:`, error);
+      createFallbackAudioIfNeeded();
+    });
+    
+    console.log(`Started looping audio: ${url}`);
+  } catch (error) {
+    console.error(`Failed to create looping audio: ${error}`);
+    createFallbackAudioIfNeeded();
+  }
+};
+
+export const stopLoopingAudio = (): void => {
+  if (loopAudioElement) {
+    loopAudioElement.pause();
+    loopAudioElement.src = '';
+    loopAudioElement = null;
+    console.log("Stopped looping audio");
+  }
+};
+
+export const setLoopingAudioVolume = (volume: number): void => {
+  if (loopAudioElement) {
+    loopAudioElement.volume = Math.max(0, Math.min(1, volume));
+    console.log(`Set looping audio volume to: ${volume}`);
+  }
+};

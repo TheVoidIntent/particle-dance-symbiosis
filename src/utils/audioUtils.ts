@@ -3,9 +3,10 @@
 export * from './audio/audioGenerationUtils';
 export * from './audio/audioPlaybackUtils';
 export * from './audio/simulationAudioUtils';
+export * from './audio/audioFileUtils';
 
 // Provide a simplified API for common audio operations
-import { playAudioWithErrorHandling, createFallbackAudioIfNeeded } from './audio/audioPlaybackUtils';
+import { playAudioWithErrorHandling } from './audio/audioPlaybackUtils';
 import { generateSampleAudio } from './audio/audioGenerationUtils';
 
 // Export common audio utility functions

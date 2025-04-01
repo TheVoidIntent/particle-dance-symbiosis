@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Toggle } from "@/components/ui/toggle";
@@ -9,7 +10,7 @@ import {
   VolumeX,
   Music,
   Bell,
-  WaveformIcon,
+  Waveform,
   InfoIcon
 } from 'lucide-react';
 import { 

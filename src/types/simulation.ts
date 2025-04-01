@@ -19,6 +19,14 @@ export interface Particle {
   lastInteraction?: number;
   interactionCount?: number;
   z?: number;
+  age?: number;
+  interactions?: number;
+  intentDecayRate?: number;
+  energyCapacity?: number;
+  created?: number;
+  isPostInflation?: boolean;
+  scale?: number;
+  adaptiveScore?: number;
 }
 
 export interface SimulationStats {

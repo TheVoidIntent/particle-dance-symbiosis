@@ -1,12 +1,12 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Helmet } from 'react-helmet';
 import { Card, CardContent } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
-import { Play, Pause, Download, Info } from "lucide-react";
+import { Play, Pause, Download, Info, Music2 } from "lucide-react";
 import { toast } from "sonner";
+import AudioOptionsSection from '@/components/simulation/AudioOptionsSection';
 
 interface Particle {
   x: number;
@@ -428,6 +428,10 @@ const VisitorSimulator: React.FC = () => {
               </CardContent>
             </Card>
           </div>
+          
+          <div className="mt-6">
+            <AudioOptionsSection />
+          </div>
         </div>
         
         <div className="space-y-6">
@@ -478,12 +482,18 @@ const VisitorSimulator: React.FC = () => {
           
           <Card className="bg-gray-800/50 border-gray-700">
             <CardContent className="p-4">
-              <h3 className="font-medium mb-2">Learn More</h3>
+              <h3 className="font-medium mb-2 flex items-center gap-2">
+                <Music2 className="h-4 w-4 text-indigo-400" />
+                Audio Explanations
+              </h3>
               <p className="text-sm text-gray-400 mb-4">
-                This is a simplified version of the IntentSim universe simulator. For full features:
+                Listen to curated audio explanations about the IntentSim universe:
               </p>
-              <Button className="w-full" onClick={() => toast.info("This would play an audio introduction to IntentSim.")}>
-                Listen to Audio Intro
+              <Button 
+                className="w-full" 
+                onClick={() => toast.success("Audio library is now available in the main section!")}
+              >
+                Browse Audio Library
               </Button>
             </CardContent>
           </Card>

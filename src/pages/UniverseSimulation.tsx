@@ -16,6 +16,7 @@ import AudioDiagnostics from '@/components/diagnostic/AudioDiagnostics';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const initialStats: StatsType = {
+  particleCount: 0,
   positiveParticles: 0,
   negativeParticles: 0,
   neutralParticles: 0,

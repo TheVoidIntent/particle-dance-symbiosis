@@ -37,6 +37,9 @@ const SimulationStats: React.FC<SimulationStatsProps> = ({ stats }) => {
         </CardHeader>
         <CardContent className="space-y-1 text-sm">
           <div className="grid grid-cols-2 gap-x-4 gap-y-1">
+            <div className="text-sm text-gray-400">Total Particles:</div>
+            <div className="text-sm text-right font-medium">{formatNumber(stats.particleCount || 0)}</div>
+            
             <div className="text-sm text-gray-400">Positive Particles:</div>
             <div className="text-sm text-right font-medium">{formatNumber(stats.positiveParticles || 0)}</div>
             

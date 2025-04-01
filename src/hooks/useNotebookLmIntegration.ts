@@ -18,13 +18,13 @@ export function useNotebookLmIntegration() {
     autoSync: false
   });
   
-  const { exportInflationEventsData } = useInflationEvents();
+  const { exportInflationEventsData, inflationEvents } = useInflationEvents();
   
   // Export simulation data to Notebook LM format as PDF only
   const exportSimulationData = useCallback(async (atlasDatasetId?: string) => {
     try {
       // Show loading toast
-      toast.loading("Preparing data export with ATLAS/CERN comparison...");
+      toast.loading("Preparing data export with ATLAS/CERN comparison and inflation events...");
       
       // Get the simulation data in standard format
       const jsonData = exportInflationEventsData();
@@ -38,6 +38,21 @@ export function useNotebookLmIntegration() {
         cern_comparison: jsonData?.simulations?.[4] || { summary: {} }
       };
       
+      // Add inflation events to each simulation
+      if (inflationEvents.length > 0) {
+        Object.keys(simulationTypes).forEach(key => {
+          // @ts-ignore - We're adding inflation_events property to the simulation types
+          simulationTypes[key].inflation_events = inflationEvents.filter(event => 
+            event.type === key || (key === 'adaptive' && !event.type)
+          );
+          
+          // @ts-ignore - Add summary info about inflation events
+          simulationTypes[key].summary.inflationEventsCount = 
+          // @ts-ignore - We're accessing the inflation_events property
+            simulationTypes[key].inflation_events?.length || 0;
+        });
+      }
+      
       // Fetch ATLAS data if a dataset ID is provided
       if (atlasDatasetId) {
         try {
@@ -47,20 +62,18 @@ export function useNotebookLmIntegration() {
             const mappedData = mapAtlasDataToSimulationFormat(atlasData);
             
             // Enhance the CERN comparison with real ATLAS data
-            simulationTypes.cern_comparison = {
-              ...simulationTypes.cern_comparison,
-              atlasData: mappedData,
-              summary: {
-                ...(simulationTypes.cern_comparison.summary || {}),
-                atlasDatasetId: atlasData.id,
-                atlasDatasetName: atlasData.name,
-                atlasParticleCount: atlasData.particles.length,
-                atlasCollisionEnergy: atlasData.collisionEnergy,
-                correlationScore: calculateCorrelationScore(
-                  simulationTypes.cern_comparison,
-                  mappedData
-                )
-              }
+            // @ts-ignore - We're adding atlasData property to cern_comparison
+            simulationTypes.cern_comparison.atlasData = mappedData;
+            simulationTypes.cern_comparison.summary = {
+              ...(simulationTypes.cern_comparison.summary || {}),
+              atlasDatasetId: atlasData.id,
+              atlasDatasetName: atlasData.name,
+              atlasParticleCount: atlasData.particles.length,
+              atlasCollisionEnergy: atlasData.collisionEnergy,
+              correlationScore: calculateCorrelationScore(
+                simulationTypes.cern_comparison,
+                mappedData
+              )
             };
             
             toast.success(
@@ -86,7 +99,7 @@ export function useNotebookLmIntegration() {
         toast.success(
           "Data prepared for Notebook LM",
           {
-            description: "Your data has been exported with all simulation types and ATLAS comparison in PDF format for easy integration with Notebook LM."
+            description: "Your data has been exported with all simulation types, inflation events, and ATLAS comparison in PDF format for easy integration with Notebook LM."
           }
         );
       }
@@ -97,7 +110,7 @@ export function useNotebookLmIntegration() {
       toast.error("Failed to export data for Notebook LM");
       return false;
     }
-  }, [exportInflationEventsData]);
+  }, [exportInflationEventsData, inflationEvents]);
   
   // Open Notebook LM in new tab
   const openNotebookLm = useCallback(() => {

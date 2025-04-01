@@ -30,7 +30,26 @@ const formatSimulationDataForPDF = (simulationType: string, data: any): string =
     formattedText += `Average Complexity: ${data.summary.avgComplexity?.toFixed(4) || 'N/A'}\n`;
     formattedText += `Maximum Complexity: ${data.summary.maxComplexity?.toFixed(4) || 'N/A'}\n`;
     formattedText += `Total Particles: ${data.summary.totalParticles || 0}\n`;
-    formattedText += `System Entropy: ${data.summary.systemEntropy?.toFixed(4) || 'N/A'}\n\n`;
+    formattedText += `System Entropy: ${data.summary.systemEntropy?.toFixed(4) || 'N/A'}\n`;
+    formattedText += `Inflation Events: ${data.summary.inflationEventsCount || 0}\n\n`;
+  }
+  
+  // Add inflation events section if available
+  if (data.inflation_events && data.inflation_events.length > 0) {
+    formattedText += "## Inflation Events\n\n";
+    formattedText += "| Timestamp | Particles Before | Particles After | System Entropy |\n";
+    formattedText += "|-----------|-----------------|----------------|----------------|\n";
+    
+    data.inflation_events.slice(0, 5).forEach((event: any) => {
+      const timestamp = new Date(event.timestamp).toISOString();
+      formattedText += `| ${timestamp} | ${event.particlesBeforeInflation || 'N/A'} | ${event.particlesAfterInflation || 'N/A'} | ${event.systemEntropy?.toFixed(4) || 'N/A'} |\n`;
+    });
+    
+    if (data.inflation_events.length > 5) {
+      formattedText += `\n*Showing 5 of ${data.inflation_events.length} inflation events*\n\n`;
+    } else {
+      formattedText += "\n";
+    }
   }
   
   // Add ATLAS data comparison if available
@@ -150,6 +169,24 @@ export const generateNotebookLmPDF = async (simulationData: Record<string, any>)
     Object.entries(simulationData).forEach(([simType, data]) => {
       combinedText += `${simType}: ${data.summary?.maxComplexity?.toFixed(4) || 'N/A'}\n`;
     });
+    
+    // Add inflation events analysis
+    const totalInflationEvents = Object.values(simulationData).reduce((sum, data: any) => 
+      sum + (data.inflation_events?.length || 0), 0);
+    
+    if (totalInflationEvents > 0) {
+      combinedText += "\n## Inflation Events Analysis\n\n";
+      combinedText += `Total inflation events across all simulations: ${totalInflationEvents}\n\n`;
+      
+      combinedText += "| Simulation Type | Inflation Events Count |\n";
+      combinedText += "|-----------------|-------------------------|\n";
+      
+      Object.entries(simulationData).forEach(([simType, data]: [string, any]) => {
+        combinedText += `| ${simType} | ${data.inflation_events?.length || 0} |\n`;
+      });
+      
+      combinedText += "\n";
+    }
     
     // Special ATLAS/CERN section if data is available
     if (simulationData.cern_comparison?.atlasData) {

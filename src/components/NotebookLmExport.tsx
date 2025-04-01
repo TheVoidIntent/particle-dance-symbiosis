@@ -2,10 +2,11 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ExternalLink, FileText, Activity, Award } from "lucide-react";
+import { ExternalLink, FileText, Activity, Award, ZapOff } from "lucide-react";
 import { useNotebookLmIntegration } from '@/hooks/useNotebookLmIntegration';
 import { getAvailableAtlasDatasets } from '@/utils/atlasDataIntegration';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useInflationEvents } from '@/hooks/useInflationEvents';
 
 // ORCID information
 const RESEARCHER_ORCID = "0009-0001-0403-6452";
@@ -13,6 +14,7 @@ const ORCID_URL = "https://orcid.org/0009-0001-0403-6452";
 
 const NotebookLmExport: React.FC = () => {
   const { exportSimulationData, openNotebookLm, notebookLmConfig } = useNotebookLmIntegration();
+  const { inflationEvents } = useInflationEvents();
   const [selectedDataset, setSelectedDataset] = useState("6004"); // Default to 13 TeV collision data
   const availableDatasets = getAvailableAtlasDatasets();
 
@@ -40,6 +42,7 @@ const NotebookLmExport: React.FC = () => {
             <li>Baseline Simulation</li>
             <li>Full Features Integration</li>
             <li>CERN ATLAS Comparison</li>
+            <li className="font-medium">Inflation Events ({inflationEvents.length})</li>
           </ul>
         </div>
         
@@ -85,6 +88,10 @@ const NotebookLmExport: React.FC = () => {
           <p className="flex items-center">
             <Activity className="h-3 w-3 mr-1 text-green-500" /> 
             Connected to ATLAS Open Data Portal
+          </p>
+          <p className="flex items-center">
+            <ZapOff className="h-3 w-3 mr-1 text-yellow-500" />
+            Inflation Events: {inflationEvents.length} detected
           </p>
           <p className="flex items-center">
             <Award className="h-3 w-3 mr-1 text-blue-500" />

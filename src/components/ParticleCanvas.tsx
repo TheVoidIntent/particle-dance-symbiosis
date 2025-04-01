@@ -1,4 +1,3 @@
-
 import React, { useCallback } from 'react';
 import { useParticleSimulation, InflationEvent } from '@/hooks/simulation';
 import { useSimulationData } from '@/hooks/useSimulationData';
@@ -135,7 +134,7 @@ export const ParticleCanvas: React.FC<ParticleCanvasProps> = ({
     handleExportData
   });
 
-  const resetSimulation = useCallback(() => {
+  const resetSimulation = useCallback((): any[] => {
     clearPersistedState();
     clearSimulationData();
     particlesRef.current = [];
@@ -182,7 +181,6 @@ export const ParticleCanvas: React.FC<ParticleCanvasProps> = ({
       variant: "default",
     });
     
-    // Fix: Return an empty array to match the expected return type
     return [];
   }, [
     toast, 

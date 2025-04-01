@@ -22,7 +22,7 @@ const AudioNotePlayer: React.FC<AudioNotePlayerProps> = ({
   onTogglePlay,
   audioUrl
 }) => {
-  const audioRef = useRef<HTMLAudioElement>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
   const [volume, setVolume] = useState<number>(0.7);
   const [localProgress, setLocalProgress] = useState<number>(progress);
   const [audioLoaded, setAudioLoaded] = useState<boolean>(false);
@@ -32,10 +32,30 @@ const AudioNotePlayer: React.FC<AudioNotePlayerProps> = ({
     setLocalProgress(progress);
   }, [progress]);
   
+  // Initialize audio element
+  useEffect(() => {
+    // Create a new audio element if it doesn't exist
+    if (!audioRef.current) {
+      audioRef.current = new Audio(audioUrl);
+      audioRef.current.volume = volume;
+      
+      console.log("Audio element created with URL:", audioUrl);
+    }
+    
+    return () => {
+      // Clean up audio element when component unmounts
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
+    };
+  }, [audioUrl]);
+  
   // Handle volume changes
   useEffect(() => {
     if (audioRef.current) {
       audioRef.current.volume = volume;
+      console.log("Volume set to:", volume);
     }
   }, [volume]);
   
@@ -44,6 +64,7 @@ const AudioNotePlayer: React.FC<AudioNotePlayerProps> = ({
     if (audioRef.current) {
       // Handle playback state
       if (isPlaying) {
+        console.log("Attempting to play audio");
         audioRef.current.play().catch(error => {
           console.error("Audio playback error:", error);
           toast.error("Failed to play audio. Please check the audio file.");
@@ -67,18 +88,24 @@ const AudioNotePlayer: React.FC<AudioNotePlayerProps> = ({
       
       const handleLoadedMetadata = () => {
         setAudioLoaded(true);
-        console.log("Audio loaded successfully!");
+        console.log("Audio loaded successfully! Duration:", audioRef.current?.duration);
       };
       
       const handleError = (e: Event) => {
-        console.error("Audio error:", e);
+        console.error("Audio error:", e, audioRef.current?.error);
         setAudioLoaded(false);
         toast.error("Error loading audio file");
+      };
+      
+      const handleEnded = () => {
+        console.log("Audio playback ended");
+        onTogglePlay(); // Reset playing state when audio ends
       };
       
       audioRef.current.addEventListener('timeupdate', handleTimeUpdate);
       audioRef.current.addEventListener('loadedmetadata', handleLoadedMetadata);
       audioRef.current.addEventListener('error', handleError);
+      audioRef.current.addEventListener('ended', handleEnded);
       
       // Cleanup function
       return () => {
@@ -86,6 +113,7 @@ const AudioNotePlayer: React.FC<AudioNotePlayerProps> = ({
           audioRef.current.removeEventListener('timeupdate', handleTimeUpdate);
           audioRef.current.removeEventListener('loadedmetadata', handleLoadedMetadata);
           audioRef.current.removeEventListener('error', handleError);
+          audioRef.current.removeEventListener('ended', handleEnded);
         }
       };
     }
@@ -99,27 +127,6 @@ const AudioNotePlayer: React.FC<AudioNotePlayerProps> = ({
       audioRef.current.currentTime = newTime;
     }
   };
-  
-  // Detect if audio file exists
-  useEffect(() => {
-    const checkAudio = async () => {
-      try {
-        const response = await fetch(audioUrl, { method: 'HEAD' });
-        if (!response.ok) {
-          console.warn(`Audio file not found: ${audioUrl}`);
-          toast.warning("Audio file not found. Using fallback audio.");
-          // Use a fallback audio file that exists
-          if (audioRef.current) {
-            audioRef.current.src = '/audio/sample-placeholder.mp3';
-          }
-        }
-      } catch (error) {
-        console.error("Error checking audio file:", error);
-      }
-    };
-    
-    checkAudio();
-  }, [audioUrl]);
   
   return (
     <div className="relative rounded-lg border border-gray-700/50 bg-gray-800/40 p-4">
@@ -146,7 +153,7 @@ const AudioNotePlayer: React.FC<AudioNotePlayerProps> = ({
             <Slider
               value={[localProgress]}
               min={0}
-              max={duration}
+              max={duration || 30}
               step={0.1}
               onValueChange={handleSeek}
               className="w-full"
@@ -154,7 +161,7 @@ const AudioNotePlayer: React.FC<AudioNotePlayerProps> = ({
           </div>
           <div className="flex justify-between text-xs text-gray-400">
             <span>{formatTime(localProgress)}</span>
-            <span>{formatTime(duration)}</span>
+            <span>{formatTime(duration || 30)}</span>
           </div>
         </div>
       </div>
@@ -167,12 +174,14 @@ const AudioNotePlayer: React.FC<AudioNotePlayerProps> = ({
           max={100}
           step={1}
           className="w-24"
-          onValueChange={(value) => setVolume(value[0] / 100)}
+          onValueChange={(value) => {
+            const newVolume = value[0] / 100;
+            setVolume(newVolume);
+            console.log("Volume slider changed to:", newVolume);
+          }}
         />
         <span className="text-xs text-gray-400">{Math.round(volume * 100)}%</span>
       </div>
-      
-      <audio ref={audioRef} src={audioUrl} preload="metadata" />
     </div>
   );
 };

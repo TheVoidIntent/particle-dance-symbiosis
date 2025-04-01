@@ -14,12 +14,23 @@ export const checkAudioFileExists = async (path: string): Promise<{
   error?: string;
 }> => {
   try {
-    const response = await fetch(path, { method: 'HEAD' });
+    console.log("Checking if audio file exists:", path);
+    
+    // Try to fetch the file with HEAD request first
+    const response = await fetch(path, { 
+      method: 'HEAD',
+      cache: 'no-cache' // Prevent caching to get fresh response
+    });
     
     if (response.ok) {
       // File exists, get some info about it
       const contentType = response.headers.get('Content-Type');
       const contentLength = response.headers.get('Content-Length');
+      
+      console.log(`Audio file check successful: ${path}`, {
+        contentType,
+        size: contentLength ? `${(parseInt(contentLength) / 1024).toFixed(2)} KB` : undefined
+      });
       
       return {
         exists: true,
@@ -28,7 +39,25 @@ export const checkAudioFileExists = async (path: string): Promise<{
         status: response.status
       };
     } else {
-      // File doesn't exist
+      // File doesn't exist with HEAD, try GET as fallback
+      // Some servers don't support HEAD requests properly
+      console.log("HEAD request failed, trying GET request as fallback");
+      
+      const getResponse = await fetch(path, { 
+        method: 'GET',
+        headers: { 'Range': 'bytes=0-0' } // Only request the first byte to minimize data transfer
+      });
+      
+      if (getResponse.ok) {
+        return {
+          exists: true,
+          contentType: getResponse.headers.get('Content-Type') || undefined,
+          status: getResponse.status
+        };
+      }
+      
+      // Both HEAD and GET failed
+      console.warn(`Audio file not found: ${path} (HTTP ${response.status})`);
       return {
         exists: false,
         status: response.status,
@@ -37,11 +66,36 @@ export const checkAudioFileExists = async (path: string): Promise<{
     }
   } catch (err) {
     // Error checking file
+    console.error(`Error checking audio file: ${path}`, err);
     return {
       exists: false,
       error: `Error checking file: ${err instanceof Error ? err.message : String(err)}`
     };
   }
+};
+
+// Create a sample audio file if none exists
+export const createFallbackAudioIfNeeded = () => {
+  const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+  
+  // Create an oscillator
+  const oscillator = audioContext.createOscillator();
+  oscillator.type = 'sine';
+  oscillator.frequency.setValueAtTime(440, audioContext.currentTime); // A4 note
+  
+  // Create a gain node to control volume
+  const gainNode = audioContext.createGain();
+  gainNode.gain.setValueAtTime(0.1, audioContext.currentTime); // Set volume to 10%
+  
+  // Connect the oscillator to the gain node, then to the audio context destination
+  oscillator.connect(gainNode);
+  gainNode.connect(audioContext.destination);
+  
+  // Set up a short beep
+  oscillator.start(audioContext.currentTime);
+  oscillator.stop(audioContext.currentTime + 0.5); // 0.5 second beep
+  
+  return "Generated audio fallback";
 };
 
 // Play an audio file with error handling
@@ -60,8 +114,11 @@ export const playAudioWithErrorHandling = (audioUrl: string): {
       audioElement = null;
     }
     
+    // Create new audio element
     audioElement = new Audio(audioUrl);
+    audioElement.volume = 0.7; // Set default volume to 70%
     
+    // Set up error handling
     audioElement.addEventListener('error', (e) => {
       const errorCode = audioElement?.error?.code;
       let errorMessage = 'Unknown audio error';
@@ -81,11 +138,13 @@ export const playAudioWithErrorHandling = (audioUrl: string): {
           break;
       }
       
+      console.error("Audio playback error:", errorMessage, audioElement?.error);
       toast.error(`Audio playback error: ${errorMessage}`);
       playing = false;
     });
     
     audioElement.addEventListener('ended', () => {
+      console.log("Audio playback ended normally");
       playing = false;
     });
     
@@ -93,10 +152,15 @@ export const playAudioWithErrorHandling = (audioUrl: string): {
     audioElement.play()
       .then(() => {
         playing = true;
+        console.log("Audio playback started successfully");
       })
       .catch(err => {
+        console.error("Failed to play audio:", err);
         toast.error(`Failed to play audio: ${err instanceof Error ? err.message : String(err)}`);
         playing = false;
+        
+        // Create fallback audio if playback fails
+        createFallbackAudioIfNeeded();
       });
   };
   
@@ -115,86 +179,109 @@ export const playAudioWithErrorHandling = (audioUrl: string): {
   };
 };
 
-// Get common audio issues based on diagnosis
-export const getDiagnosticHelp = (
-  path: string, 
-  exists: boolean, 
-  contentType?: string, 
-  error?: string
-): string[] => {
-  const suggestions: string[] = [];
-  
-  if (!path.trim()) {
-    suggestions.push("Audio path is empty. Provide a valid path to an audio file.");
-    return suggestions;
+// Generate a sample audio for testing
+export const generateSampleAudio = () => {
+  // Check if the Web Audio API is supported
+  if (!window.AudioContext && !(window as any).webkitAudioContext) {
+    console.error("Web Audio API is not supported in this browser");
+    return null;
   }
   
-  // Basic path formatting issues
-  if (!path.startsWith('/')) {
-    suggestions.push("Audio path should start with '/' (e.g., '/audio/file.mp3')");
-  }
-  
-  // Check file extension
-  const extension = path.split('.').pop()?.toLowerCase();
-  if (!extension) {
-    suggestions.push("No file extension detected. Audio files should have extensions like .mp3, .wav, etc.");
-  } else if (!['mp3', 'wav', 'ogg', 'm4a', 'aac'].includes(extension)) {
-    suggestions.push(`File extension '${extension}' may not be a common audio format. Try using .mp3, .wav, or .ogg.`);
-  }
-  
-  // File existence issues
-  if (!exists) {
-    suggestions.push("File not found at the specified path. Check if the file exists in the correct directory.");
+  try {
+    // Create an offline audio context
+    const offlineCtx = new OfflineAudioContext({
+      numberOfChannels: 1,
+      length: 44100 * 5, // 5 seconds
+      sampleRate: 44100
+    });
     
-    // GitHub size limit
-    if (path.includes('/audio/categories/')) {
-      suggestions.push("Files larger than 25MB cannot be stored on GitHub. Consider using an external storage solution.");
-    }
+    // Create an oscillator
+    const oscillator = offlineCtx.createOscillator();
+    oscillator.type = 'sine';
+    oscillator.frequency.setValueAtTime(440, 0); // A4
+    oscillator.frequency.linearRampToValueAtTime(880, 2.5); // Ramp to A5 over 2.5 seconds
+    oscillator.frequency.linearRampToValueAtTime(440, 5); // Back to A4
     
-    // Check for common path errors
-    if (path.includes('src/')) {
-      suggestions.push("Files in 'src/' directory are not accessible at runtime. Move files to 'public/' directory.");
-    }
-  } else if (contentType && !contentType.startsWith('audio/')) {
-    suggestions.push(`File exists but doesn't have an audio MIME type (${contentType}). File may be corrupted or not an audio file.`);
+    // Create a gain node
+    const gainNode = offlineCtx.createGain();
+    gainNode.gain.setValueAtTime(0, 0);
+    gainNode.gain.linearRampToValueAtTime(0.7, 0.5); // Fade in
+    gainNode.gain.setValueAtTime(0.7, 4);
+    gainNode.gain.linearRampToValueAtTime(0, 5); // Fade out
+    
+    // Connect nodes
+    oscillator.connect(gainNode);
+    gainNode.connect(offlineCtx.destination);
+    
+    // Start the oscillator
+    oscillator.start(0);
+    oscillator.stop(5);
+    
+    // Render the audio
+    return offlineCtx.startRendering().then(renderedBuffer => {
+      // Create a blob from the rendered buffer
+      const audioData = renderAudioBufferToWav(renderedBuffer);
+      const audioBlob = new Blob([audioData], { type: 'audio/wav' });
+      const audioUrl = URL.createObjectURL(audioBlob);
+      
+      return {
+        url: audioUrl,
+        revoke: () => URL.revokeObjectURL(audioUrl)
+      };
+    });
+    
+  } catch (error) {
+    console.error("Error generating sample audio:", error);
+    return null;
   }
-  
-  // Error-specific suggestions
-  if (error) {
-    if (error.includes('NetworkError')) {
-      suggestions.push("Network error while loading audio. Check your internet connection.");
-    } else if (error.includes('MEDIA_ERR_DECODE')) {
-      suggestions.push("Browser couldn't decode the audio. The file might be corrupted or in an unsupported format.");
-    } else if (error.includes('MEDIA_ERR_SRC_NOT_SUPPORTED')) {
-      suggestions.push("Audio format not supported by your browser. Try converting to MP3 or WAV format.");
-    }
-  }
-  
-  // General suggestions
-  if (suggestions.length === 0) {
-    suggestions.push("Audio file format is likely not supported by your browser. Try a different format.");
-    suggestions.push("Check browser console for additional error details.");
-  }
-  
-  // Always add these helpful suggestions
-  suggestions.push("Try using the sample audio file (/audio/sample-placeholder.mp3) to test if your audio player works correctly.");
-  
-  return suggestions;
 };
 
-// Generate a list of folders to check for audio files
-export const getAudioFolderPaths = (): string[] => {
-  const categories = [
-    'lectures',
-    'technical',
-    'research',
-    'interviews',
-    'ambient',
-    'uncategorized'
-  ];
+// Helper function to convert AudioBuffer to WAV format
+function renderAudioBufferToWav(audioBuffer: AudioBuffer): ArrayBuffer {
+  const numOfChan = audioBuffer.numberOfChannels;
+  const length = audioBuffer.length * numOfChan * 2;
+  const buffer = new ArrayBuffer(44 + length);
+  const view = new DataView(buffer);
   
-  return [
-    '/audio',
-    ...categories.map(category => `/audio/categories/${category}`)
-  ];
-};
+  // Write WAV header
+  // "RIFF" chunk descriptor
+  writeString(view, 0, 'RIFF');
+  view.setUint32(4, 36 + length, true);
+  writeString(view, 8, 'WAVE');
+  
+  // "fmt " sub-chunk
+  writeString(view, 12, 'fmt ');
+  view.setUint32(16, 16, true);
+  view.setUint16(20, 1, true); // PCM format
+  view.setUint16(22, numOfChan, true);
+  view.setUint32(24, audioBuffer.sampleRate, true);
+  view.setUint32(28, audioBuffer.sampleRate * 2 * numOfChan, true);
+  view.setUint16(32, numOfChan * 2, true);
+  view.setUint16(34, 16, true);
+  
+  // "data" sub-chunk
+  writeString(view, 36, 'data');
+  view.setUint32(40, length, true);
+  
+  // Write audio data
+  const offset = 44;
+  let pos = 0;
+  
+  for (let i = 0; i < audioBuffer.numberOfChannels; i++) {
+    const channelData = audioBuffer.getChannelData(i);
+    
+    for (let j = 0; j < channelData.length; j++, pos += 2) {
+      const sample = Math.max(-1, Math.min(1, channelData[j]));
+      view.setInt16(offset + pos, sample < 0 ? sample * 0x8000 : sample * 0x7FFF, true);
+    }
+  }
+  
+  return buffer;
+}
+
+// Helper function to write strings to DataView
+function writeString(view: DataView, offset: number, string: string) {
+  for (let i = 0; i < string.length; i++) {
+    view.setUint8(offset + i, string.charCodeAt(i));
+  }
+}

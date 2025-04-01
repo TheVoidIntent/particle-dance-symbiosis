@@ -2,7 +2,6 @@
 import React from 'react';
 import { Info, MoreVertical, Plus, FileText, BookOpen, HelpCircle, BarChart } from 'lucide-react';
 import { Button } from "@/components/ui/button";
-import AudioNotePlayer from "./AudioNotePlayer";
 import NotesList from "./NotesList";
 import { toast } from "sonner";
 
@@ -30,15 +29,6 @@ const SourcesTabContent: React.FC<SourcesTabContentProps> = ({
         <h2 className="text-xl font-semibold text-white">Audio Overview</h2>
         <Info className="h-5 w-5 text-gray-400" />
       </div>
-      
-      <AudioNotePlayer 
-        title={currentAudio.title}
-        progress={currentAudio.progress}
-        duration={currentAudio.duration}
-        isPlaying={isPlaying}
-        onTogglePlay={onTogglePlay}
-        audioUrl={currentAudio.url}
-      />
       
       <div className="bg-gray-800/40 rounded-lg p-4 border border-gray-700/50 text-center">
         <p className="text-gray-300 flex items-center justify-center gap-2">

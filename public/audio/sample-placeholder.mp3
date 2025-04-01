@@ -1,8 +1,3 @@
-
-// This is just a placeholder. You need to replace this with actual MP3 files.
-// The website will look for files with these specific names:
-// - introduction-to-intent-theory.mp3
-// - particle-interaction-dynamics.mp3
-// - emergent-complexity-patterns.mp3
-// - charge-knowledge-transfer.mp3
-// - simulation-parameters-explained.mp3
+// This is just a placeholder comment. 
+// The actual MP3 file will need to be uploaded manually or generated at runtime.
+// For development purposes, we'll be using the audio utilities to create a fallback audio.

@@ -1,6 +1,7 @@
 
 import { toast } from "sonner";
 import { createFallbackAudioIfNeeded } from "./audioGenerationUtils";
+import { checkAudioFileExists } from "./audioFileUtils";
 
 /**
  * Utilities for audio playback with error handling
@@ -9,13 +10,38 @@ import { createFallbackAudioIfNeeded } from "./audioGenerationUtils";
 /**
  * Play an audio file with comprehensive error handling
  */
-export const playAudioWithErrorHandling = (audioUrl: string): {
+export const playAudioWithErrorHandling = async (audioUrl: string): Promise<{
   play: () => void;
   stop: () => void;
   isPlaying: boolean;
-} => {
+}> => {
   let audioElement: HTMLAudioElement | null = null;
   let playing = false;
+  
+  // First check if the audio file exists and is valid
+  const fileCheck = await checkAudioFileExists(audioUrl);
+  console.log(`Audio file check for ${audioUrl}:`, fileCheck);
+  
+  if (!fileCheck.exists || fileCheck.error) {
+    console.warn(`Audio file not found or has errors: ${audioUrl}`, fileCheck.error);
+    toast.error(`Audio file not available: ${fileCheck.error || 'Unknown error'}`);
+    // Return a dummy player that will generate a fallback sound
+    return {
+      play: () => {
+        console.log("Playing fallback audio instead of missing file:", audioUrl);
+        createFallbackAudioIfNeeded();
+        playing = true;
+        // Set a timeout to simulate the audio ending
+        setTimeout(() => {
+          playing = false;
+        }, 1000);
+      },
+      stop: () => {
+        playing = false;
+      },
+      get isPlaying() { return playing; }
+    };
+  }
   
   const play = () => {
     if (audioElement) {
@@ -51,6 +77,9 @@ export const playAudioWithErrorHandling = (audioUrl: string): {
       console.error("Audio playback error:", errorMessage, audioElement?.error);
       toast.error(`Audio playback error: ${errorMessage}`);
       playing = false;
+      
+      // Create fallback audio if playback fails
+      createFallbackAudioIfNeeded();
     });
     
     audioElement.addEventListener('ended', () => {

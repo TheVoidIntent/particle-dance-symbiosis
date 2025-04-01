@@ -9,26 +9,38 @@ import { toast } from "sonner";
  * Create a simple audio fallback if needed
  */
 export const createFallbackAudioIfNeeded = () => {
-  const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-  
-  // Create an oscillator
-  const oscillator = audioContext.createOscillator();
-  oscillator.type = 'sine';
-  oscillator.frequency.setValueAtTime(440, audioContext.currentTime); // A4 note
-  
-  // Create a gain node to control volume
-  const gainNode = audioContext.createGain();
-  gainNode.gain.setValueAtTime(0.1, audioContext.currentTime); // Set volume to 10%
-  
-  // Connect the oscillator to the gain node, then to the audio context destination
-  oscillator.connect(gainNode);
-  gainNode.connect(audioContext.destination);
-  
-  // Set up a short beep
-  oscillator.start(audioContext.currentTime);
-  oscillator.stop(audioContext.currentTime + 0.5); // 0.5 second beep
-  
-  return "Generated audio fallback";
+  try {
+    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    
+    // Create a more pleasing audio notification
+    const oscillator = audioContext.createOscillator();
+    oscillator.type = 'sine';
+    oscillator.frequency.setValueAtTime(440, audioContext.currentTime); // A4 note
+    oscillator.frequency.exponentialRampToValueAtTime(880, audioContext.currentTime + 0.2); // Slide to A5
+    oscillator.frequency.exponentialRampToValueAtTime(440, audioContext.currentTime + 0.4); // Back to A4
+    
+    // Create a gain node to control volume and envelope
+    const gainNode = audioContext.createGain();
+    gainNode.gain.setValueAtTime(0, audioContext.currentTime); // Start silent
+    gainNode.gain.linearRampToValueAtTime(0.2, audioContext.currentTime + 0.05); // Fade in
+    gainNode.gain.setValueAtTime(0.2, audioContext.currentTime + 0.35); // Hold
+    gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + 0.5); // Fade out
+    
+    // Connect the oscillator to the gain node, then to the audio context destination
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    
+    // Start and stop the oscillator
+    oscillator.start(audioContext.currentTime);
+    oscillator.stop(audioContext.currentTime + 0.5);
+    
+    toast.info("Using generated audio tone (original audio unavailable)");
+    
+    return "Generated audio fallback";
+  } catch (error) {
+    console.error("Failed to create fallback audio:", error);
+    return null;
+  }
 };
 
 /**
@@ -77,6 +89,9 @@ export const generateSampleAudio = () => {
       const audioData = renderAudioBufferToWav(renderedBuffer);
       const audioBlob = new Blob([audioData], { type: 'audio/wav' });
       const audioUrl = URL.createObjectURL(audioBlob);
+      
+      console.log("Generated sample audio:", audioUrl);
+      toast.success("Generated sample audio successfully");
       
       return {
         url: audioUrl,

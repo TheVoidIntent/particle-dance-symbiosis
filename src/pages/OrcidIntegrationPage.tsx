@@ -1,9 +1,9 @@
 
 import React from 'react';
 import { Helmet } from 'react-helmet';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { FileText, Database, ChevronLeft } from "lucide-react";
+import { FileText, Database, ChevronLeft, BookOpen, HelpCircle } from "lucide-react";
 import OrcidIntegration from '@/components/OrcidIntegration';
 import NotebookLmExport from '@/components/NotebookLmExport';
 import Footer from "@/components/Footer";
@@ -45,14 +45,49 @@ const OrcidIntegrationPage: React.FC = () => {
             
             <Card className="mt-6">
               <CardHeader>
-                <CardTitle className="text-lg">DOE Research Integration</CardTitle>
+                <CardTitle className="text-lg flex items-center">
+                  <BookOpen className="h-5 w-5 mr-2 text-blue-500" />
+                  ORCID Works & DOI Integration
+                </CardTitle>
+                <CardDescription>
+                  Manage your research outputs and add them to your ORCID profile
+                </CardDescription>
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                  The Department of Energy's Office of Scientific and Technical Information (OSTI.GOV) serves as the DOE repository for scientific and technical information. Connecting your ORCID identifier allows your simulation research to be properly attributed.
-                </p>
+                <div className="border rounded-md p-4 bg-blue-50/20 dark:bg-blue-900/10 border-blue-200 dark:border-blue-700/40 mb-4">
+                  <h3 className="font-medium text-sm mb-2">About ORCID Works</h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                    Works are your research outputs, including publications, data sets, conference presentations, and more. 
+                    You can add up to 10,000 works to your ORCID record to maintain a comprehensive research profile.
+                  </p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    By connecting DOIs and other identifiers to your ORCID profile, your research gains visibility and proper attribution.
+                  </p>
+                </div>
                 
-                <div className="flex flex-col sm:flex-row gap-2">
+                <div className="space-y-4">
+                  <div>
+                    <h3 className="font-medium text-sm mb-1 flex items-center">
+                      <FileText className="h-4 w-4 mr-2 text-green-500" />
+                      Export Options
+                    </h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 pl-6 mb-2">
+                      Export your simulation data in various formats for addition to your ORCID record: PDF, BibTeX, DOI metadata.
+                    </p>
+                  </div>
+                  
+                  <div>
+                    <h3 className="font-medium text-sm mb-1 flex items-center">
+                      <Database className="h-4 w-4 mr-2 text-amber-500" />
+                      OSTI.GOV Integration
+                    </h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 pl-6 mb-2">
+                      The Department of Energy's Office of Scientific and Technical Information (OSTI.GOV) repository connects with your ORCID iD for proper attribution.
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="flex flex-col sm:flex-row gap-2 mt-4">
                   <Button 
                     variant="outline"
                     className="flex-1"
@@ -106,6 +141,22 @@ const OrcidIntegrationPage: React.FC = () => {
                   <p className="text-sm text-gray-600 dark:text-gray-400">
                     Meets Department of Energy requirements for research data attribution and publication, facilitating collaboration with national laboratories.
                   </p>
+                </div>
+                
+                <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+                  <h3 className="font-medium text-sm mb-2 flex items-center">
+                    <HelpCircle className="h-4 w-4 mr-2 text-blue-400" />
+                    ORCID Works Help
+                  </h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                    Works can be added in multiple ways:
+                  </p>
+                  <ul className="text-sm text-gray-600 dark:text-gray-400 list-disc pl-5 space-y-1">
+                    <li>Search & Link (recommended)</li>
+                    <li>Add by DOI or PubMed ID</li>
+                    <li>Import BibTeX</li>
+                    <li>Manual entry</li>
+                  </ul>
                 </div>
                 
                 <Button 

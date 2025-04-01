@@ -1,20 +1,44 @@
 
 import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ExternalLink, FileText, CheckCircle, Database } from "lucide-react";
+import { ExternalLink, FileText, CheckCircle, Database, BookOpen, Plus, Search } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 // ORCID information
 const RESEARCHER_ORCID = "0009-0001-0403-6452";
 const ORCID_URL = "https://orcid.org/0009-0001-0403-6452";
 const RESEARCHER_NAME = "Marcelo Mezquia";
 
+// Sample works for demonstration
+const sampleWorks = [
+  { 
+    id: 1, 
+    title: "Adaptive Particle Analysis in Proto-Universe Simulations", 
+    type: "Journal Article", 
+    date: "2024", 
+    source: "IntentSim.org",
+    doi: "10.1234/intent.2024.0001"
+  },
+  { 
+    id: 2, 
+    title: "Energy Conservation in Intent Field Fluctuations", 
+    type: "Conference Paper", 
+    date: "2023", 
+    source: "CERN Physics Conference",
+    doi: "10.1234/cern.2023.5678"
+  }
+];
+
 const OrcidIntegration: React.FC = () => {
   const [activeTab, setActiveTab] = useState("details");
   const [isAuthorized, setIsAuthorized] = useState(true);
+  const [doiInput, setDoiInput] = useState("");
+  const [worksList, setWorksList] = useState(sampleWorks);
   
   const handleOpenOrcid = () => {
     window.open(ORCID_URL, '_blank');
@@ -28,6 +52,28 @@ const OrcidIntegration: React.FC = () => {
   
   const handleAddWork = () => {
     toast.success("Simulation data added to your ORCID Works");
+  };
+
+  const handleAddDOI = () => {
+    if (!doiInput.trim()) {
+      toast.error("Please enter a valid DOI");
+      return;
+    }
+
+    // In a real implementation, this would validate and fetch metadata for the DOI
+    // For demonstration, we'll just add a placeholder entry
+    const newWork = {
+      id: worksList.length + 1,
+      title: `Publication with DOI: ${doiInput}`,
+      type: "Journal Article",
+      date: new Date().getFullYear().toString(),
+      source: "Added via DOI",
+      doi: doiInput
+    };
+
+    setWorksList([...worksList, newWork]);
+    setDoiInput("");
+    toast.success("Work added from DOI!");
   };
   
   return (
@@ -56,9 +102,10 @@ const OrcidIntegration: React.FC = () => {
       {isAuthorized ? (
         <CardContent className="pt-0">
           <Tabs defaultValue={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
+            <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="details">Account Details</TabsTrigger>
-              <TabsTrigger value="works">OSTI.GOV Works</TabsTrigger>
+              <TabsTrigger value="works">ORCID Works</TabsTrigger>
+              <TabsTrigger value="add">Add Works</TabsTrigger>
             </TabsList>
             
             <TabsContent value="details" className="space-y-4 pt-4">
@@ -98,40 +145,108 @@ const OrcidIntegration: React.FC = () => {
             
             <TabsContent value="works" className="pt-4">
               <div className="text-sm space-y-4">
-                <p>
-                  You can search OSTI.GOV and add DOE research records you've authored directly to your ORCID Works. Use the search box to find records, or search your name.
-                </p>
-                
-                <div className="border rounded-md p-3 bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="bg-green-600 text-white text-xs font-medium px-2 py-0.5 rounded">Add to ORCID Works</span>
-                    <span className="text-sm">Will appear at the bottom of each search result</span>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center">
+                    <BookOpen className="h-4 w-4 mr-2 text-blue-500" />
+                    <span className="font-medium">Your Works ({worksList.length}/10,000)</span>
                   </div>
+                  <Badge variant="secondary">First 50 shown</Badge>
+                </div>
+                
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Title</TableHead>
+                      <TableHead>Type</TableHead>
+                      <TableHead>Date</TableHead>
+                      <TableHead>Source</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {worksList.map(work => (
+                      <TableRow key={work.id}>
+                        <TableCell className="font-medium">{work.title}</TableCell>
+                        <TableCell>{work.type}</TableCell>
+                        <TableCell>{work.date}</TableCell>
+                        <TableCell>{work.source}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+                
+                <div className="flex justify-end mt-4">
+                  <Button 
+                    onClick={() => setActiveTab("add")}
+                    size="sm"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Work
+                  </Button>
+                </div>
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="add" className="pt-4">
+              <div className="space-y-6">
+                <div className="border rounded-md p-4 bg-blue-50/30 dark:bg-blue-900/10 border-blue-200 dark:border-blue-800/40">
+                  <h3 className="text-md font-medium mb-2 flex items-center">
+                    <FileText className="h-4 w-4 mr-2 text-blue-500" />
+                    Add Works to Your ORCID Record
+                  </h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+                    Works are your research outputs, including publications, data sets, and presentations. You can add up to 10,000 works to your ORCID record.
+                  </p>
                   
-                  <div className="flex flex-col sm:flex-row gap-2 mt-3">
-                    <Button 
-                      variant="default" 
-                      className="flex-1 bg-blue-600 hover:bg-blue-700"
-                      onClick={() => toast.info("Opening OSTI.GOV search page")}
-                    >
-                      <FileText className="h-4 w-4 mr-2" />
-                      Search OSTI.GOV
-                    </Button>
+                  <div className="grid grid-cols-1 gap-4">
+                    <div className="border rounded-md p-3 bg-white dark:bg-gray-800">
+                      <h4 className="text-sm font-medium mb-2">Add by DOI</h4>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+                        Import the work by entering its Digital Object Identifier (DOI).
+                      </p>
+                      <div className="flex gap-2">
+                        <Input 
+                          placeholder="Enter DOI (e.g., 10.1234/example)" 
+                          value={doiInput}
+                          onChange={(e) => setDoiInput(e.target.value)}
+                          className="text-sm"
+                        />
+                        <Button size="sm" onClick={handleAddDOI}>Add</Button>
+                      </div>
+                    </div>
                     
-                    <Button 
-                      variant="outline" 
-                      className="flex-1"
-                      onClick={handleOpenOrcid}
-                    >
-                      <ExternalLink className="h-4 w-4 mr-2" />
-                      View ORCID Works
-                    </Button>
+                    <div className="border rounded-md p-3 bg-white dark:bg-gray-800">
+                      <h4 className="text-sm font-medium mb-2">Search & Link (Recommended)</h4>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+                        Connect with trusted databases like Scopus and Crossref to import your works with just a few clicks.
+                      </p>
+                      <Button variant="outline" size="sm" className="w-full">
+                        <Search className="h-4 w-4 mr-2" />
+                        Search External Databases
+                      </Button>
+                    </div>
+                    
+                    <div className="border rounded-md p-3 bg-white dark:bg-gray-800">
+                      <h4 className="text-sm font-medium mb-2">Add IntentSim Simulation</h4>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+                        Add your current simulation as a research output to your ORCID record with proper attribution.
+                      </p>
+                      <Button onClick={handleAddWork} size="sm" className="w-full">
+                        <Database className="h-4 w-4 mr-2" />
+                        Add Current Simulation
+                      </Button>
+                    </div>
                   </div>
                 </div>
                 
-                <p className="text-xs text-gray-500 pt-2">
-                  Your simulation data from IntentSim can be published to OSTI.GOV and linked with your ORCID profile, enhancing scientific credibility.
-                </p>
+                <div className="text-xs text-gray-500 dark:text-gray-400">
+                  <p className="mb-2 font-medium">💡 Tips for adding works:</p>
+                  <ul className="list-disc pl-5 space-y-1">
+                    <li>Allow trusted organizations to automatically update your ORCID record for the most accurate information.</li>
+                    <li>When publishing papers, look for the green ORCID iD icon to connect your publication directly.</li>
+                    <li>For multiple publications, use BibTex import to add them in bulk.</li>
+                    <li>Always verify information after importing to ensure accuracy.</li>
+                  </ul>
+                </div>
               </div>
             </TabsContent>
           </Tabs>
@@ -154,6 +269,13 @@ const OrcidIntegration: React.FC = () => {
           </div>
         </CardContent>
       )}
+      
+      <CardFooter className="text-xs text-gray-500 border-t pt-4">
+        <div className="flex items-center">
+          <FileText className="h-3 w-3 mr-1 text-gray-400" />
+          <span>Using ORCID API v3.0 for DOE research integration</span>
+        </div>
+      </CardFooter>
     </Card>
   );
 };

@@ -2,12 +2,13 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ExternalLink, FileText, Activity, Award, ZapOff, Database } from "lucide-react";
+import { ExternalLink, FileText, Activity, Award, ZapOff, Database, BookOpen } from "lucide-react";
 import { useNotebookLmIntegration } from '@/hooks/useNotebookLmIntegration';
 import { getAvailableAtlasDatasets } from '@/utils/atlasDataIntegration';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useInflationEvents } from '@/hooks/useInflationEvents';
 import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
 
 // ORCID information
 const RESEARCHER_ORCID = "0009-0001-0403-6452";
@@ -18,6 +19,12 @@ const NotebookLmExport: React.FC = () => {
   const { inflationEvents } = useInflationEvents();
   const [selectedDataset, setSelectedDataset] = useState("6004"); // Default to 13 TeV collision data
   const availableDatasets = getAvailableAtlasDatasets();
+  const [exportFormat, setExportFormat] = useState("pdf");
+
+  const handleExport = () => {
+    exportSimulationData(selectedDataset, exportFormat);
+    toast.success(`Exporting as ${exportFormat.toUpperCase()}`);
+  };
 
   return (
     <Card className="shadow-lg border-purple-200/40 dark:border-purple-800/40">
@@ -44,8 +51,9 @@ const NotebookLmExport: React.FC = () => {
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="border border-purple-300/20 rounded-md p-3 bg-purple-50/20 dark:bg-purple-900/10">
-          <p className="text-sm mb-2">
-            Export and compare your data with ATLAS/CERN datasets:
+          <p className="text-sm mb-2 flex items-center">
+            <BookOpen className="h-4 w-4 mr-2 text-purple-500" />
+            <span className="font-medium">Export as ORCID Work</span>
           </p>
           <ul className="text-sm space-y-1 list-disc list-inside">
             <li>Adaptive Particle Analysis</li>
@@ -76,14 +84,32 @@ const NotebookLmExport: React.FC = () => {
           </Select>
         </div>
         
+        <div className="space-y-2">
+          <label className="text-sm text-gray-500 dark:text-gray-400">Export Format:</label>
+          <Select
+            value={exportFormat}
+            onValueChange={setExportFormat}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Select export format" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="pdf">PDF Document</SelectItem>
+              <SelectItem value="bibtex">BibTeX Citation</SelectItem>
+              <SelectItem value="json">JSON Metadata</SelectItem>
+              <SelectItem value="doi">DOI Metadata</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        
         <div className="flex flex-col sm:flex-row gap-2">
           <Button 
             variant="outline" 
             className="flex-1"
-            onClick={() => exportSimulationData(selectedDataset)}
+            onClick={handleExport}
           >
             <FileText className="h-4 w-4 mr-2" />
-            Export as PDF
+            Export for ORCID
           </Button>
           
           <Button 

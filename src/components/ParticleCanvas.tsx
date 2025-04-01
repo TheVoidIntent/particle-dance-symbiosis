@@ -1,4 +1,3 @@
-
 import React, { useCallback } from 'react';
 import { useParticleSimulation, InflationEvent } from '@/hooks/simulation';
 import { useSimulationData } from '@/hooks/useSimulationData';
@@ -193,6 +192,9 @@ export const ParticleCanvas: React.FC<ParticleCanvasProps> = ({
       description: "The simulation has been completely reset.",
       variant: "default",
     });
+    
+    // Return empty array to satisfy TypeScript
+    return [];
   }, [
     toast, 
     particlesRef, 

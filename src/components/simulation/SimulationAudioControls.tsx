@@ -10,7 +10,7 @@ import {
   VolumeX,
   Music,
   Bell,
-  Waveform,
+  WaveformCircle,
   InfoIcon
 } from 'lucide-react';
 import { 

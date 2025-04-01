@@ -47,11 +47,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // In a real app, this would connect to a backend authentication service
   const login = async (email: string, password: string): Promise<boolean> => {
     // This is a mock authentication - replace with real auth in production
-    if (email === 'creator@intentsim.org' && password === 'creator123') {
+    if ((email === 'creator@intentsim.org' && password === 'creator123') || 
+        (email === 'thevoidintent@intentsim.org' && password === 'intentsim')) {
       const userData: User = {
         id: '1',
         email,
-        name: 'IntentSim Creator',
+        name: email === 'thevoidintent@intentsim.org' ? 'TheVoidIntent' : 'IntentSim Creator',
         role: 'creator',
       };
       

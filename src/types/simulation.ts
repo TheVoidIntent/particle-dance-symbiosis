@@ -37,4 +37,13 @@ export interface SimulationStats {
   averageKnowledge?: number;
   complexityIndex?: number;
   systemEntropy?: number;
+  shannonEntropy?: number;
+  spatialEntropy?: number;
+  fieldOrderParameter?: number;
+  kolmogorovComplexity?: number;
+  clusterCount?: number;
+  averageClusterSize?: number;
+  informationDensity?: number;
+  clusterLifetime?: number;
+  maxComplexity?: number;
 }

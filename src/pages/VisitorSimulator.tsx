@@ -8,6 +8,7 @@ import { Play, Pause, Download, Info, Music2 } from "lucide-react";
 import { toast } from "sonner";
 import AudioOptionsSection from '@/components/simulation/AudioOptionsSection';
 import { playLoopingAudio, stopLoopingAudio, setLoopingAudioVolume } from '@/utils/audio/audioPlaybackUtils';
+import { getAvailableAudioFiles } from '@/utils/audio/audioFileUtils';
 
 interface Particle {
   x: number;

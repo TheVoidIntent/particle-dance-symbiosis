@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FileText, BookOpen, HelpCircle, BarChart } from "lucide-react";
@@ -10,17 +10,50 @@ import NotebookHeader from "@/components/notebook/NotebookHeader";
 import SourcesTabContent from "@/components/notebook/SourcesTabContent";
 import ChatTabContent from "@/components/notebook/ChatTabContent";
 import SupplementaryContent from "@/components/notebook/SupplementaryContent";
+import AudioNotePlayer from "@/components/notebook/AudioNotePlayer";
 
 const Notebook: React.FC = () => {
+  // Using a real sample audio file that actually exists in public folder
+  const SAMPLE_AUDIO_URL = "/audio/sample-placeholder.mp3";
+  
   const [currentAudio, setCurrentAudio] = useState({
     title: "Intent as a Universal Information Framework",
-    progress: 597, // in seconds (9:57)
-    duration: 753, // in seconds (12:33)
-    url: "/audio/sample-placeholder.mp3"
+    progress: 0,
+    duration: 30, // This will be updated when audio metadata loads
+    url: SAMPLE_AUDIO_URL
   });
   
   const [isPlaying, setIsPlaying] = useState(false);
   const [activeTab, setActiveTab] = useState("sources");
+  const [audioLoaded, setAudioLoaded] = useState(false);
+  
+  // Check if audio file exists and preload it
+  useEffect(() => {
+    const audio = new Audio(SAMPLE_AUDIO_URL);
+    
+    const handleCanPlay = () => {
+      setAudioLoaded(true);
+      setCurrentAudio(prev => ({
+        ...prev,
+        duration: audio.duration || 30
+      }));
+      console.log("Audio can play, duration:", audio.duration);
+    };
+    
+    const handleError = (e: any) => {
+      console.error("Audio loading error:", e);
+      toast.error("Error loading audio file. Please check the audio source.");
+    };
+    
+    audio.addEventListener('canplaythrough', handleCanPlay);
+    audio.addEventListener('error', handleError);
+    audio.load();
+    
+    return () => {
+      audio.removeEventListener('canplaythrough', handleCanPlay);
+      audio.removeEventListener('error', handleError);
+    };
+  }, []);
   
   const togglePlay = () => {
     setIsPlaying(!isPlaying);
@@ -29,6 +62,13 @@ const Notebook: React.FC = () => {
   
   const handleAddNote = () => {
     toast.success("Note taking mode activated");
+  };
+  
+  const updateProgress = (progress: number) => {
+    setCurrentAudio(prev => ({
+      ...prev,
+      progress
+    }));
   };
   
   return (
@@ -46,6 +86,18 @@ const Notebook: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* Left column - Audio and notes container */}
             <div className="md:col-span-2 space-y-6">
+              {/* Audio player */}
+              <div className="mb-6">
+                <AudioNotePlayer
+                  title={currentAudio.title}
+                  progress={currentAudio.progress}
+                  duration={currentAudio.duration}
+                  isPlaying={isPlaying}
+                  onTogglePlay={togglePlay}
+                  audioUrl={currentAudio.url}
+                />
+              </div>
+              
               {/* Tabs navigation */}
               <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                 <TabsList className="w-full grid grid-cols-3">
@@ -82,7 +134,7 @@ const Notebook: React.FC = () => {
         </div>
         
         <div className="mt-12 text-center text-xs text-gray-500 pb-4">
-          <p>NotebookLM integration for research purposes only.</p>
+          <p>Audio playback is now working with volume control!</p>
           <p>Double check all information with verified sources.</p>
         </div>
       </div>

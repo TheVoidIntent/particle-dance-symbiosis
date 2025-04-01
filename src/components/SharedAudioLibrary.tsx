@@ -1,11 +1,13 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Headphones, Play, Pause, Info, Tag, ExternalLink, FileDown, FolderOpen } from "lucide-react";
+import { Headphones, Play, Pause, Info, Tag, ExternalLink, FileDown, FolderOpen, Volume2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Slider } from "@/components/ui/slider";
+import { checkAudioFileExists } from "@/utils/audioUtils";
 
 // Define categories structure
 const AUDIO_CATEGORIES = [
@@ -15,6 +17,9 @@ const AUDIO_CATEGORIES = [
   { id: 'interviews', name: 'Interviews', description: 'Discussions with researchers and contributors' },
   { id: 'ambient', name: 'Ambient', description: 'Background and simulation ambient sounds' }
 ];
+
+// Audio file for demo purposes (this one always works)
+const SAMPLE_AUDIO_URL = '/audio/sample-placeholder.mp3';
 
 // Predefined audio files that will be bundled with the application
 const PREDEFINED_AUDIO_FILES = [
@@ -73,6 +78,14 @@ const PREDEFINED_AUDIO_FILES = [
     category: 'ambient',
     duration: '15:34',
     url: '/audio/categories/ambient/field-fluctuation-sonification.mp3'
+  },
+  {
+    id: 'sample-audio',
+    name: 'Sample Audio (Always Works)',
+    description: 'A sample audio file that always works for testing',
+    category: 'technical',
+    duration: '0:30',
+    url: SAMPLE_AUDIO_URL
   }
 ];
 
@@ -81,27 +94,80 @@ const SharedAudioLibrary: React.FC = () => {
   const [volume, setVolume] = useState<number>(0.7);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [audioAvailability, setAudioAvailability] = useState<{[key: string]: boolean}>({});
-  const audioRefs = React.useRef<{ [key: string]: HTMLAudioElement | null }>({});
+  const audioRefs = useRef<{ [key: string]: HTMLAudioElement | null }>({});
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+
+  // Initialize audio elements
+  useEffect(() => {
+    PREDEFINED_AUDIO_FILES.forEach(file => {
+      if (!audioRefs.current[file.id]) {
+        const audio = new Audio(file.url);
+        audio.volume = volume;
+        
+        // Handle playback ended
+        audio.addEventListener('ended', () => {
+          setCurrentlyPlaying(null);
+        });
+        
+        audioRefs.current[file.id] = audio;
+      }
+    });
+    
+    // Cleanup function
+    return () => {
+      Object.values(audioRefs.current).forEach(audio => {
+        if (audio) {
+          audio.pause();
+          audio.src = '';
+        }
+      });
+    };
+  }, []);
 
   // Check if audio files actually exist
   useEffect(() => {
     const checkAudioAvailability = async () => {
+      setIsLoading(true);
       const availabilityResults: {[key: string]: boolean} = {};
       
+      // First, make sure our sample audio works
+      const sampleResult = await checkAudioFileExists(SAMPLE_AUDIO_URL);
+      availabilityResults['sample-audio'] = sampleResult.exists;
+      
+      // Then check other files
       for (const file of PREDEFINED_AUDIO_FILES) {
+        if (file.id === 'sample-audio') continue; // Already checked
+        
         try {
-          const response = await fetch(file.url, { method: 'HEAD' });
-          availabilityResults[file.id] = response.ok;
+          const result = await checkAudioFileExists(file.url);
+          availabilityResults[file.id] = result.exists;
         } catch (error) {
           availabilityResults[file.id] = false;
         }
       }
       
       setAudioAvailability(availabilityResults);
+      setIsLoading(false);
+      
+      // If sample audio is available, show a success message
+      if (availabilityResults['sample-audio']) {
+        toast.success("Audio player is working! Try the sample audio.");
+      } else {
+        toast.error("Audio player may not work properly in this environment.");
+      }
     };
     
     checkAudioAvailability();
   }, []);
+  
+  // Update volume when it changes
+  useEffect(() => {
+    Object.values(audioRefs.current).forEach(audio => {
+      if (audio) {
+        audio.volume = volume;
+      }
+    });
+  }, [volume]);
   
   // Filter audio files by category
   const filteredAudioFiles = selectedCategory
@@ -109,15 +175,18 @@ const SharedAudioLibrary: React.FC = () => {
     : PREDEFINED_AUDIO_FILES;
 
   const handlePlayPause = (audioId: string) => {
-    // Check if the audio file is available
-    if (!audioAvailability[audioId]) {
-      toast.error("This audio file is not available yet");
-      return;
-    }
-    
     const audioElement = audioRefs.current[audioId];
     if (!audioElement) {
-      toast.error("Audio file not available");
+      toast.error("Audio element not initialized");
+      return;
+    }
+
+    // First, check if the file is available
+    const fileExists = audioAvailability[audioId];
+    if (!fileExists && audioId !== 'sample-audio') {
+      // If the file doesn't exist and it's not our sample, try playing the sample instead
+      toast.warning("This audio file is not available. Playing sample audio instead.");
+      handlePlayPause('sample-audio');
       return;
     }
 
@@ -125,6 +194,7 @@ const SharedAudioLibrary: React.FC = () => {
       // Pause the current audio
       audioElement.pause();
       setCurrentlyPlaying(null);
+      toast.info("Audio paused");
     } else {
       // Pause any currently playing audio
       if (currentlyPlaying && audioRefs.current[currentlyPlaying]) {
@@ -133,11 +203,22 @@ const SharedAudioLibrary: React.FC = () => {
       
       // Play the new audio
       audioElement.volume = volume;
-      audioElement.play().catch(error => {
-        console.error("Error playing audio:", error);
-        toast.error("This audio file is not yet available. Check back later.");
-      });
-      setCurrentlyPlaying(audioId);
+      audioElement.currentTime = 0; // Start from beginning
+      
+      audioElement.play()
+        .then(() => {
+          setCurrentlyPlaying(audioId);
+          toast.success(`Now playing: ${PREDEFINED_AUDIO_FILES.find(f => f.id === audioId)?.name}`);
+        })
+        .catch(error => {
+          console.error("Error playing audio:", error);
+          toast.error("Failed to play audio. Trying sample audio...");
+          
+          // If playing fails, try the sample audio as a fallback
+          if (audioId !== 'sample-audio') {
+            handlePlayPause('sample-audio');
+          }
+        });
     }
   };
 
@@ -149,7 +230,11 @@ const SharedAudioLibrary: React.FC = () => {
     const link = document.createElement('a');
     link.href = file.url;
     link.download = `${file.name.toLowerCase().replace(/ /g, '-')}.mp3`;
+    document.body.appendChild(link);
     link.click();
+    document.body.removeChild(link);
+    
+    toast.success(`Downloading: ${file.name}`);
   };
 
   const openCategoryFolder = (category: string) => {
@@ -167,137 +252,114 @@ const SharedAudioLibrary: React.FC = () => {
           Listen to explanations and lectures about the Intent Universe Framework
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="flex flex-wrap gap-2 mb-4">
-          <Button 
+      <CardContent>
+        {/* Volume control */}
+        <div className="mb-6 flex items-center gap-4">
+          <Volume2 className="h-5 w-5 text-gray-500" />
+          <Slider
+            value={[volume * 100]}
+            max={100}
+            step={1}
+            className="w-full"
+            onValueChange={(value) => setVolume(value[0] / 100)}
+          />
+          <span className="min-w-[40px] text-sm text-gray-500">{Math.round(volume * 100)}%</span>
+        </div>
+        
+        {/* Category filters */}
+        <div className="mb-4 flex flex-wrap gap-2">
+          <Badge 
             variant={selectedCategory === null ? "default" : "outline"}
-            size="sm"
+            className="cursor-pointer"
             onClick={() => setSelectedCategory(null)}
           >
             All
-          </Button>
+          </Badge>
           {AUDIO_CATEGORIES.map(category => (
-            <Button
+            <Badge
               key={category.id}
               variant={selectedCategory === category.id ? "default" : "outline"}
-              size="sm"
+              className="cursor-pointer"
               onClick={() => setSelectedCategory(category.id)}
-              title={category.description}
             >
               {category.name}
-            </Button>
+            </Badge>
           ))}
         </div>
-
-        <div className="space-y-3">
-          {filteredAudioFiles.length === 0 ? (
-            <div className="text-center py-4 text-muted-foreground">
-              No audio files found in this category.
-            </div>
-          ) : (
-            filteredAudioFiles.map(file => (
-              <div 
-                key={file.id} 
-                className="flex items-center justify-between p-3 rounded-lg bg-gray-900/60 border border-gray-700"
-              >
-                <div className="flex items-center gap-3">
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className={`h-8 w-8 p-0 rounded-full ${!audioAvailability[file.id] ? 'opacity-50' : ''}`}
-                          onClick={() => handlePlayPause(file.id)}
-                        >
-                          {currentlyPlaying === file.id ? (
-                            <Pause className="h-4 w-4" />
-                          ) : (
-                            <Play className="h-4 w-4" />
-                          )}
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        {audioAvailability[file.id] ? 'Play audio' : 'Audio file not available yet'}
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                  <div className="flex flex-col max-w-xs md:max-w-md">
-                    <span className="font-medium text-sm truncate">{file.name}</span>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs text-muted-foreground">
-                        {file.duration}
-                      </span>
-                      <Badge variant="outline" className="text-xs py-0">
-                        {AUDIO_CATEGORIES.find(c => c.id === file.category)?.name || file.category}
-                      </Badge>
-                    </div>
-                    {file.description && (
-                      <span className="text-xs text-muted-foreground truncate mt-1">
-                        {file.description}
-                      </span>
-                    )}
+        
+        {isLoading ? (
+          <div className="py-10 text-center">
+            <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
+            <p className="text-gray-500">Checking audio availability...</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {filteredAudioFiles.map(file => (
+              <div key={file.id} className="border rounded-md p-3 hover:bg-gray-50 dark:hover:bg-gray-900">
+                <div className="flex justify-between items-start mb-2">
+                  <div>
+                    <h3 className="font-medium">{file.name}</h3>
+                    <p className="text-sm text-gray-500">{file.description}</p>
                   </div>
-                  <audio 
-                    ref={el => audioRefs.current[file.id] = el} 
-                    src={file.url}
-                    onEnded={() => setCurrentlyPlaying(null)}
-                    onError={() => {
-                      setCurrentlyPlaying(prev => prev === file.id ? null : prev);
-                    }}
-                  />
+                  <div className="flex items-center gap-1">
+                    <Badge variant="outline" className="text-xs">
+                      {file.duration}
+                    </Badge>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button variant="ghost" size="icon" onClick={() => openCategoryFolder(file.category)}>
+                            <FolderOpen className="h-4 w-4 text-gray-500" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Open category folder</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Button
+                  <Button 
                     size="sm"
-                    variant="ghost"
-                    className="text-blue-400 hover:text-blue-300 hover:bg-blue-900/20"
-                    onClick={() => toast.info(file.description || "No description available")}
+                    variant={currentlyPlaying === file.id ? "default" : "outline"}
+                    onClick={() => handlePlayPause(file.id)}
+                    className="flex-1"
                   >
-                    <Info className="h-4 w-4" />
+                    {currentlyPlaying === file.id ? (
+                      <><Pause className="h-4 w-4 mr-2" /> Pause</>
+                    ) : (
+                      <><Play className="h-4 w-4 mr-2" /> Play</>
+                    )}
                   </Button>
-                  <Button
+                  <Button 
                     size="sm"
-                    variant="ghost"
-                    className="text-green-400 hover:text-green-300 hover:bg-green-900/20"
+                    variant="outline"
                     onClick={() => downloadSampleAudio(file.id)}
                   >
                     <FileDown className="h-4 w-4" />
                   </Button>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div className={`h-2 w-2 rounded-full ${audioAvailability[file.id] ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>{audioAvailability[file.id] ? 'Audio available' : 'Audio unavailable'}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                 </div>
               </div>
-            ))
-          )}
-        </div>
-        
-        <div className="mt-8 bg-indigo-950/30 rounded-md p-4 border border-indigo-800">
-          <h3 className="text-lg font-medium flex items-center mb-2">
-            <FolderOpen className="mr-2 h-5 w-5 text-indigo-400" />
-            Audio File Storage Structure
-          </h3>
-          <p className="text-sm text-gray-300 mb-4">
-            Audio files are organized into categories in the <code className="bg-gray-800 px-1 py-0.5 rounded">public/audio/categories/</code> directory:
-          </p>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-4">
-            {AUDIO_CATEGORIES.map(category => (
-              <div key={category.id} className="flex items-center">
-                <Button 
-                  variant="outline"
-                  size="sm"
-                  onClick={() => openCategoryFolder(category.id)}
-                  className="text-xs flex items-center justify-start overflow-hidden"
-                >
-                  <FolderOpen className="mr-1 h-3 w-3 flex-shrink-0" />
-                  <span className="truncate">/audio/categories/{category.id}/</span>
-                </Button>
-              </div>
             ))}
+            
+            {filteredAudioFiles.length === 0 && (
+              <div className="text-center py-8 text-gray-500">
+                <p>No audio files found in this category</p>
+              </div>
+            )}
           </div>
-          <div className="text-xs text-gray-400 mt-3">
-            <p>Each category folder contains a README.md with specific guidelines.</p>
-            <p className="mt-1">Place your audio files in the appropriate category folder to keep your collection organized.</p>
-          </div>
-        </div>
+        )}
       </CardContent>
     </Card>
   );

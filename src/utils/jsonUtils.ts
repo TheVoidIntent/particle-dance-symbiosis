@@ -1,91 +1,65 @@
+
 /**
- * Utility functions for handling JSON serialization/deserialization
- * with support for special values like Infinity
+ * Utility functions for handling JSON serialization/deserialization with special values
  */
 
-// Stringify an object with support for Infinity and other non-standard JSON values
-export function stringifyWithInfinity(obj: any): string {
-  return JSON.stringify(obj, (key, value) => {
-    // Handle special number values
-    if (typeof value === 'number') {
-      if (value === Infinity) return "Infinity";
-      if (value === -Infinity) return "-Infinity";
-      if (Number.isNaN(value)) return "NaN";
-    }
+/**
+ * Parse JSON with special handling for Infinity and similar values
+ */
+export const parseJsonWithInfinity = (jsonString: string): any => {
+  return JSON.parse(jsonString, (key, value) => {
+    // Convert string 'Infinity', '-Infinity' back to actual numbers
+    if (value === 'Infinity') return Infinity;
+    if (value === '-Infinity') return -Infinity;
+    if (value === 'NaN') return NaN;
     return value;
   });
-}
+};
 
-// Parse JSON with support for Infinity and other non-standard JSON values
-export function parseJsonWithInfinity(json: string): any {
-  return JSON.parse(json, (key, value) => {
-    // Convert string representations back to their special number values
-    if (value === "Infinity") return Infinity;
-    if (value === "-Infinity") return -Infinity;
-    if (value === "NaN") return NaN;
+/**
+ * Stringify with special handling for Infinity and similar values
+ */
+export const stringifyWithInfinity = (data: any, space: number = 2): string => {
+  return JSON.stringify(data, (key, value) => {
+    // Convert Infinity, -Infinity, NaN to strings
+    if (value === Infinity) return 'Infinity';
+    if (value === -Infinity) return '-Infinity';
+    if (typeof value === 'number' && isNaN(value)) return 'NaN';
     return value;
-  });
-}
+  }, space);
+};
 
-// Compress large JSON data for storage efficiency
-export function compressJson(jsonString: string): string {
-  // This is a simple placeholder - for real compression, you'd want to use
-  // a library like pako or lz-string, but to keep dependencies minimal,
-  // we're just using this method
+/**
+ * Save data to localStorage with error handling and Infinity support
+ */
+export const saveToLocalStorage = (key: string, data: any): boolean => {
   try {
-    return btoa(encodeURIComponent(jsonString));
-  } catch (e) {
-    console.error("JSON compression failed", e);
-    return jsonString;
-  }
-}
-
-// Decompress JSON data
-export function decompressJson(compressed: string): string {
-  try {
-    return decodeURIComponent(atob(compressed));
-  } catch (e) {
-    console.error("JSON decompression failed", e);
-    return compressed;
-  }
-}
-
-// For large datasets, consider compression
-export function storeCompressedJson(key: string, data: any): boolean {
-  try {
-    const jsonString = stringifyWithInfinity(data);
-    
-    // Only compress if the data is large
-    const shouldCompress = jsonString.length > 100000;
-    const valueToStore = shouldCompress 
-      ? `compressed:${compressJson(jsonString)}`
-      : jsonString;
-    
-    localStorage.setItem(key, valueToStore);
+    const serialized = stringifyWithInfinity(data);
+    localStorage.setItem(key, serialized);
     return true;
-  } catch (e) {
-    console.error(`Failed to store data for key ${key}:`, e);
+  } catch (error) {
+    console.error(`Error saving to localStorage (${key}):`, error);
     return false;
   }
-}
+};
 
-// Retrieve and potentially decompress stored data
-export function retrieveCompressedJson(key: string): any | null {
+/**
+ * Get data from localStorage with error handling and Infinity support
+ */
+export const getFromLocalStorage = <T>(key: string, defaultValue: T): T => {
   try {
-    const stored = localStorage.getItem(key);
-    if (!stored) return null;
-    
-    // Check if data is compressed
-    if (stored.startsWith('compressed:')) {
-      const compressed = stored.substring(11);
-      const decompressed = decompressJson(compressed);
-      return parseJsonWithInfinity(decompressed);
-    }
-    
-    // Not compressed
-    return parseJsonWithInfinity(stored);
-  } catch (e) {
-    console.error(`Failed to retrieve data for key ${key}:`, e);
-    return null;
+    const serialized = localStorage.getItem(key);
+    if (serialized === null) return defaultValue;
+    return parseJsonWithInfinity(serialized);
+  } catch (error) {
+    console.error(`Error getting from localStorage (${key}):`, error);
+    return defaultValue;
   }
-}
+};
+
+/**
+ * Generate a unique ID for tracking objects
+ */
+export const generateUniqueId = (): string => {
+  return Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
+};

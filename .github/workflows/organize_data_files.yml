@@ -23,7 +23,7 @@ jobs:
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install requests pandas numpy matplotlib
+          pip install requests pandas numpy matplotlib fpdf
 
       - name: Run organization script
         run: python data_digest2.py
@@ -36,6 +36,7 @@ jobs:
           import requests
           import datetime
           from glob import glob
+          from fpdf import FPDF
           
           # Define the 5 simulation types
           simulation_types = ['adaptive', 'energy_conservation', 'baseline', 'full_features', 'cern_comparison']
@@ -136,15 +137,59 @@ jobs:
           }
           
           # Save the data to JSON file
-          output_file = f'intentSim_notebook_data_{datetime.datetime.now().strftime(\"%Y%m%d_%H%M%S\")}.json'
-          with open(output_file, 'w') as f:
+          timestamp = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
+          json_output_file = f'intentSim_notebook_data_{timestamp}.json'
+          with open(json_output_file, 'w') as f:
               json.dump(notebook_data, f, indent=2)
           
-          print(f'Notebook LM data generated: {output_file}')
+          print(f'Notebook LM JSON data generated: {json_output_file}')
           
-          # This script won't actually directly upload to Notebook LM as it requires authentication
-          # The file can be manually uploaded to the Notebook LM interface
-          # In a production environment, you would use an API or service account to upload it
+          # Create PDF for Notebook LM
+          pdf = FPDF()
+          pdf.add_page()
+          pdf.set_font('Arial', 'B', 16)
+          pdf.cell(40, 10, 'IntentSim Notebook LM Data')
+          pdf.ln(20)
+          
+          # Add summary for each simulation type
+          pdf.set_font('Arial', 'B', 14)
+          pdf.cell(0, 10, 'Simulation Summaries', 0, 1)
+          pdf.set_font('Arial', '', 12)
+          
+          for sim_type in simulation_types:
+              sim_data = notebook_data['simulations'][sim_type]
+              pdf.set_font('Arial', 'B', 12)
+              pdf.cell(0, 10, f'{sim_type.upper()}', 0, 1)
+              pdf.set_font('Arial', '', 10)
+              pdf.cell(0, 8, f'Data points: {sim_data[\"summary\"][\"total_datapoints\"]}', 0, 1)
+              pdf.cell(0, 8, f'Avg Entropy: {sim_data[\"summary\"][\"avg_entropy\"]:.4f}', 0, 1)
+              pdf.cell(0, 8, f'Max Complexity: {sim_data[\"summary\"][\"max_complexity\"]:.4f}', 0, 1)
+              pdf.ln(5)
+          
+          # Add comparative analysis
+          pdf.add_page()
+          pdf.set_font('Arial', 'B', 14)
+          pdf.cell(0, 10, 'Comparative Analysis', 0, 1)
+          pdf.set_font('Arial', 'B', 12)
+          pdf.cell(0, 10, 'Entropy Comparison', 0, 1)
+          pdf.set_font('Arial', '', 10)
+          
+          for sim_type, entropy in notebook_data['comparative_analysis']['entropy_comparison'].items():
+              pdf.cell(0, 8, f'{sim_type}: {entropy:.4f}', 0, 1)
+          
+          pdf.ln(5)
+          pdf.set_font('Arial', 'B', 12)
+          pdf.cell(0, 10, 'Complexity Comparison', 0, 1)
+          pdf.set_font('Arial', '', 10)
+          
+          for sim_type, complexity in notebook_data['comparative_analysis']['complexity_comparison'].items():
+              pdf.cell(0, 8, f'{sim_type}: {complexity:.4f}', 0, 1)
+          
+          # Save the PDF file
+          pdf_output_file = f'intentSim_notebook_data_{timestamp}.pdf'
+          pdf.output(pdf_output_file)
+          
+          print(f'Notebook LM PDF data generated: {pdf_output_file}')
           "
 
       - name: Commit and push changes
@@ -153,5 +198,6 @@ jobs:
           git config --local user.name "GitHub Action"
           git add data/
           git add *.json
+          git add *.pdf
           git commit -m "Auto-update simulation data and Notebook LM export" || echo "No changes to commit"
           git push

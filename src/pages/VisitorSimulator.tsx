@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+
+import React, { useState, useEffect, useRef } from 'react';
 import { Helmet } from 'react-helmet';
 import { Card, CardContent } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
@@ -6,6 +7,16 @@ import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { Play, Pause, Download, Info } from "lucide-react";
 import { toast } from "sonner";
+
+interface Particle {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  radius: number;
+  color: string;
+  type: 'positive' | 'negative' | 'neutral';
+}
 
 const VisitorSimulator: React.FC = () => {
   // Basic simulation parameters
@@ -17,18 +28,272 @@ const VisitorSimulator: React.FC = () => {
   const [negativeParticles, setNegativeParticles] = useState(0);
   const [neutralParticles, setNeutralParticles] = useState(0);
   
-  // Simulate changing particle counts
+  // Canvas and animation references
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const animationRef = useRef<number | null>(null);
+  const particlesRef = useRef<Particle[]>([]);
+  const intentFieldRef = useRef<number[][]>([]);
+  
+  // Initialize simulation
   useEffect(() => {
-    if (!running) return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
     
-    const interval = setInterval(() => {
-      setPositiveParticles(prev => Math.min(maxParticles * 0.4, prev + Math.random() * 2 - 0.5));
-      setNegativeParticles(prev => Math.min(maxParticles * 0.35, prev + Math.random() * 2 - 0.7));
-      setNeutralParticles(prev => Math.min(maxParticles * 0.25, prev + Math.random() * 2 - 0.8));
-    }, 1000);
+    const context = canvas.getContext('2d');
+    if (!context) return;
     
-    return () => clearInterval(interval);
-  }, [running, maxParticles]);
+    // Set canvas dimensions to match container
+    const resizeCanvas = () => {
+      const container = canvas.parentElement;
+      if (container) {
+        canvas.width = container.clientWidth;
+        canvas.height = container.clientHeight;
+        
+        // Initialize intent field grid (simplified for performance)
+        const gridSize = 20; // Size of grid cells
+        const cols = Math.ceil(canvas.width / gridSize);
+        const rows = Math.ceil(canvas.height / gridSize);
+        
+        const newField: number[][] = [];
+        for (let y = 0; y < rows; y++) {
+          const row: number[] = [];
+          for (let x = 0; x < cols; x++) {
+            // Random values between -1 and 1 (negative to positive intent)
+            row.push(Math.random() * 2 - 1);
+          }
+          newField.push(row);
+        }
+        intentFieldRef.current = newField;
+      }
+    };
+    
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+    
+    // Initial particles
+    initializeParticles();
+    
+    return () => {
+      window.removeEventListener('resize', resizeCanvas);
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+      }
+    };
+  }, []);
+  
+  // Initialize particles
+  const initializeParticles = () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    
+    const width = canvas.width;
+    const height = canvas.height;
+    
+    // Create initial particles
+    const newParticles: Particle[] = [];
+    const initialCount = Math.min(maxParticles, 30); // Start with fewer particles
+    
+    for (let i = 0; i < initialCount; i++) {
+      const type = Math.random() < 0.33 
+        ? 'positive' 
+        : Math.random() < 0.5 
+          ? 'negative' 
+          : 'neutral';
+      
+      newParticles.push(createParticle(type, width, height));
+    }
+    
+    particlesRef.current = newParticles;
+    
+    // Update counters
+    updateParticleCounts();
+  };
+  
+  // Create a new particle
+  const createParticle = (type: 'positive' | 'negative' | 'neutral', width: number, height: number): Particle => {
+    // Different colors for different types
+    const color = type === 'positive' 
+      ? '#4ECDC4' // Blue for positive
+      : type === 'negative' 
+        ? '#FF6B6B' // Red for negative
+        : '#5E60CE'; // Purple for neutral
+    
+    // Different velocities based on type (positive = more active)
+    const speedMultiplier = type === 'positive' 
+      ? 1.5 
+      : type === 'negative' 
+        ? 0.7 
+        : 1.0;
+    
+    return {
+      x: Math.random() * width,
+      y: Math.random() * height,
+      vx: (Math.random() - 0.5) * 2 * speedMultiplier,
+      vy: (Math.random() - 0.5) * 2 * speedMultiplier,
+      radius: 3 + Math.random() * 3,
+      color,
+      type
+    };
+  };
+  
+  // Animation loop
+  useEffect(() => {
+    if (!running) {
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+        animationRef.current = null;
+      }
+      return;
+    }
+    
+    const animate = () => {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      
+      const context = canvas.getContext('2d');
+      if (!context) return;
+      
+      const width = canvas.width;
+      const height = canvas.height;
+      
+      // Clear canvas with a fade effect for trails
+      context.fillStyle = 'rgba(0, 0, 0, 0.1)';
+      context.fillRect(0, 0, width, height);
+      
+      // Update intent field (occasionally)
+      if (Math.random() < intentFluctuationRate) {
+        updateIntentField();
+      }
+      
+      // Update particles
+      updateParticles(width, height);
+      
+      // Draw particles
+      drawParticles(context);
+      
+      // Maybe create a new particle
+      if (Math.random() < 0.05 && particlesRef.current.length < maxParticles) {
+        // Bias towards types based on intent field
+        const positiveChance = 0.3 + intentFluctuationRate * 2;
+        const negativeChance = 0.3 - intentFluctuationRate;
+        
+        const type = Math.random() < positiveChance 
+          ? 'positive' 
+          : Math.random() < negativeChance 
+            ? 'negative' 
+            : 'neutral';
+        
+        particlesRef.current.push(createParticle(type, width, height));
+        updateParticleCounts();
+      }
+      
+      // Continue animation loop
+      animationRef.current = requestAnimationFrame(animate);
+    };
+    
+    animationRef.current = requestAnimationFrame(animate);
+    
+    return () => {
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+      }
+    };
+  }, [running, intentFluctuationRate, maxParticles]);
+  
+  // Update intent field with fluctuations
+  const updateIntentField = () => {
+    const newField = intentFieldRef.current.map(row => 
+      row.map(value => {
+        // Apply small random fluctuations
+        const fluctuation = (Math.random() - 0.5) * intentFluctuationRate * 2;
+        // Constrain field values to [-1, 1]
+        return Math.max(-1, Math.min(1, value + fluctuation));
+      })
+    );
+    intentFieldRef.current = newField;
+  };
+  
+  // Update particle positions and velocities
+  const updateParticles = (width: number, height: number) => {
+    const gridSize = 20;
+    const particles = particlesRef.current;
+    
+    particles.forEach(particle => {
+      // Get intent field influence at particle position
+      const gridX = Math.floor(particle.x / gridSize);
+      const gridY = Math.floor(particle.y / gridSize);
+      
+      if (gridX >= 0 && gridX < intentFieldRef.current[0]?.length && 
+          gridY >= 0 && gridY < intentFieldRef.current.length) {
+        
+        const fieldValue = intentFieldRef.current[gridY][gridX];
+        
+        // Adjust velocity based on field value and particle type
+        let fieldMultiplier = 0.02;
+        if (particle.type === 'positive') fieldMultiplier = 0.03;
+        if (particle.type === 'negative') fieldMultiplier = 0.01;
+        
+        // Field affects velocity - positive particles are more responsive
+        particle.vx += fieldValue * fieldMultiplier;
+        particle.vy += fieldValue * fieldMultiplier;
+      }
+      
+      // Update position
+      particle.x += particle.vx;
+      particle.y += particle.vy;
+      
+      // Boundary checks - bounce off edges
+      if (particle.x < 0 || particle.x > width) {
+        particle.vx = -particle.vx * 0.8;
+        particle.x = Math.max(0, Math.min(width, particle.x));
+      }
+      
+      if (particle.y < 0 || particle.y > height) {
+        particle.vy = -particle.vy * 0.8;
+        particle.y = Math.max(0, Math.min(height, particle.y));
+      }
+      
+      // Apply damping
+      particle.vx *= 0.99;
+      particle.vy *= 0.99;
+      
+      // Add small random movement
+      particle.vx += (Math.random() - 0.5) * 0.05;
+      particle.vy += (Math.random() - 0.5) * 0.05;
+    });
+  };
+  
+  // Draw particles on the canvas
+  const drawParticles = (context: CanvasRenderingContext2D) => {
+    particlesRef.current.forEach(particle => {
+      // Draw glow effect
+      const gradient = context.createRadialGradient(
+        particle.x, particle.y, 0,
+        particle.x, particle.y, particle.radius * 3
+      );
+      gradient.addColorStop(0, particle.color + '80'); // Semi-transparent
+      gradient.addColorStop(1, 'transparent');
+      
+      context.beginPath();
+      context.arc(particle.x, particle.y, particle.radius * 3, 0, Math.PI * 2);
+      context.fillStyle = gradient;
+      context.fill();
+      
+      // Draw particle core
+      context.beginPath();
+      context.arc(particle.x, particle.y, particle.radius, 0, Math.PI * 2);
+      context.fillStyle = particle.color;
+      context.fill();
+    });
+  };
+  
+  // Update particle counts for the UI
+  const updateParticleCounts = () => {
+    const particles = particlesRef.current;
+    setPositiveParticles(particles.filter(p => p.type === 'positive').length);
+    setNegativeParticles(particles.filter(p => p.type === 'negative').length);
+    setNeutralParticles(particles.filter(p => p.type === 'neutral').length);
+  };
   
   const toggleRunning = () => {
     setRunning(!running);
@@ -82,47 +347,12 @@ const VisitorSimulator: React.FC = () => {
         <div className="lg:col-span-3">
           <Card className="bg-gray-800/50 border-gray-700">
             <CardContent className="p-0 relative">
-              {/* Simulation canvas placeholder - in a real implementation, this would be the actual visualization */}
+              {/* Simulation canvas */}
               <div className="aspect-video bg-black rounded-t-lg overflow-hidden flex items-center justify-center relative">
-                <div className="absolute inset-0">
-                  {/* We'll create a simple particle visualization with CSS */}
-                  {Array.from({ length: Math.floor(positiveParticles) }).map((_, i) => (
-                    <div 
-                      key={`pos-${i}`} 
-                      className="absolute w-3 h-3 rounded-full bg-blue-400"
-                      style={{
-                        left: `${Math.random() * 100}%`,
-                        top: `${Math.random() * 100}%`,
-                        animation: `float ${2 + Math.random() * 3}s infinite ease-in-out`,
-                        opacity: 0.7 + Math.random() * 0.3
-                      }}
-                    />
-                  ))}
-                  {Array.from({ length: Math.floor(negativeParticles) }).map((_, i) => (
-                    <div 
-                      key={`neg-${i}`} 
-                      className="absolute w-3 h-3 rounded-full bg-red-400"
-                      style={{
-                        left: `${Math.random() * 100}%`,
-                        top: `${Math.random() * 100}%`,
-                        animation: `float ${2 + Math.random() * 3}s infinite ease-in-out`,
-                        opacity: 0.7 + Math.random() * 0.3
-                      }}
-                    />
-                  ))}
-                  {Array.from({ length: Math.floor(neutralParticles) }).map((_, i) => (
-                    <div 
-                      key={`neu-${i}`} 
-                      className="absolute w-3 h-3 rounded-full bg-green-400"
-                      style={{
-                        left: `${Math.random() * 100}%`,
-                        top: `${Math.random() * 100}%`,
-                        animation: `float ${2 + Math.random() * 3}s infinite ease-in-out`,
-                        opacity: 0.7 + Math.random() * 0.3
-                      }}
-                    />
-                  ))}
-                </div>
+                <canvas 
+                  ref={canvasRef} 
+                  className="absolute inset-0 w-full h-full"
+                />
                 
                 {!running && (
                   <div className="absolute inset-0 bg-black/70 flex items-center justify-center">

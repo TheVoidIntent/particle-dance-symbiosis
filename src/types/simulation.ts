@@ -1,56 +1,40 @@
 
 export interface Particle {
-  id: number;
+  id?: string | number;
   x: number;
   y: number;
   vx: number;
   vy: number;
+  vz?: number;
   radius: number;
-  mass: number;
-  charge: 'positive' | 'negative' | 'neutral';
+  mass?: number;
+  charge?: string;
   color: string;
-  intent: number;
-  knowledge: number;
-  interactionTendency: number;
-  lastInteraction: number;
-  interactionCount: number;
+  type: 'positive' | 'negative' | 'neutral' | string;
+  intent?: number;
+  energy?: number;
+  knowledge?: number;
+  complexity?: number;
+  interactionTendency?: number;
+  lastInteraction?: number;
+  interactionCount?: number;
+  z?: number;
 }
 
 export interface SimulationStats {
+  particleCount: number;
   positiveParticles: number;
   negativeParticles: number;
   neutralParticles: number;
-  highEnergyParticles: number;
-  quantumParticles: number;
-  compositeParticles: number;
-  adaptiveParticles: number;
-  totalInteractions: number;
-  complexityIndex: number;
-  averageKnowledge: number;
-  maxComplexity: number;
-  clusterCount: number;
-  averageClusterSize: number;
-  systemEntropy: number;
-  intentFieldComplexity: number;
-  shannonEntropy: number;
-  spatialEntropy: number;
-  fieldOrderParameter: number;
-  clusterLifetime: number;
-  clusterEntropyDelta: number;
-  informationDensity: number;
-  kolmogorovComplexity: number;
-}
-
-export interface SimulationDataPoint {
-  timestamp: number;
-  stats: SimulationStats;
-}
-
-export interface InflationEvent {
-  timestamp: number;
-  particlesBeforeInflation: number;
-  particlesAfterInflation: number;
-  fieldEntropyBefore: number;
-  fieldEntropyAfter: number;
-  duration: number;
+  highEnergyParticles?: number;
+  quantumParticles?: number;
+  compositeParticles?: number;
+  adaptiveParticles?: number;
+  interactions?: number;
+  totalInteractions?: number;
+  frame?: number;
+  time?: number;
+  averageKnowledge?: number;
+  complexityIndex?: number;
+  systemEntropy?: number;
 }

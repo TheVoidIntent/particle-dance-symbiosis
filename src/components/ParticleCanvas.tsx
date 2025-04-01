@@ -1,4 +1,3 @@
-
 import React, { useCallback } from 'react';
 import { useParticleSimulation, InflationEvent } from '@/hooks/simulation';
 import { useSimulationData } from '@/hooks/useSimulationData';

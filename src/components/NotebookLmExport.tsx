@@ -1,12 +1,16 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ExternalLink, FileText } from "lucide-react";
+import { ExternalLink, FileText, Activity } from "lucide-react";
 import { useNotebookLmIntegration } from '@/hooks/useNotebookLmIntegration';
+import { getAvailableAtlasDatasets } from '@/utils/atlasDataIntegration';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const NotebookLmExport: React.FC = () => {
   const { exportSimulationData, openNotebookLm, notebookLmConfig } = useNotebookLmIntegration();
+  const [selectedDataset, setSelectedDataset] = useState("6004"); // Default to 13 TeV collision data
+  const availableDatasets = getAvailableAtlasDatasets();
 
   return (
     <Card className="shadow-lg border-purple-200/40 dark:border-purple-800/40">
@@ -24,22 +28,41 @@ const NotebookLmExport: React.FC = () => {
       <CardContent className="space-y-4">
         <div className="border border-purple-300/20 rounded-md p-3 bg-purple-50/20 dark:bg-purple-900/10">
           <p className="text-sm mb-2">
-            Ready to export 5 datasets for your Notebook LM analysis:
+            Export and compare your data with ATLAS/CERN datasets:
           </p>
           <ul className="text-sm space-y-1 list-disc list-inside">
             <li>Adaptive Particle Analysis</li>
             <li>Energy Conservation Simulation</li>
             <li>Baseline Simulation</li>
             <li>Full Features Integration</li>
-            <li>CERN Atlas Comparison</li>
+            <li>CERN ATLAS Comparison</li>
           </ul>
+        </div>
+        
+        <div className="space-y-2">
+          <label className="text-sm text-gray-500 dark:text-gray-400">ATLAS Dataset Reference:</label>
+          <Select 
+            value={selectedDataset} 
+            onValueChange={setSelectedDataset}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Select ATLAS dataset" />
+            </SelectTrigger>
+            <SelectContent>
+              {availableDatasets.map(dataset => (
+                <SelectItem key={dataset.id} value={dataset.id}>
+                  {dataset.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
         
         <div className="flex flex-col sm:flex-row gap-2">
           <Button 
             variant="outline" 
             className="flex-1"
-            onClick={() => exportSimulationData()}
+            onClick={() => exportSimulationData(selectedDataset)}
           >
             <FileText className="h-4 w-4 mr-2" />
             Export as PDF
@@ -54,9 +77,13 @@ const NotebookLmExport: React.FC = () => {
           </Button>
         </div>
         
-        <div className="text-xs text-gray-500 dark:text-gray-400 mt-4">
-          <p>Connected to Notebook ID: {notebookLmConfig.notebookId}</p>
-          <p>After exporting, upload the PDF file to your Notebook for analysis.</p>
+        <div className="text-xs text-gray-500 dark:text-gray-400 mt-4 space-y-1">
+          <p className="flex items-center">
+            <Activity className="h-3 w-3 mr-1 text-green-500" /> 
+            Connected to ATLAS Open Data Portal
+          </p>
+          <p>Notebook ID: {notebookLmConfig.notebookId}</p>
+          <p>After exporting, open the PDF file in your Notebook LM for analysis.</p>
         </div>
       </CardContent>
     </Card>

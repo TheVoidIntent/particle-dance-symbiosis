@@ -20,11 +20,12 @@ export function useNotebookLmIntegration() {
   
   const { exportInflationEventsData, inflationEvents } = useInflationEvents();
   
-  // Export simulation data to Notebook LM format as PDF only
-  const exportSimulationData = useCallback(async (atlasDatasetId?: string) => {
+  // Export simulation data to Notebook LM format
+  // Now accepts both dataset ID and export format
+  const exportSimulationData = useCallback(async (atlasDatasetId?: string, exportFormat: string = 'pdf') => {
     try {
       // Show loading toast
-      toast.loading("Preparing data export with ATLAS/CERN comparison and inflation events...");
+      toast.loading(`Preparing data export as ${exportFormat.toUpperCase()} with ATLAS/CERN comparison and inflation events...`);
       
       // Get the simulation data in standard format
       const jsonData = exportInflationEventsData();
@@ -92,16 +93,68 @@ export function useNotebookLmIntegration() {
       // Dismiss loading toast
       toast.dismiss();
       
-      // Export the data as PDF
-      const pdfFilename = await exportSimulationDataAsPDF(simulationTypes);
-      
-      if (pdfFilename) {
-        toast.success(
-          "Data prepared for Notebook LM",
-          {
-            description: "Your data has been exported with all simulation types, inflation events, and ATLAS comparison in PDF format for easy integration with Notebook LM."
-          }
-        );
+      // Handle different export formats
+      if (exportFormat === 'pdf') {
+        // Export the data as PDF
+        const pdfFilename = await exportSimulationDataAsPDF(simulationTypes);
+        
+        if (pdfFilename) {
+          toast.success(
+            "Data prepared for Notebook LM",
+            {
+              description: `Your data has been exported as ${exportFormat.toUpperCase()} with all simulation types, inflation events, and ATLAS comparison.`
+            }
+          );
+        }
+      } else if (exportFormat === 'bibtex') {
+        // For BibTeX, create a citation format (simplified)
+        const timestamp = new Date().toISOString().substring(0, 10);
+        const citation = `@dataset{intentSim${timestamp.replace(/-/g, '')},
+  title={IntentSim Universe Simulation Data},
+  author={IntentSim Research Team},
+  year={${new Date().getFullYear()}},
+  publisher={IntentSim.org},
+  url={https://intentsim.org},
+  note={Data generated from universe simulation with intent field fluctuations}
+}`;
+        
+        // Create a download link for the BibTeX file
+        const blob = new Blob([citation], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `intentSim_citation_${timestamp}.bib`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        toast.success("BibTeX citation generated for ORCID");
+      } else if (exportFormat === 'doi' || exportFormat === 'json') {
+        // For DOI metadata or JSON format
+        const metadata = {
+          title: "IntentSim Universe Simulation Data",
+          creators: [{ name: "IntentSim Research Team" }],
+          publicationYear: new Date().getFullYear(),
+          publisher: "IntentSim.org",
+          resourceType: "Dataset",
+          subjects: ["Simulation", "Universe", "Intent Field Fluctuations"],
+          format: exportFormat === 'doi' ? "DOI Metadata" : "JSON Dataset",
+          data: jsonData
+        };
+        
+        // Create a download link for the metadata file
+        const blob = new Blob([JSON.stringify(metadata, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `intentSim_${exportFormat}_${new Date().toISOString().substring(0, 10)}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        toast.success(`${exportFormat.toUpperCase()} metadata generated for ORCID`);
       }
       
       return true;

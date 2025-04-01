@@ -3,9 +3,12 @@ import React from "react";
 import { Helmet } from "react-helmet";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Brain, Share2, Zap } from "lucide-react";
+import { ArrowRight, Brain, Share2, Zap, User, Lock } from "lucide-react";
+import { useAuth } from "../contexts/AuthContext";
 
 const HomePage: React.FC = () => {
+  const { isAuthenticated } = useAuth();
+
   return (
     <>
       <Helmet>
@@ -41,17 +44,28 @@ const HomePage: React.FC = () => {
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 mb-16">
-              <Link to="/simulation">
+              <Link to="/visitor-simulator">
                 <Button size="lg" className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-6 h-auto">
-                  Launch Simulation
+                  Try the Simulation
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </Link>
-              <Link to="/analysis">
-                <Button size="lg" variant="outline" className="border-gray-600 text-gray-300 hover:bg-gray-800 px-6 py-6 h-auto">
-                  View Data Analysis
-                </Button>
-              </Link>
+              
+              {isAuthenticated ? (
+                <Link to="/creator">
+                  <Button size="lg" variant="outline" className="border-gray-600 text-gray-300 hover:bg-gray-800 px-6 py-6 h-auto">
+                    <Lock className="mr-2 h-5 w-5" />
+                    Creator Dashboard
+                  </Button>
+                </Link>
+              ) : (
+                <Link to="/auth">
+                  <Button size="lg" variant="outline" className="border-gray-600 text-gray-300 hover:bg-gray-800 px-6 py-6 h-auto">
+                    <User className="mr-2 h-5 w-5" />
+                    Creator Access
+                  </Button>
+                </Link>
+              )}
             </div>
           </div>
           
@@ -104,15 +118,22 @@ const HomePage: React.FC = () => {
           {/* Call to action */}
           <div className="mt-20 mb-28 text-center">
             <div className="bg-gradient-to-r from-indigo-900/50 via-purple-900/50 to-pink-900/50 border border-gray-700/50 rounded-xl p-10 backdrop-blur-sm">
-              <h2 className="text-2xl md:text-3xl font-bold mb-4">Ready to explore the universe?</h2>
+              <h2 className="text-2xl md:text-3xl font-bold mb-4">Explore Both Versions of IntentSim</h2>
               <p className="text-gray-300 mb-8 max-w-2xl mx-auto">
-                Launch the simulation and adjust parameters to watch how different initial conditions lead to unique universe formations.
+                Try our public simulation explorer or log in to access the full creator version with advanced features, data analysis, and notebook integration.
               </p>
-              <Link to="/simulation">
-                <Button size="lg" className="bg-white hover:bg-gray-100 text-gray-900 font-medium px-6">
-                  Begin Your Journey
-                </Button>
-              </Link>
+              <div className="flex flex-col sm:flex-row justify-center gap-4">
+                <Link to="/visitor-simulator">
+                  <Button size="lg" className="bg-white hover:bg-gray-100 text-gray-900 font-medium px-6">
+                    Visitor Experience
+                  </Button>
+                </Link>
+                <Link to="/auth">
+                  <Button size="lg" variant="outline" className="border-white text-white hover:bg-white/10 font-medium px-6">
+                    Creator Access
+                  </Button>
+                </Link>
+              </div>
             </div>
           </div>
         </section>

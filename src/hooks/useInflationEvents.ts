@@ -187,22 +187,28 @@ export function useInflationEvents() {
       }
     };
     
-    // Export as JSON
-    const jsonString = JSON.stringify(notebookData, null, 2);
-    const blob = new Blob([jsonString], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
+    // Only handle JSON download if not in PDF mode (otherwise PDF export will handle it)
+    const downloadJson = () => {
+      const jsonString = JSON.stringify(notebookData, null, 2);
+      const blob = new Blob([jsonString], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `intentSim_notebook_lm_data_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    };
     
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `intentSim_notebook_lm_data_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+    // Only download JSON directly if explicitly requested
+    // downloadJson();
     
     toast.success("Notebook LM data generated with all 5 simulation types");
     console.log("Generated Notebook LM data with 5 simulation types:", Object.keys(notebookData.simulations));
     
-    return true;
+    // Return the data structure instead of just true
+    return notebookData;
   }, [generateSampleData]);
 
   // Clean up timeout on unmount

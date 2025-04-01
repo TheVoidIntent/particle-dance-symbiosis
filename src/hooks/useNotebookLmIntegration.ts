@@ -29,12 +29,13 @@ export function useNotebookLmIntegration() {
       
       if (notebookLmConfig.usePdfFormat) {
         // For PDF format
+        // Extract simulation types from jsonData
         const simulationTypes = {
-          adaptive: jsonData.simulations[0],
-          energy_conservation: jsonData.simulations[1],
-          baseline: jsonData.simulations[2],
-          full_features: jsonData.simulations[3],
-          cern_comparison: jsonData.simulations[4]
+          adaptive: jsonData?.simulations?.[0] || {},
+          energy_conservation: jsonData?.simulations?.[1] || {},
+          baseline: jsonData?.simulations?.[2] || {},
+          full_features: jsonData?.simulations?.[3] || {},
+          cern_comparison: jsonData?.simulations?.[4] || {}
         };
         
         const pdfFilename = await exportSimulationDataAsPDF(simulationTypes);

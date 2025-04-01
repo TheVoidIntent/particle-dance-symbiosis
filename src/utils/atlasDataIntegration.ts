@@ -202,13 +202,59 @@ function getParticleMass(particleType: string): number {
  * Generates a fallback dataset when ATLAS data can't be fetched
  */
 function generateFallbackDataset(datasetId: string): AtlasDataset {
+  // Create simulated particles synchronously for the fallback case
+  const particles: AtlasParticleData[] = [];
+  const particleTypes = getParticleTypesForDataset(datasetId);
+  const count = 100;
+  
+  for (let i = 0; i < count; i++) {
+    const particleType = particleTypes[Math.floor(Math.random() * particleTypes.length)];
+    
+    // Determine charge based on particle type (same logic as in simulateAtlasParticleData)
+    let charge: 'positive' | 'negative' | 'neutral';
+    if (particleType === 'electron' || particleType === 'muon-' || particleType === 'tau-') {
+      charge = 'negative';
+    } else if (particleType === 'positron' || particleType === 'muon+' || particleType === 'tau+') {
+      charge = 'positive';
+    } else if (particleType === 'photon' || particleType === 'neutron' || particleType === 'neutrino') {
+      charge = 'neutral';
+    } else {
+      const chargeValue = Math.random();
+      if (chargeValue < 0.4) {
+        charge = 'positive';
+      } else if (chargeValue < 0.8) {
+        charge = 'negative';
+      } else {
+        charge = 'neutral';
+      }
+    }
+    
+    const momentumScale = getDatasetMomentumScale(datasetId);
+    const px = (Math.random() * 2 - 1) * momentumScale;
+    const py = (Math.random() * 2 - 1) * momentumScale;
+    const pz = (Math.random() * 2 - 1) * momentumScale;
+    
+    const mass = getParticleMass(particleType);
+    const momentumMagnitude = Math.sqrt(px*px + py*py + pz*pz);
+    const energy = Math.sqrt(momentumMagnitude*momentumMagnitude + mass*mass);
+    
+    particles.push({
+      particleType,
+      charge,
+      momentum: [px, py, pz],
+      energy,
+      mass,
+      decayLength: particleType.includes('tau') || particleType.includes('b-quark') ? Math.random() * 5 : undefined
+    });
+  }
+  
   return {
     id: datasetId,
     name: `ATLAS Dataset ${datasetId} (Fallback)`,
     description: "Fallback dataset with simulated values following real ATLAS distributions",
     collisionEnergy: "13 TeV",
     year: 2015,
-    particles: simulateAtlasParticleData(datasetId, 100) as AtlasParticleData[],
+    particles: particles,
     metadata: {
       source: "fallback",
       note: "This is a simulated dataset using realistic distributions"

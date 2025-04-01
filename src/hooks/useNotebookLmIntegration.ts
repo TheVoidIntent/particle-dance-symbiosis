@@ -31,11 +31,11 @@ export function useNotebookLmIntegration() {
       
       // Extract simulation types from jsonData with fallbacks for missing data
       const simulationTypes = {
-        adaptive: jsonData?.simulations?.[0] || {},
-        energy_conservation: jsonData?.simulations?.[1] || {},
-        baseline: jsonData?.simulations?.[2] || {},
-        full_features: jsonData?.simulations?.[3] || {},
-        cern_comparison: jsonData?.simulations?.[4] || {}
+        adaptive: jsonData?.simulations?.[0] || { summary: {} }, // Ensure summary exists
+        energy_conservation: jsonData?.simulations?.[1] || { summary: {} },
+        baseline: jsonData?.simulations?.[2] || { summary: {} },
+        full_features: jsonData?.simulations?.[3] || { summary: {} },
+        cern_comparison: jsonData?.simulations?.[4] || { summary: {} }
       };
       
       // Fetch ATLAS data if a dataset ID is provided

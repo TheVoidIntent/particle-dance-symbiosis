@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -36,22 +35,22 @@ const MediaTab: React.FC = () => {
           <TabsContent value="audio" className="space-y-6">
             <Alert className="bg-indigo-950/30 border-indigo-800">
               <Music className="h-5 w-5 text-indigo-400" />
-              <AlertTitle>Adding Audio Files for Visitors</AlertTitle>
+              <AlertTitle>Organized Audio File Storage</AlertTitle>
               <AlertDescription>
                 <p className="mb-2">
-                  To make audio files available to visitors, place the following MP3 files in the 
-                  <code className="bg-gray-800 px-1 py-0.5 rounded mx-1">public/audio/</code> 
-                  directory:
+                  Audio files are now organized by categories in the 
+                  <code className="bg-gray-800 px-1 py-0.5 rounded mx-1">public/audio/categories/</code> 
+                  directory structure:
                 </p>
                 <ul className="list-disc pl-5 space-y-1 text-sm">
-                  <li><code className="bg-gray-800 px-1 py-0.5 rounded">introduction-to-intent-theory.mp3</code></li>
-                  <li><code className="bg-gray-800 px-1 py-0.5 rounded">particle-interaction-dynamics.mp3</code></li>
-                  <li><code className="bg-gray-800 px-1 py-0.5 rounded">emergent-complexity-patterns.mp3</code></li>
-                  <li><code className="bg-gray-800 px-1 py-0.5 rounded">charge-knowledge-transfer.mp3</code></li>
-                  <li><code className="bg-gray-800 px-1 py-0.5 rounded">simulation-parameters-explained.mp3</code></li>
+                  <li><code className="bg-gray-800 px-1 py-0.5 rounded">/categories/lectures/</code> - Educational presentations</li>
+                  <li><code className="bg-gray-800 px-1 py-0.5 rounded">/categories/technical/</code> - Technical explanations</li>
+                  <li><code className="bg-gray-800 px-1 py-0.5 rounded">/categories/research/</code> - Research findings</li>
+                  <li><code className="bg-gray-800 px-1 py-0.5 rounded">/categories/interviews/</code> - Discussions and interviews</li>
+                  <li><code className="bg-gray-800 px-1 py-0.5 rounded">/categories/ambient/</code> - Background sounds</li>
                 </ul>
                 <p className="mt-2">
-                  These files will automatically be served to visitors through the Audio Library component.
+                  Each category contains a README.md with specific guidelines for that type of audio.
                 </p>
               </AlertDescription>
             </Alert>

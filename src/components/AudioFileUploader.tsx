@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -10,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 
 interface AudioFile {
   id: string;
@@ -34,7 +34,15 @@ const AudioFileUploader: React.FC = () => {
   const audioRefs = useRef<{ [key: string]: HTMLAudioElement | null }>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Load saved audio files on component mount
+  const categoryOptions = [
+    { id: 'lectures', name: 'Lectures' },
+    { id: 'technical', name: 'Technical' },
+    { id: 'research', name: 'Research' },
+    { id: 'interviews', name: 'Interviews' },
+    { id: 'ambient', name: 'Ambient' },
+    { id: 'uncategorized', name: 'Uncategorized' }
+  ];
+
   useEffect(() => {
     loadAudioFiles();
   }, []);
@@ -45,13 +53,10 @@ const AudioFileUploader: React.FC = () => {
       if (savedFiles) {
         const parsedFiles = JSON.parse(savedFiles);
         
-        // Recreate ObjectURLs for the files
         const restoredFiles = parsedFiles.map((file: AudioFile) => {
-          // We can't restore the actual file URL from localStorage, 
-          // but we can mark it as needing to be downloaded again
           return {
             ...file,
-            url: file.url.startsWith('blob:') ? '' : file.url, // Clear blob URLs as they won't be valid
+            url: file.url.startsWith('blob:') ? '' : file.url,
             needsRedownload: file.url.startsWith('blob:')
           };
         });
@@ -67,8 +72,6 @@ const AudioFileUploader: React.FC = () => {
 
   const saveAudioFiles = (files: AudioFile[]) => {
     try {
-      // Save to localStorage - note that we can't save the actual audio data
-      // We just save metadata for future reference
       localStorage.setItem('intentSimAudioFiles', JSON.stringify(files));
     } catch (error) {
       console.error('Error saving audio files:', error);
@@ -83,24 +86,32 @@ const AudioFileUploader: React.FC = () => {
     const newAudioFiles: AudioFile[] = [];
 
     Array.from(files).forEach(file => {
-      // Check if it's an audio file
       if (!file.type.startsWith('audio/')) {
         toast.error(`${file.name} is not an audio file`);
         return;
       }
 
-      // Create a URL for the audio file
       const audioUrl = URL.createObjectURL(file);
+      const effectiveCategory = fileCategory || 'uncategorized';
+      
       newAudioFiles.push({
         id: `audio-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         name: file.name,
         url: audioUrl,
         type: file.type,
         size: file.size,
-        category: fileCategory || 'Uncategorized',
+        category: effectiveCategory,
         description: fileDescription || '',
         dateAdded: new Date().toISOString()
       });
+      
+      toast.info(
+        `Storage recommendation:`, 
+        { 
+          description: `Save "${file.name}" to /audio/categories/${effectiveCategory}/`,
+          duration: 5000
+        }
+      );
     });
 
     if (newAudioFiles.length > 0) {
@@ -109,7 +120,6 @@ const AudioFileUploader: React.FC = () => {
       saveAudioFiles(updatedFiles);
       toast.success(`${newAudioFiles.length} audio file(s) uploaded successfully`);
       
-      // Reset file input and description/category
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
@@ -123,16 +133,13 @@ const AudioFileUploader: React.FC = () => {
     if (!audioElement) return;
 
     if (currentlyPlaying === audioId) {
-      // Pause the current audio
       audioElement.pause();
       setCurrentlyPlaying(null);
     } else {
-      // Pause any currently playing audio
       if (currentlyPlaying && audioRefs.current[currentlyPlaying]) {
         audioRefs.current[currentlyPlaying]?.pause();
       }
       
-      // Play the new audio
       audioElement.volume = volume;
       audioElement.play().catch(error => {
         console.error("Error playing audio:", error);
@@ -143,19 +150,16 @@ const AudioFileUploader: React.FC = () => {
   };
 
   const handleRemoveAudio = (audioId: string) => {
-    // Stop playing if removing the currently playing audio
     if (currentlyPlaying === audioId && audioRefs.current[audioId]) {
       audioRefs.current[audioId]?.pause();
       setCurrentlyPlaying(null);
     }
 
-    // Find the audio file to revoke its URL
     const audioToRemove = audioFiles.find(file => file.id === audioId);
     if (audioToRemove && audioToRemove.url.startsWith('blob:')) {
       URL.revokeObjectURL(audioToRemove.url);
     }
 
-    // Remove the audio from the state
     const updatedFiles = audioFiles.filter(file => file.id !== audioId);
     setAudioFiles(updatedFiles);
     saveAudioFiles(updatedFiles);
@@ -184,7 +188,6 @@ const AudioFileUploader: React.FC = () => {
     const newVolume = value[0];
     setVolume(newVolume);
     
-    // Update volume of currently playing audio
     if (currentlyPlaying && audioRefs.current[currentlyPlaying]) {
       audioRefs.current[currentlyPlaying]!.volume = newVolume;
     }
@@ -221,14 +224,12 @@ const AudioFileUploader: React.FC = () => {
     }
   };
 
-  // Format file size to readable format
   const formatFileSize = (bytes: number): string => {
     if (bytes < 1024) return bytes + " bytes";
     else if (bytes < 1048576) return (bytes / 1024).toFixed(1) + " KB";
     else return (bytes / 1048576).toFixed(1) + " MB";
   };
 
-  // Format date for display
   const formatDate = (dateString: string): string => {
     return new Date(dateString).toLocaleDateString(undefined, {
       year: 'numeric',
@@ -237,10 +238,8 @@ const AudioFileUploader: React.FC = () => {
     });
   };
 
-  // Get unique categories
   const categories = Array.from(new Set(audioFiles.map(file => file.category || 'Uncategorized')));
 
-  // Filter audio files based on search and category
   const filteredAudioFiles = audioFiles.filter(file => {
     const matchesSearch = searchQuery === '' || 
       file.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -329,6 +328,21 @@ const AudioFileUploader: React.FC = () => {
           </Button>
         </div>
 
+        <div className="space-y-2">
+          <label className="text-sm text-gray-500 dark:text-gray-400">Category Structure:</label>
+          <div className="bg-gray-800/50 p-3 rounded-md border border-gray-700 text-sm">
+            <p className="mb-2 font-medium">Audio files are organized in these categories:</p>
+            <div className="grid grid-cols-2 gap-2">
+              {categoryOptions.map(category => (
+                <div key={category.id} className="flex items-center">
+                  <span className="text-indigo-400 mr-1">•</span>
+                  <code className="bg-gray-700/50 px-1 rounded">/audio/categories/{category.id}/</code>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
         {audioFiles.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
             No audio files uploaded yet. Click the button above to add files.
@@ -339,13 +353,13 @@ const AudioFileUploader: React.FC = () => {
               <TabsTrigger value="all" onClick={() => setSelectedCategory(null)}>
                 All Files
               </TabsTrigger>
-              {categories.map(category => (
+              {Array.from(new Set(audioFiles.map(file => file.category || 'uncategorized'))).map(category => (
                 <TabsTrigger 
                   key={category} 
                   value={category}
                   onClick={() => setSelectedCategory(category)}
                 >
-                  {category}
+                  {categoryOptions.find(c => c.id === category)?.name || category}
                 </TabsTrigger>
               ))}
             </TabsList>
@@ -498,7 +512,6 @@ const AudioFileUploader: React.FC = () => {
           </Tabs>
         )}
         
-        {/* File details dialog */}
         <Dialog open={showFileDetails !== null} onOpenChange={(open) => !open && setShowFileDetails(null)}>
           <DialogContent>
             <DialogHeader>
@@ -513,12 +526,24 @@ const AudioFileUploader: React.FC = () => {
             <div className="space-y-4 py-4">
               <div className="space-y-2">
                 <Label htmlFor="file-category">Category</Label>
-                <Input
-                  id="file-category"
-                  placeholder="e.g., Lectures, Research, Experiments"
+                <Select
                   value={fileCategory}
-                  onChange={(e) => setFileCategory(e.target.value)}
-                />
+                  onValueChange={setFileCategory}
+                >
+                  <SelectTrigger id="file-category">
+                    <SelectValue placeholder="Select a category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categoryOptions.map(category => (
+                      <SelectItem key={category.id} value={category.id}>
+                        {category.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-gray-500">
+                  Files will be recommended to store in /audio/categories/{fileCategory || "uncategorized"}/
+                </p>
               </div>
               
               <div className="space-y-2">
@@ -539,7 +564,6 @@ const AudioFileUploader: React.FC = () => {
               <Button 
                 onClick={() => {
                   if (showFileDetails === 'new') {
-                    // Will be added when the file is uploaded
                     fileInputRef.current?.click();
                   } else {
                     handleUpdateAudioDetails(showFileDetails);

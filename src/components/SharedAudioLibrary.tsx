@@ -2,10 +2,19 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Headphones, Play, Pause, Info, Tag, ExternalLink, FileDown } from "lucide-react";
+import { Headphones, Play, Pause, Info, Tag, ExternalLink, FileDown, FolderOpen } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+
+// Define categories structure
+const AUDIO_CATEGORIES = [
+  { id: 'lectures', name: 'Lectures', description: 'Educational presentations on intent theory' },
+  { id: 'technical', name: 'Technical', description: 'Detailed explanations of simulation mechanics' },
+  { id: 'research', name: 'Research', description: 'Research findings and analysis' },
+  { id: 'interviews', name: 'Interviews', description: 'Discussions with researchers and contributors' },
+  { id: 'ambient', name: 'Ambient', description: 'Background and simulation ambient sounds' }
+];
 
 // Predefined audio files that will be bundled with the application
 const PREDEFINED_AUDIO_FILES = [
@@ -13,41 +22,57 @@ const PREDEFINED_AUDIO_FILES = [
     id: 'intro-intent-theory',
     name: 'Introduction to Intent Theory',
     description: 'Overview of the fundamental concepts behind intent field theory',
-    category: 'Lectures',
+    category: 'lectures',
     duration: '45:12', 
-    url: '/audio/introduction-to-intent-theory.mp3'
+    url: '/audio/categories/lectures/introduction-to-intent-theory.mp3'
   },
   {
     id: 'particle-interaction',
     name: 'Particle Interaction Dynamics',
     description: 'Technical explanation of how particles interact based on their charge and intent',
-    category: 'Technical',
+    category: 'technical',
     duration: '32:05',
-    url: '/audio/particle-interaction-dynamics.mp3'
+    url: '/audio/categories/technical/particle-interaction-dynamics.mp3'
   },
   {
     id: 'complexity-patterns',
     name: 'Emergent Complexity Patterns',
     description: 'Analysis of observed patterns emerging from intent field simulations',
-    category: 'Research',
+    category: 'research',
     duration: '28:47',
-    url: '/audio/emergent-complexity-patterns.mp3'
+    url: '/audio/categories/research/emergent-complexity-patterns.mp3'
   },
   {
     id: 'charge-implications',
     name: 'Charge and Knowledge Transfer',
     description: 'How particle charge affects information exchange in the model',
-    category: 'Lectures',
+    category: 'lectures',
     duration: '39:18',
-    url: '/audio/charge-knowledge-transfer.mp3'
+    url: '/audio/categories/lectures/charge-knowledge-transfer.mp3'
   },
   {
     id: 'simulation-parameters',
     name: 'Simulation Parameters Explained',
     description: 'Guide to understanding and tuning simulation parameters for different outcomes',
-    category: 'Technical',
+    category: 'technical',
     duration: '22:35',
-    url: '/audio/simulation-parameters-explained.mp3'
+    url: '/audio/categories/technical/simulation-parameters-explained.mp3'
+  },
+  {
+    id: 'researcher-interview-1',
+    name: 'Interview with Dr. Samantha Chen',
+    description: 'Discussion about intent field fluctuations and their implications',
+    category: 'interviews',
+    duration: '48:22',
+    url: '/audio/categories/interviews/dr-samantha-chen-interview.mp3'
+  },
+  {
+    id: 'field-fluctuation-ambient',
+    name: 'Field Fluctuation Sonification',
+    description: 'Ambient audio based on intent field fluctuation data',
+    category: 'ambient',
+    duration: '15:34',
+    url: '/audio/categories/ambient/field-fluctuation-sonification.mp3'
   }
 ];
 
@@ -77,9 +102,6 @@ const SharedAudioLibrary: React.FC = () => {
     
     checkAudioAvailability();
   }, []);
-  
-  // Get unique categories
-  const categories = Array.from(new Set(PREDEFINED_AUDIO_FILES.map(file => file.category)));
   
   // Filter audio files by category
   const filteredAudioFiles = selectedCategory
@@ -130,6 +152,10 @@ const SharedAudioLibrary: React.FC = () => {
     link.click();
   };
 
+  const openCategoryFolder = (category: string) => {
+    toast.info(`Category folder structure: /audio/categories/${category}/`);
+  };
+
   return (
     <Card className="w-full">
       <CardHeader>
@@ -150,14 +176,15 @@ const SharedAudioLibrary: React.FC = () => {
           >
             All
           </Button>
-          {categories.map(category => (
+          {AUDIO_CATEGORIES.map(category => (
             <Button
-              key={category}
-              variant={selectedCategory === category ? "default" : "outline"}
+              key={category.id}
+              variant={selectedCategory === category.id ? "default" : "outline"}
               size="sm"
-              onClick={() => setSelectedCategory(category)}
+              onClick={() => setSelectedCategory(category.id)}
+              title={category.description}
             >
-              {category}
+              {category.name}
             </Button>
           ))}
         </div>
@@ -202,7 +229,7 @@ const SharedAudioLibrary: React.FC = () => {
                         {file.duration}
                       </span>
                       <Badge variant="outline" className="text-xs py-0">
-                        {file.category}
+                        {AUDIO_CATEGORIES.find(c => c.id === file.category)?.name || file.category}
                       </Badge>
                     </div>
                     {file.description && (
@@ -245,29 +272,30 @@ const SharedAudioLibrary: React.FC = () => {
         
         <div className="mt-8 bg-indigo-950/30 rounded-md p-4 border border-indigo-800">
           <h3 className="text-lg font-medium flex items-center mb-2">
-            <ExternalLink className="mr-2 h-5 w-5 text-indigo-400" />
-            Adding Your Own Audio
+            <FolderOpen className="mr-2 h-5 w-5 text-indigo-400" />
+            Audio File Storage Structure
           </h3>
           <p className="text-sm text-gray-300 mb-4">
-            To add these audio files to your site, place them in the <code className="bg-gray-800 px-1 py-0.5 rounded">public/audio/</code> directory with the following filenames:
+            Audio files are organized into categories in the <code className="bg-gray-800 px-1 py-0.5 rounded">public/audio/categories/</code> directory:
           </p>
-          <ul className="text-sm text-gray-300 space-y-1.5 ml-6 list-disc">
-            {PREDEFINED_AUDIO_FILES.map(file => (
-              <li key={file.id}>
-                <code className="bg-gray-800 px-1 py-0.5 rounded">{file.url.split('/').pop()}</code> - {file.name}
-              </li>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-4">
+            {AUDIO_CATEGORIES.map(category => (
+              <div key={category.id} className="flex items-center">
+                <Button 
+                  variant="outline"
+                  size="sm"
+                  onClick={() => openCategoryFolder(category.id)}
+                  className="text-xs flex items-center justify-start overflow-hidden"
+                >
+                  <FolderOpen className="mr-1 h-3 w-3 flex-shrink-0" />
+                  <span className="truncate">/audio/categories/{category.id}/</span>
+                </Button>
+              </div>
             ))}
-          </ul>
-          <div className="mt-4">
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => window.location.href = '/documentation'}
-              className="text-indigo-300 hover:text-indigo-200 hover:bg-indigo-900/30"
-            >
-              <ExternalLink className="mr-2 h-4 w-4" />
-              Media Documentation
-            </Button>
+          </div>
+          <div className="text-xs text-gray-400 mt-3">
+            <p>Each category folder contains a README.md with specific guidelines.</p>
+            <p className="mt-1">Place your audio files in the appropriate category folder to keep your collection organized.</p>
           </div>
         </div>
       </CardContent>

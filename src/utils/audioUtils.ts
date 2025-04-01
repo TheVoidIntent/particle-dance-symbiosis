@@ -1,19 +1,28 @@
 
 // Re-export audio utilities from the audio subdirectories
-export * from './audio/audioGenerationUtils';
 export * from './audio/audioPlaybackUtils';
 export * from './audio/simulationAudioUtils';
 export * from './audio/audioFileUtils';
 
+// Explicitly re-export from audioGenerationUtils to avoid name collision
+import { 
+  generateSampleAudio, 
+  // Rename this to avoid ambiguity with the one from audioPlaybackUtils
+  createFallbackAudioIfNeeded as createGenerationFallbackAudio 
+} from './audio/audioGenerationUtils';
+
+export {
+  generateSampleAudio,
+  createGenerationFallbackAudio
+};
+
 // Provide a simplified API for common audio operations
 import { playAudioWithErrorHandling } from './audio/audioPlaybackUtils';
-import { generateSampleAudio } from './audio/audioGenerationUtils';
 import { checkAudioFileExists } from './audio/audioFileUtils';
 
 // Re-export explicitly to avoid ambiguity
 export {
   playAudioWithErrorHandling,
-  generateSampleAudio,
   checkAudioFileExists
 };
 

@@ -2,10 +2,14 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ExternalLink, FileText, Activity } from "lucide-react";
+import { ExternalLink, FileText, Activity, Award } from "lucide-react";
 import { useNotebookLmIntegration } from '@/hooks/useNotebookLmIntegration';
 import { getAvailableAtlasDatasets } from '@/utils/atlasDataIntegration';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
+// ORCID information
+const RESEARCHER_ORCID = "0009-0001-0403-6452";
+const ORCID_URL = "https://orcid.org/0009-0001-0403-6452";
 
 const NotebookLmExport: React.FC = () => {
   const { exportSimulationData, openNotebookLm, notebookLmConfig } = useNotebookLmIntegration();
@@ -81,6 +85,10 @@ const NotebookLmExport: React.FC = () => {
           <p className="flex items-center">
             <Activity className="h-3 w-3 mr-1 text-green-500" /> 
             Connected to ATLAS Open Data Portal
+          </p>
+          <p className="flex items-center">
+            <Award className="h-3 w-3 mr-1 text-blue-500" />
+            ORCID: <a href={ORCID_URL} target="_blank" rel="noopener noreferrer" className="ml-1 text-blue-500 hover:underline">{RESEARCHER_ORCID}</a>
           </p>
           <p>Notebook ID: {notebookLmConfig.notebookId}</p>
           <p>After exporting, open the PDF file in your Notebook LM for analysis.</p>

@@ -2,6 +2,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { toast } from "sonner";
 import { getSimulationData } from '@/utils/dataExportUtils';
+import { convertAnyDataToPDF } from '@/utils/pdfExportUtils';
 
 export interface InflationEvent {
   timestamp: string;
@@ -160,7 +161,8 @@ export function useInflationEvents() {
         source: "IntentSim.org",
         generated: new Date().toISOString(),
         description: "Simulation data from IntentSim universe model for Notebook LM analysis",
-        notebookId: "b2d28cf3-eebe-436c-9cfe-0015c99f99ac"
+        notebookId: "b2d28cf3-eebe-436c-9cfe-0015c99f99ac",
+        format: "pdf_only"
       },
       simulations: [
         adaptiveData,
@@ -187,29 +189,24 @@ export function useInflationEvents() {
       }
     };
     
-    // Only handle JSON download if not in PDF mode (otherwise PDF export will handle it)
-    const downloadJson = () => {
-      const jsonString = JSON.stringify(notebookData, null, 2);
-      const blob = new Blob([jsonString], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `intentSim_notebook_lm_data_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.json`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-    };
-    
-    // Only download JSON directly if explicitly requested
-    // downloadJson();
-    
-    toast.success("Notebook LM data generated with all 5 simulation types");
+    toast.success("Notebook LM data generated with all 5 simulation types (PDF format)");
     console.log("Generated Notebook LM data with 5 simulation types:", Object.keys(notebookData.simulations));
     
-    // Return the data structure instead of just true
+    // Return the data structure
     return notebookData;
   }, [generateSampleData]);
+
+  // Function to download any current data as PDF
+  const downloadCurrentDataAsPDF = useCallback(async () => {
+    const data = exportInflationEventsData();
+    const filename = await convertAnyDataToPDF(data, "Current Simulation Data");
+    
+    if (filename) {
+      toast.success(`Data exported as PDF: ${filename}`);
+      return filename;
+    }
+    return null;
+  }, [exportInflationEventsData]);
 
   // Clean up timeout on unmount
   useEffect(() => {
@@ -225,6 +222,7 @@ export function useInflationEvents() {
     showInflationBanner,
     latestInflation,
     handleInflationDetected,
-    exportInflationEventsData
+    exportInflationEventsData,
+    downloadCurrentDataAsPDF
   };
 }

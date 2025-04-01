@@ -2,6 +2,7 @@
 import { useState, useCallback } from 'react';
 import { toast } from "sonner";
 import { SimulationStats } from '@/types/simulation';
+import { convertAnyDataToPDF } from '@/utils/pdfExportUtils';
 
 export interface NotebookAnnotation {
   id: string;
@@ -51,13 +52,13 @@ export function useNotebookIntegration() {
     return newAnnotation;
   }, [annotations, saveAnnotations]);
 
-  // Import annotations from Notebook LM JSON
-  const importAnnotations = useCallback((jsonData: string) => {
+  // Import annotations from file
+  const importAnnotations = useCallback(async (fileData: string) => {
     try {
-      const data = JSON.parse(jsonData);
+      const data = JSON.parse(fileData);
       let importedAnnotations: NotebookAnnotation[] = [];
       
-      // Handle different JSON formats from Notebook LM
+      // Handle different JSON formats
       if (data.annotations && Array.isArray(data.annotations)) {
         importedAnnotations = data.annotations.map((anno: any) => ({
           id: `imported-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
@@ -95,8 +96,8 @@ export function useNotebookIntegration() {
     }
   }, [annotations, saveAnnotations]);
 
-  // Export annotations to JSON
-  const exportAnnotations = useCallback(() => {
+  // Export annotations as PDF
+  const exportAnnotations = useCallback(async () => {
     if (annotations.length === 0) {
       toast.warning("No annotations to export");
       return null;
@@ -108,23 +109,17 @@ export function useNotebookIntegration() {
       source: "intentSim.org"
     };
     
-    const jsonString = JSON.stringify(exportData, null, 2);
-    const blob = new Blob([jsonString], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
+    const filename = await convertAnyDataToPDF(exportData, "IntentSim_Annotations");
     
-    const downloadLink = document.createElement('a');
-    downloadLink.href = url;
-    downloadLink.download = `intentSim-annotations-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.json`;
-    document.body.appendChild(downloadLink);
-    downloadLink.click();
-    document.body.removeChild(downloadLink);
+    if (filename) {
+      toast.success("Annotations exported as PDF");
+    }
     
-    toast.success("Annotations exported successfully");
     return exportData;
   }, [annotations]);
 
-  // Export simulation data with annotations for Notebook LM
-  const exportForNotebookLM = useCallback((simulationData: any) => {
+  // Export simulation data with annotations for Notebook LM as PDF
+  const exportForNotebookLM = useCallback(async (simulationData: any) => {
     const exportData = {
       simulationData,
       annotations,
@@ -133,18 +128,12 @@ export function useNotebookIntegration() {
       format: "notebook_lm_compatible"
     };
     
-    const jsonString = JSON.stringify(exportData, null, 2);
-    const blob = new Blob([jsonString], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
+    const filename = await convertAnyDataToPDF(exportData, "IntentSim_Notebook_Data");
     
-    const downloadLink = document.createElement('a');
-    downloadLink.href = url;
-    downloadLink.download = `intentSim-notebook-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.json`;
-    document.body.appendChild(downloadLink);
-    downloadLink.click();
-    document.body.removeChild(downloadLink);
+    if (filename) {
+      toast.success("Notebook LM export completed as PDF");
+    }
     
-    toast.success("Notebook LM export completed");
     return exportData;
   }, [annotations]);
 

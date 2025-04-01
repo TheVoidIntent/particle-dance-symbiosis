@@ -5,12 +5,13 @@ import SimulationStats from '@/components/simulation/SimulationStats';
 import NotebookLmExport from '@/components/NotebookLmExport';
 import { SimulationStats as StatsType } from '@/types/simulation';
 import { Button } from "@/components/ui/button";
-import { Download, Zap, FileText } from "lucide-react";
+import { FileText, Zap } from "lucide-react";
 import { toast } from "sonner";
 import Footer from "@/components/Footer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { setupDailyDataExport, getNearestExportTime } from '@/utils/dailyDataExport';
 import { getSimulationStats } from '@/utils/simulation/state';
+import { useInflationEvents } from '@/hooks/useInflationEvents';
 
 const initialStats: StatsType = {
   positiveParticles: 0,
@@ -41,15 +42,16 @@ const UniverseSimulation: React.FC = () => {
   const [stats, setStats] = useState<StatsType>(initialStats);
   const [nextExportTime, setNextExportTime] = useState<string>("");
   const [lastExportTime, setLastExportTime] = useState<string>("");
+  const { downloadCurrentDataAsPDF } = useInflationEvents();
 
   useEffect(() => {
     const exportSchedule = setupDailyDataExport({
       onExportStart: () => {
-        toast.info("Exporting daily simulation data...");
+        toast.info("Exporting daily simulation data as PDF...");
       },
       onExportComplete: (filename) => {
         setLastExportTime(new Date().toLocaleTimeString());
-        toast.success(`Daily export complete: ${filename}`);
+        toast.success(`Daily PDF export complete: ${filename}`);
       }
     });
 
@@ -104,10 +106,7 @@ const UniverseSimulation: React.FC = () => {
   };
 
   const handleDownloadCurrentData = () => {
-    import('@/utils/dataExportUtils').then(module => {
-      const filename = module.exportDataToJSON();
-      toast.success(`Data exported as ${filename}`);
-    });
+    downloadCurrentDataAsPDF();
   };
 
   return (
@@ -160,8 +159,8 @@ const UniverseSimulation: React.FC = () => {
                     size="sm"
                     className="ml-2"
                   >
-                    <Download className="h-4 w-4 mr-2" />
-                    Download Current Data
+                    <FileText className="h-4 w-4 mr-2" />
+                    Download as PDF
                   </Button>
                 </CardTitle>
               </CardHeader>
@@ -200,7 +199,7 @@ const UniverseSimulation: React.FC = () => {
                   
                   <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
                     <p className="text-sm text-gray-500 dark:text-gray-400">
-                      Simulation data is automatically exported daily as JSON files with detailed metrics.
+                      Simulation data is automatically exported daily as PDF files with detailed metrics for easy viewing in Notebook LM.
                     </p>
                   </div>
                 </div>

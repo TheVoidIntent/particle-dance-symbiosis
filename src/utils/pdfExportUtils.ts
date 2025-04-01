@@ -18,10 +18,10 @@ const formatSimulationDataForPDF = (simulationType: string, data: any): string =
   // Add summary section
   formattedText += "## Summary\n\n";
   if (data.summary) {
-    formattedText += `Average Complexity: ${data.summary.avgComplexity.toFixed(4)}\n`;
-    formattedText += `Maximum Complexity: ${data.summary.maxComplexity.toFixed(4)}\n`;
-    formattedText += `Total Particles: ${data.summary.totalParticles}\n`;
-    formattedText += `System Entropy: ${data.summary.systemEntropy.toFixed(4)}\n\n`;
+    formattedText += `Average Complexity: ${data.summary.avgComplexity?.toFixed(4) || 'N/A'}\n`;
+    formattedText += `Maximum Complexity: ${data.summary.maxComplexity?.toFixed(4) || 'N/A'}\n`;
+    formattedText += `Total Particles: ${data.summary.totalParticles || 0}\n`;
+    formattedText += `System Entropy: ${data.summary.systemEntropy?.toFixed(4) || 'N/A'}\n\n`;
   }
   
   // Add data points in a condensed format
@@ -30,10 +30,10 @@ const formatSimulationDataForPDF = (simulationType: string, data: any): string =
   
   samplePoints.forEach((point: any, index: number) => {
     formattedText += `Point ${index + 1}:\n`;
-    formattedText += `- Timestamp: ${point.timestamp}\n`;
-    formattedText += `- Total Particles: ${point.total_particles}\n`;
-    formattedText += `- Complexity: ${point.avg_complexity?.toFixed(4)}\n`;
-    formattedText += `- Entropy: ${point.system_entropy?.toFixed(4)}\n\n`;
+    formattedText += `- Timestamp: ${point.timestamp || 'N/A'}\n`;
+    formattedText += `- Total Particles: ${point.total_particles || 0}\n`;
+    formattedText += `- Complexity: ${point.avg_complexity?.toFixed(4) || 'N/A'}\n`;
+    formattedText += `- Entropy: ${point.system_entropy?.toFixed(4) || 'N/A'}\n\n`;
   });
   
   return formattedText;
@@ -53,7 +53,7 @@ const generatePDFFromText = async (text: string): Promise<Blob> => {
       <style>
         body { font-family: Arial, sans-serif; line-height: 1.6; padding: 20px; }
         h1, h2 { color: #333; }
-        pre { background-color: #f5f5f5; padding: 10px; border-radius: 5px; }
+        pre { background-color: #f5f5f5; padding: 10px; border-radius: 5px; white-space: pre-wrap; }
       </style>
     </head>
     <body>
@@ -63,8 +63,6 @@ const generatePDFFromText = async (text: string): Promise<Blob> => {
   `;
   
   // Convert HTML to a Blob with PDF mimetype
-  // This is a simplification - in a real implementation, you would use a library like jsPDF
-  // But for Notebook LM compatibility, we'll use this approach
   const blob = new Blob([htmlContent], { type: 'application/pdf' });
   return blob;
 };
@@ -75,11 +73,14 @@ export const generateNotebookLmPDF = async (simulationData: Record<string, any>)
     // Create formatted text for each simulation type
     let combinedText = "# INTENTSIM NOTEBOOK LM DATA EXPORT\n\n";
     combinedText += `Generated: ${new Date().toISOString()}\n\n`;
+    combinedText += "All data is provided in PDF format for better readability in Notebook LM.\n\n";
     
     // Add each simulation section
     for (const [simType, data] of Object.entries(simulationData)) {
-      combinedText += formatSimulationDataForPDF(simType, data);
-      combinedText += "\n---\n\n";
+      if (Object.keys(data).length > 0) {
+        combinedText += formatSimulationDataForPDF(simType, data);
+        combinedText += "\n---\n\n";
+      }
     }
     
     // Create comparative analysis section
@@ -87,13 +88,13 @@ export const generateNotebookLmPDF = async (simulationData: Record<string, any>)
     combinedText += "## Entropy Comparison\n\n";
     
     Object.entries(simulationData).forEach(([simType, data]) => {
-      combinedText += `${simType}: ${data.summary?.systemEntropy.toFixed(4) || 'N/A'}\n`;
+      combinedText += `${simType}: ${data.summary?.systemEntropy?.toFixed(4) || 'N/A'}\n`;
     });
     
     combinedText += "\n## Complexity Comparison\n\n";
     
     Object.entries(simulationData).forEach(([simType, data]) => {
-      combinedText += `${simType}: ${data.summary?.maxComplexity.toFixed(4) || 'N/A'}\n`;
+      combinedText += `${simType}: ${data.summary?.maxComplexity?.toFixed(4) || 'N/A'}\n`;
     });
     
     // Generate PDF blob
@@ -121,6 +122,39 @@ export const exportSimulationDataAsPDF = async (simulationData: Record<string, a
   } catch (error) {
     console.error("Error exporting PDF for Notebook LM:", error);
     toast.error("Failed to export PDF for Notebook LM");
+    return null;
+  }
+};
+
+// General purpose function to convert any simulation data to PDF
+export const convertAnyDataToPDF = async (data: any, title: string = "Simulation Data"): Promise<string | null> => {
+  try {
+    // Format the data as JSON with pretty printing
+    const jsonString = JSON.stringify(data, null, 2);
+    
+    // Create a basic formatted text representation
+    let formattedText = `# ${title.toUpperCase()}\n\n`;
+    formattedText += `Generated: ${new Date().toISOString()}\n\n`;
+    formattedText += "## Data Content\n\n";
+    formattedText += "```json\n";
+    formattedText += jsonString;
+    formattedText += "\n```\n";
+    
+    // Generate the PDF
+    const pdfBlob = await generatePDFFromText(formattedText);
+    if (!pdfBlob) return null;
+    
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '').slice(0, 15);
+    const sanitizedTitle = title.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+    const filename = `intentSim_${sanitizedTitle}_${timestamp}.pdf`;
+    
+    // Save the PDF file
+    saveAs(pdfBlob, filename);
+    
+    return filename;
+  } catch (error) {
+    console.error("Error converting data to PDF:", error);
+    toast.error("Failed to convert data to PDF");
     return null;
   }
 };

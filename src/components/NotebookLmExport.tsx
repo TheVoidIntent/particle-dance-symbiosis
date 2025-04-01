@@ -2,13 +2,11 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ExternalLink, Download, Upload, Settings, FileText } from "lucide-react";
+import { ExternalLink, FileText } from "lucide-react";
 import { useNotebookLmIntegration } from '@/hooks/useNotebookLmIntegration';
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
 
 const NotebookLmExport: React.FC = () => {
-  const { exportSimulationData, openNotebookLm, notebookLmConfig, setNotebookLmConfig } = useNotebookLmIntegration();
+  const { exportSimulationData, openNotebookLm, notebookLmConfig } = useNotebookLmIntegration();
 
   return (
     <Card className="shadow-lg border-purple-200/40 dark:border-purple-800/40">
@@ -37,27 +35,14 @@ const NotebookLmExport: React.FC = () => {
           </ul>
         </div>
         
-        <div className="flex items-center space-x-2 py-2">
-          <Switch 
-            id="pdf-format" 
-            checked={notebookLmConfig.usePdfFormat}
-            onCheckedChange={(checked) => setNotebookLmConfig({...notebookLmConfig, usePdfFormat: checked})}
-          />
-          <Label htmlFor="pdf-format" className="text-sm">Export as PDF (Recommended for Notebook LM)</Label>
-        </div>
-        
         <div className="flex flex-col sm:flex-row gap-2">
           <Button 
             variant="outline" 
             className="flex-1"
             onClick={() => exportSimulationData()}
           >
-            {notebookLmConfig.usePdfFormat ? (
-              <FileText className="h-4 w-4 mr-2" />
-            ) : (
-              <Download className="h-4 w-4 mr-2" />
-            )}
-            Export Data
+            <FileText className="h-4 w-4 mr-2" />
+            Export as PDF
           </Button>
           
           <Button 
@@ -70,8 +55,8 @@ const NotebookLmExport: React.FC = () => {
         </div>
         
         <div className="text-xs text-gray-500 dark:text-gray-400 mt-4">
-          <p>Connected to Notebook ID: b2d28cf3-eebe-436c-9cfe-0015c99f99ac</p>
-          <p>After exporting, upload the {notebookLmConfig.usePdfFormat ? "PDF" : "JSON"} file to your Notebook for analysis.</p>
+          <p>Connected to Notebook ID: {notebookLmConfig.notebookId}</p>
+          <p>After exporting, upload the PDF file to your Notebook for analysis.</p>
         </div>
       </CardContent>
     </Card>

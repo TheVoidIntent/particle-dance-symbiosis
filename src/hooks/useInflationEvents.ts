@@ -1,9 +1,9 @@
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { toast } from "sonner";
 import { getSimulationData } from '@/utils/dataExportUtils';
 
-interface InflationEvent {
+export interface InflationEvent {
   timestamp: string;
   type: 'adaptive' | 'energy_conservation' | 'baseline' | 'full_features' | 'cern_comparison';
   dataPoints: any[];
@@ -16,8 +16,48 @@ interface InflationEvent {
 }
 
 export function useInflationEvents() {
-  // We're focusing on generating and exporting the data
+  // Add state for inflation banner and latest inflation event
   const [inflationEvents, setInflationEvents] = useState<InflationEvent[]>([]);
+  const [showInflationBanner, setShowInflationBanner] = useState(false);
+  const [latestInflation, setLatestInflation] = useState<any | null>(null);
+  const bannerTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Handle inflation detection
+  const handleInflationDetected = useCallback((event: any) => {
+    console.log('Inflation event detected:', event);
+    
+    // Update latest inflation
+    setLatestInflation(event);
+    
+    // Show banner
+    setShowInflationBanner(true);
+    
+    // Auto-hide banner after 5 seconds
+    if (bannerTimeoutRef.current) {
+      clearTimeout(bannerTimeoutRef.current);
+    }
+    
+    bannerTimeoutRef.current = setTimeout(() => {
+      setShowInflationBanner(false);
+    }, 5000);
+    
+    // Add to events list
+    setInflationEvents(prev => [...prev, {
+      timestamp: new Date(event.timestamp).toISOString(),
+      type: 'adaptive', // Default type, can be updated later
+      dataPoints: [],
+      summary: {
+        avgComplexity: Math.random() * 5 + 1, // Placeholder value
+        maxComplexity: Math.random() * 10 + 5, // Placeholder value
+        totalParticles: event.particlesAfterInflation || 0,
+        systemEntropy: Math.random() * 0.5 + 0.5 // Placeholder value
+      }
+    }]);
+    
+    toast.info("Universe inflation event detected!", {
+      description: `${event.particlesAfterInflation - event.particlesBeforeInflation} new particles formed during inflation.`
+    });
+  }, []);
 
   // Function to generate sample data for each simulation type
   const generateSampleData = useCallback((type: InflationEvent['type']) => {
@@ -165,8 +205,20 @@ export function useInflationEvents() {
     return true;
   }, [generateSampleData]);
 
+  // Clean up timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (bannerTimeoutRef.current) {
+        clearTimeout(bannerTimeoutRef.current);
+      }
+    };
+  }, []);
+
   return {
     inflationEvents,
+    showInflationBanner,
+    latestInflation,
+    handleInflationDetected,
     exportInflationEventsData
   };
 }

@@ -195,7 +195,7 @@ const AudioDiagnostics: React.FC = () => {
                   <li>Check if the file exists in the correct directory</li>
                   <li>Ensure the path is correct (it should start with '/')</li>
                   <li>Verify file name and extension</li>
-                  <li>The file may be too large for GitHub (>25MB)</li>
+                  <li>The file may be too large for GitHub ({'>'}25MB)</li>
                 </ul>
               </div>
             </AlertDescription>

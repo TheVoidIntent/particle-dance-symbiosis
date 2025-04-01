@@ -1,8 +1,8 @@
-
 import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet';
 import { ParticleCanvas } from '@/components/ParticleCanvas';
 import SimulationStats from '@/components/simulation/SimulationStats';
+import NotebookLmExport from '@/components/NotebookLmExport';
 import { SimulationStats as StatsType } from '@/types/simulation';
 import { Button } from "@/components/ui/button";
 import { Download, Zap, FileText } from "lucide-react";
@@ -38,12 +38,10 @@ const initialStats: StatsType = {
 };
 
 const UniverseSimulation: React.FC = () => {
-  // Fixed simulation parameters for the continuous simulation
   const [stats, setStats] = useState<StatsType>(initialStats);
   const [nextExportTime, setNextExportTime] = useState<string>("");
   const [lastExportTime, setLastExportTime] = useState<string>("");
 
-  // Setup the daily data export
   useEffect(() => {
     const exportSchedule = setupDailyDataExport({
       onExportStart: () => {
@@ -55,16 +53,14 @@ const UniverseSimulation: React.FC = () => {
       }
     });
 
-    // Update the next export time display
     const updateNextExportTime = () => {
       const nextTime = getNearestExportTime();
       setNextExportTime(nextTime.toLocaleTimeString());
     };
 
     updateNextExportTime();
-    const timeInterval = setInterval(updateNextExportTime, 60000); // Update every minute
+    const timeInterval = setInterval(updateNextExportTime, 60000);
 
-    // Regularly fetch current simulation stats even if ParticleCanvas doesn't update them
     const statsInterval = setInterval(() => {
       const motherStats = getSimulationStats();
       if (motherStats && motherStats.particleCount > 0) {
@@ -90,11 +86,9 @@ const UniverseSimulation: React.FC = () => {
   }, []);
 
   const handleStatsUpdate = (newStats: any) => {
-    // Combine new stats with existing ones to prevent losing data
     setStats(prevStats => ({
       ...prevStats,
       ...newStats,
-      // These specific fields should be directly updated from newStats if present
       positiveParticles: newStats.positiveParticles ?? prevStats.positiveParticles,
       negativeParticles: newStats.negativeParticles ?? prevStats.negativeParticles,
       neutralParticles: newStats.neutralParticles ?? prevStats.neutralParticles,
@@ -110,7 +104,6 @@ const UniverseSimulation: React.FC = () => {
   };
 
   const handleDownloadCurrentData = () => {
-    // Import dynamically to prevent circular dependencies
     import('@/utils/dataExportUtils').then(module => {
       const filename = module.exportDataToJSON();
       toast.success(`Data exported as ${filename}`);
@@ -179,6 +172,8 @@ const UniverseSimulation: React.FC = () => {
           </div>
 
           <div className="lg:col-span-1 space-y-6">
+            <NotebookLmExport />
+
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg">Continuous Data Export</CardTitle>

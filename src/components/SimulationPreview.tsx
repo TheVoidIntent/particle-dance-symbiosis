@@ -106,8 +106,9 @@ const SimulationPreview: React.FC = () => {
           if (particle.type === 'positive') intentMultiplier = 0.1;
           if (particle.type === 'negative') intentMultiplier = 0.03;
           
-          const newVx = particle.vx + intentValue * intentMultiplier;
-          const newVy = particle.vy + intentValue * intentMultiplier;
+          // Fix: Use let instead of const for these variables that need to be reassigned
+          let newVx = particle.vx + intentValue * intentMultiplier;
+          let newVy = particle.vy + intentValue * intentMultiplier;
           
           // Update position
           let newX = particle.x + newVx;

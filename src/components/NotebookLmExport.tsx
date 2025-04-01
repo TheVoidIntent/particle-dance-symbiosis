@@ -1,12 +1,13 @@
 
 import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ExternalLink, FileText, Activity, Award, ZapOff } from "lucide-react";
+import { ExternalLink, FileText, Activity, Award, ZapOff, Database } from "lucide-react";
 import { useNotebookLmIntegration } from '@/hooks/useNotebookLmIntegration';
 import { getAvailableAtlasDatasets } from '@/utils/atlasDataIntegration';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useInflationEvents } from '@/hooks/useInflationEvents';
+import { Badge } from "@/components/ui/badge";
 
 // ORCID information
 const RESEARCHER_ORCID = "0009-0001-0403-6452";
@@ -21,14 +22,24 @@ const NotebookLmExport: React.FC = () => {
   return (
     <Card className="shadow-lg border-purple-200/40 dark:border-purple-800/40">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-purple-500">
-            <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"></path>
-          </svg>
-          Notebook LM Integration
-        </CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-purple-500">
+              <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"></path>
+            </svg>
+            Notebook LM Integration
+          </CardTitle>
+          <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800 text-xs">
+            <img 
+              src="/lovable-uploads/7772820c-08b8-40cc-a74b-278e08a6b862.png" 
+              alt="ORCID" 
+              className="h-3 w-3 mr-1"
+            />
+            ORCID Linked
+          </Badge>
+        </div>
         <CardDescription>
-          Export simulation data to your Notebook LM for analysis
+          Export simulation data to your Notebook LM for analysis with proper attribution
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -93,14 +104,29 @@ const NotebookLmExport: React.FC = () => {
             <ZapOff className="h-3 w-3 mr-1 text-yellow-500" />
             Inflation Events: {inflationEvents.length} detected
           </p>
-          <p className="flex items-center">
+          <div className="flex items-center">
             <Award className="h-3 w-3 mr-1 text-blue-500" />
-            ORCID: <a href={ORCID_URL} target="_blank" rel="noopener noreferrer" className="ml-1 text-blue-500 hover:underline">{RESEARCHER_ORCID}</a>
-          </p>
-          <p>Notebook ID: {notebookLmConfig.notebookId}</p>
-          <p>After exporting, open the PDF file in your Notebook LM for analysis.</p>
+            <a href={ORCID_URL} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline flex items-center">
+              ORCID: {RESEARCHER_ORCID}
+              <ExternalLink className="h-3 w-3 ml-1" />
+            </a>
+          </div>
         </div>
       </CardContent>
+      <CardFooter className="pt-0 pb-4 px-6">
+        <div className="w-full text-xs text-gray-500 dark:text-gray-400 flex items-center justify-between">
+          <span>Notebook ID: {notebookLmConfig.notebookId.slice(0, 8)}...</span>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="h-6 text-xs"
+            onClick={() => window.location.href = '/orcid-integration'}
+          >
+            <Database className="h-3 w-3 mr-1" />
+            OSTI.GOV Integration
+          </Button>
+        </div>
+      </CardFooter>
     </Card>
   );
 };

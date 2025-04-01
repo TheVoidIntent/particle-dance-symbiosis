@@ -1,47 +1,27 @@
-
-import React, { useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import './App.css';
+import React from 'react';
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import HomePage from './pages/HomePage';
 import UniverseSimulation from './pages/UniverseSimulation';
-import { Toaster } from './components/ui/toaster';
-import { Toaster as SonnerToaster } from "sonner";
-import { initializeMotherSimulation, startMotherSimulation } from './utils/motherSimulation';
+import Notebook from './pages/Notebook';
+import OrcidIntegrationPage from './pages/OrcidIntegrationPage';
+import { ThemeProvider } from "@/components/theme-provider"
 
 function App() {
-  // Initialize and start the continuous simulation when the app loads
-  useEffect(() => {
-    console.info("🔄 Initializing mother simulation...");
-    initializeMotherSimulation();
-    startMotherSimulation();
-    
-    // Remove any Lovable badge that might be added automatically
-    const removeBadge = () => {
-      const badges = document.querySelectorAll('[class*="lovable"], [id*="lovable"], [class*="gpte"], [id*="gpte"]');
-      badges.forEach(badge => {
-        if (badge.parentNode) {
-          badge.parentNode.removeChild(badge);
-        }
-      });
-    };
-    
-    // Run on first load and set an interval to catch any dynamically added badges
-    removeBadge();
-    const interval = setInterval(removeBadge, 1000);
-    
-    return () => clearInterval(interval);
-  }, []);
-
   return (
     <Router>
-      <div className="min-h-screen">
+      <ThemeProvider
+        attribute="class"
+        defaultTheme="system"
+        enableSystem
+        disableTransitionOnChange
+      >
         <Routes>
+          <Route path="/" element={<HomePage />} />
           <Route path="/simulation" element={<UniverseSimulation />} />
-          <Route path="/" element={<Navigate to="/simulation" replace />} />
-          <Route path="*" element={<Navigate to="/simulation" replace />} />
+          <Route path="/orcid-integration" element={<OrcidIntegrationPage />} />
+          <Route path="/notebook" element={<Notebook />} />
         </Routes>
-        <Toaster />
-        <SonnerToaster position="top-right" />
-      </div>
+      </ThemeProvider>
     </Router>
   );
 }

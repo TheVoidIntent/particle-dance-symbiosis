@@ -46,5 +46,6 @@ export interface SimulationStats {
   informationDensity?: number;
   clusterLifetime?: number;
   maxComplexity?: number;
-  intentFieldComplexity?: number; // Add the missing property
+  intentFieldComplexity?: number;
+  clusterEntropyDelta?: number; // Added this missing property
 }

@@ -15,6 +15,7 @@ import {
 import { analyzeIntentField } from '@/utils/fields';
 
 export interface SimulationStats {
+  particleCount: number;
   positiveParticles: number;
   negativeParticles: number;
   neutralParticles: number;

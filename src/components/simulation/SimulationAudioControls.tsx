@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Toggle } from "@/components/ui/toggle";
@@ -10,7 +9,7 @@ import {
   VolumeX,
   Music,
   Bell,
-  Waveform,
+  WaveformIcon,
   InfoIcon
 } from 'lucide-react';
 import { 
@@ -47,7 +46,6 @@ const SimulationAudioControls: React.FC<SimulationAudioControlsProps> = ({
   const [volume, setVolume] = useState(70);
   const [audioInitialized, setAudioInitialized] = useState(false);
   
-  // Initialize audio on first user interaction
   const handleInitAudio = () => {
     if (!audioInitialized) {
       const initialized = initAudioContext();
@@ -58,7 +56,6 @@ const SimulationAudioControls: React.FC<SimulationAudioControlsProps> = ({
     }
   };
   
-  // Update playing state based on audio system
   useEffect(() => {
     const checkAudioState = () => {
       setIsPlaying(isSimulationAudioPlaying());
@@ -69,7 +66,6 @@ const SimulationAudioControls: React.FC<SimulationAudioControlsProps> = ({
     return () => clearInterval(intervalId);
   }, []);
   
-  // Stop audio when simulation stops
   useEffect(() => {
     if (!isRunning && isPlaying) {
       stopSimulationAudioStream();
@@ -77,7 +73,6 @@ const SimulationAudioControls: React.FC<SimulationAudioControlsProps> = ({
     }
   }, [isRunning, isPlaying]);
   
-  // Toggle audio streaming on/off
   const toggleAudioStream = () => {
     handleInitAudio();
     
@@ -100,7 +95,6 @@ const SimulationAudioControls: React.FC<SimulationAudioControlsProps> = ({
     }
   };
   
-  // Generate a soundscape from current particles
   const generateSoundscape = () => {
     handleInitAudio();
     
@@ -118,7 +112,6 @@ const SimulationAudioControls: React.FC<SimulationAudioControlsProps> = ({
     setIsPlaying(true);
   };
   
-  // Play a test audio sample
   const playTestAudio = (category: string, filename: string) => {
     handleInitAudio();
     
@@ -130,7 +123,6 @@ const SimulationAudioControls: React.FC<SimulationAudioControlsProps> = ({
     playSimulationAudio(category, filename);
   };
   
-  // Play test simulation event sounds
   const playTestEvent = (eventType: string) => {
     handleInitAudio();
     
@@ -139,7 +131,6 @@ const SimulationAudioControls: React.FC<SimulationAudioControlsProps> = ({
       return;
     }
     
-    // Create test data based on event type
     const testData: any = {
       particle_creation: { charge: 'positive' },
       particle_interaction: { intensity: 0.7, charge1: 'positive', charge2: 'negative' },
@@ -150,7 +141,6 @@ const SimulationAudioControls: React.FC<SimulationAudioControlsProps> = ({
     playSimulationEvent(eventType, testData[eventType] || {});
   };
   
-  // Toggle audio system
   const toggleAudio = () => {
     handleInitAudio();
     
@@ -235,7 +225,7 @@ const SimulationAudioControls: React.FC<SimulationAudioControlsProps> = ({
               onClick={generateSoundscape}
               className="flex items-center gap-1"
             >
-              <Waveform className="w-4 h-4" />
+              <WaveformIcon className="w-4 h-4" />
               <span>Generate Soundscape</span>
             </Button>
           </div>

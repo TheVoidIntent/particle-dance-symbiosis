@@ -1,7 +1,7 @@
-
 import { toast } from "sonner";
 import { Particle, SimulationStats } from '@/types/simulation';
-import { playAudioWithErrorHandling, createFallbackAudioIfNeeded } from './audioPlaybackUtils';
+import { playAudioWithErrorHandling } from './audioPlaybackUtils';
+import { createFallbackAudioIfNeeded, generateSampleAudio } from './audioGenerationUtils';
 
 /**
  * Utilities for converting simulation data to audio

@@ -21,8 +21,10 @@ export function useParticleCreation({
   const [particles, setParticles] = useState<Particle[]>([]);
   
   // Create a new particle with properties based on environment
-  const createNewParticles = useCallback((count: number = 1) => {
-    if (particles.length >= maxParticles) return;
+  const createNewParticles = useCallback((count: number = 1): Particle[] => {
+    if (particles.length >= maxParticles) return [];
+    
+    const newParticlesArray: Particle[] = [];
     
     setParticles(prevParticles => {
       const newParticles = [...prevParticles];
@@ -132,10 +134,13 @@ export function useParticleCreation({
         }
         
         newParticles.push(newParticle);
+        newParticlesArray.push(newParticle);
       }
       
       return newParticles;
     });
+    
+    return newParticlesArray;
   }, [particles.length, maxParticles, intentFluctuationRate, probabilisticIntent]);
   
   // Initialize with some particles when simulation starts

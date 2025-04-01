@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Toggle } from "@/components/ui/toggle";
@@ -9,7 +10,7 @@ import {
   VolumeX,
   Music,
   Bell,
-  WaveformIcon,
+  Waveform,
   InfoIcon
 } from 'lucide-react';
 import { 
@@ -225,7 +226,7 @@ const SimulationAudioControls: React.FC<SimulationAudioControlsProps> = ({
               onClick={generateSoundscape}
               className="flex items-center gap-1"
             >
-              <WaveformIcon className="w-4 h-4" />
+              <Waveform className="w-4 h-4" />
               <span>Generate Soundscape</span>
             </Button>
           </div>

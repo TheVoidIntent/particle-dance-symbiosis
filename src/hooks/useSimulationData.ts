@@ -1,4 +1,3 @@
-
 import { useState, useRef, useCallback } from 'react';
 import { Particle } from '@/utils/particleUtils';
 import { 
@@ -115,6 +114,7 @@ export function useSimulationData(
 
     // Create stats object with all metrics
     const stats: SimulationStats = {
+      particleCount: particles.length,
       positiveParticles,
       negativeParticles,
       neutralParticles,

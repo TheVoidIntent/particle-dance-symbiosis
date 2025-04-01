@@ -182,7 +182,7 @@ export const ParticleCanvas: React.FC<ParticleCanvasProps> = ({
       variant: "default",
     });
     
-    // Return empty array instead of void to match the expected return type
+    // Return empty array to match the expected return type
     return [];
   }, [
     toast, 

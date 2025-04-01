@@ -5,13 +5,15 @@ import SimulationStats from '@/components/simulation/SimulationStats';
 import NotebookLmExport from '@/components/NotebookLmExport';
 import { SimulationStats as StatsType } from '@/types/simulation';
 import { Button } from "@/components/ui/button";
-import { FileText, Zap } from "lucide-react";
+import { FileText, Zap, Bug } from "lucide-react";
 import { toast } from "sonner";
 import Footer from "@/components/Footer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { setupDailyDataExport, getNearestExportTime } from '@/utils/dailyDataExport';
 import { getSimulationStats } from '@/utils/simulation/state';
 import { useInflationEvents } from '@/hooks/useInflationEvents';
+import AudioDiagnostics from '@/components/diagnostic/AudioDiagnostics';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const initialStats: StatsType = {
   positiveParticles: 0,
@@ -42,6 +44,7 @@ const UniverseSimulation: React.FC = () => {
   const [stats, setStats] = useState<StatsType>(initialStats);
   const [nextExportTime, setNextExportTime] = useState<string>("");
   const [lastExportTime, setLastExportTime] = useState<string>("");
+  const [activeTab, setActiveTab] = useState<string>("simulation");
   const { downloadCurrentDataAsPDF } = useInflationEvents();
 
   useEffect(() => {
@@ -126,113 +129,131 @@ const UniverseSimulation: React.FC = () => {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-10">
-          <div className="lg:col-span-3">
-            <Card className="mb-4">
-              <CardContent className="p-0">
-                <div className="relative aspect-video w-full border rounded overflow-hidden">
-                  <ParticleCanvas
-                    intentFluctuationRate={0.01}
-                    maxParticles={200}
-                    learningRate={1}
-                    particleCreationRate={2}
-                    viewMode="2d"
-                    renderMode="particles"
-                    useAdaptiveParticles={true}
-                    energyConservation={false}
-                    probabilisticIntent={true}
-                    running={true}
-                    onStatsUpdate={handleStatsUpdate}
-                    onAnomalyDetected={() => {}}
-                  />
-                </div>
-              </CardContent>
-            </Card>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
+          <TabsList className="grid grid-cols-2 w-full max-w-md mx-auto">
+            <TabsTrigger value="simulation">Simulation</TabsTrigger>
+            <TabsTrigger value="diagnostics">
+              <Bug className="h-4 w-4 mr-2" />
+              Audio Diagnostics
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
 
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="flex justify-between items-center">
-                  <span>Real-time Simulation Statistics</span>
-                  <Button 
-                    onClick={handleDownloadCurrentData}
-                    variant="outline" 
-                    size="sm"
-                    className="ml-2"
-                  >
-                    <FileText className="h-4 w-4 mr-2" />
-                    Download as PDF
-                  </Button>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <SimulationStats stats={stats} />
-              </CardContent>
-            </Card>
-          </div>
+        <TabsContent value="simulation" className="mt-0">
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-10">
+            <div className="lg:col-span-3">
+              <Card className="mb-4">
+                <CardContent className="p-0">
+                  <div className="relative aspect-video w-full border rounded overflow-hidden">
+                    <ParticleCanvas
+                      intentFluctuationRate={0.01}
+                      maxParticles={200}
+                      learningRate={1}
+                      particleCreationRate={2}
+                      viewMode="2d"
+                      renderMode="particles"
+                      useAdaptiveParticles={true}
+                      energyConservation={false}
+                      probabilisticIntent={true}
+                      running={true}
+                      onStatsUpdate={handleStatsUpdate}
+                      onAnomalyDetected={() => {}}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
 
-          <div className="lg:col-span-1 space-y-6">
-            <NotebookLmExport />
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="flex justify-between items-center">
+                    <span>Real-time Simulation Statistics</span>
+                    <Button 
+                      onClick={handleDownloadCurrentData}
+                      variant="outline" 
+                      size="sm"
+                      className="ml-2"
+                    >
+                      <FileText className="h-4 w-4 mr-2" />
+                      Download as PDF
+                    </Button>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <SimulationStats stats={stats} />
+                </CardContent>
+              </Card>
+            </div>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Continuous Data Export</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <Zap className="h-4 w-4 text-yellow-400" />
-                      <span className="font-medium">Next Export:</span>
+            <div className="lg:col-span-1 space-y-6">
+              <NotebookLmExport />
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Continuous Data Export</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <Zap className="h-4 w-4 text-yellow-400" />
+                        <span className="font-medium">Next Export:</span>
+                      </div>
+                      <p className="text-gray-600 dark:text-gray-400 ml-6">{nextExportTime || "Calculating..."}</p>
                     </div>
-                    <p className="text-gray-600 dark:text-gray-400 ml-6">{nextExportTime || "Calculating..."}</p>
-                  </div>
-                  
-                  <div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <FileText className="h-4 w-4 text-green-400" />
-                      <span className="font-medium">Last Export:</span>
+                    
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <FileText className="h-4 w-4 text-green-400" />
+                        <span className="font-medium">Last Export:</span>
+                      </div>
+                      <p className="text-gray-600 dark:text-gray-400 ml-6">
+                        {lastExportTime || "No exports yet"}
+                      </p>
                     </div>
-                    <p className="text-gray-600 dark:text-gray-400 ml-6">
-                      {lastExportTime || "No exports yet"}
-                    </p>
+                    
+                    <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        Simulation data is automatically exported daily as PDF files with detailed metrics for easy viewing in Notebook LM.
+                      </p>
+                    </div>
                   </div>
-                  
-                  <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                      Simulation data is automatically exported daily as PDF files with detailed metrics for easy viewing in Notebook LM.
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">About This Simulation</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                  This continuous simulation models a proto-universe born from intent field fluctuations. 
-                  Particles emerge with different charges based on the fluctuations:
-                </p>
-                <ul className="space-y-2 text-sm">
-                  <li className="flex items-start">
-                    <span className="h-5 w-5 rounded-full bg-blue-500 mr-2 flex-shrink-0 mt-0.5"></span>
-                    <span><strong>Positive charge:</strong> More inclined to interact and exchange information</span>
-                  </li>
-                  <li className="flex items-start">
-                    <span className="h-5 w-5 rounded-full bg-red-500 mr-2 flex-shrink-0 mt-0.5"></span>
-                    <span><strong>Negative charge:</strong> Less inclined to interact</span>
-                  </li>
-                  <li className="flex items-start">
-                    <span className="h-5 w-5 rounded-full bg-gray-500 mr-2 flex-shrink-0 mt-0.5"></span>
-                    <span><strong>Neutral charge:</strong> Moderate interaction tendency</span>
-                  </li>
-                </ul>
-              </CardContent>
-            </Card>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">About This Simulation</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                    This continuous simulation models a proto-universe born from intent field fluctuations. 
+                    Particles emerge with different charges based on the fluctuations:
+                  </p>
+                  <ul className="space-y-2 text-sm">
+                    <li className="flex items-start">
+                      <span className="h-5 w-5 rounded-full bg-blue-500 mr-2 flex-shrink-0 mt-0.5"></span>
+                      <span><strong>Positive charge:</strong> More inclined to interact and exchange information</span>
+                    </li>
+                    <li className="flex items-start">
+                      <span className="h-5 w-5 rounded-full bg-red-500 mr-2 flex-shrink-0 mt-0.5"></span>
+                      <span><strong>Negative charge:</strong> Less inclined to interact</span>
+                    </li>
+                    <li className="flex items-start">
+                      <span className="h-5 w-5 rounded-full bg-gray-500 mr-2 flex-shrink-0 mt-0.5"></span>
+                      <span><strong>Neutral charge:</strong> Moderate interaction tendency</span>
+                    </li>
+                  </ul>
+                </CardContent>
+              </Card>
+            </div>
           </div>
-        </div>
+        </TabsContent>
+
+        <TabsContent value="diagnostics" className="mt-0">
+          <div className="max-w-4xl mx-auto">
+            <AudioDiagnostics />
+          </div>
+        </TabsContent>
       </div>
       <Footer />
     </div>

@@ -1,3 +1,4 @@
+
 import React, { useCallback } from 'react';
 import { useParticleSimulation, InflationEvent } from '@/hooks/simulation';
 import { useSimulationData } from '@/hooks/useSimulationData';
@@ -181,6 +182,7 @@ export const ParticleCanvas: React.FC<ParticleCanvasProps> = ({
       variant: "default",
     });
     
+    // Return empty array instead of void to match the expected return type
     return [];
   }, [
     toast, 

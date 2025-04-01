@@ -17,7 +17,7 @@ export {
   checkAudioFileExists
 };
 
-// Export common audio utility functions
+// Export common audio utility functions - renamed to avoid collision
 export const playSound = (url: string): Promise<void> => {
   return playAudioWithErrorHandling(url);
 };

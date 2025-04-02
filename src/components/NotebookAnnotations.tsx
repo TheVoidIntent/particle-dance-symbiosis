@@ -165,7 +165,13 @@ const NotebookAnnotations: React.FC<NotebookAnnotationsProps> = ({ currentStats 
                           {Object.entries(annotation.relatedStats).map(([key, value]) => (
                             <div key={key} className="flex justify-between">
                               <span>{key}:</span>
-                              <span className="font-mono">{typeof value === 'number' ? value.toFixed(2) : value}</span>
+                              <span className="font-mono">
+                                {typeof value === 'number' 
+                                  ? value.toFixed(2) 
+                                  : typeof value === 'string' 
+                                    ? value
+                                    : JSON.stringify(value)}
+                              </span>
                             </div>
                           ))}
                         </div>

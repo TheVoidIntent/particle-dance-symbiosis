@@ -1,6 +1,6 @@
 
 import { MutableRefObject } from 'react';
-import { Particle } from '@/utils/particleUtils';
+import { Particle } from '@/types/simulation';
 import { initializeIntentField } from '@/utils/intentFieldUtils';
 
 interface UseSimulationResetProps {

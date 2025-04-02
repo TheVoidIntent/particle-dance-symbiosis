@@ -19,8 +19,8 @@ export interface Particle {
   lastInteraction?: number;
   interactionCount?: number;
   z?: number;
-  age?: number;
-  interactions?: number;
+  age?: number; // Added age property
+  interactions?: number; // Added interactions property
   intentDecayRate?: number;
   energyCapacity?: number;
   created?: number;

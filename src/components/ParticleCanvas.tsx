@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useParticleSimulation } from '@/hooks/simulation';
 import { useSimulationData } from '@/hooks/useSimulationData';
@@ -134,7 +133,6 @@ export const ParticleCanvas: React.FC<ParticleCanvasProps> = ({
     return resetSimulation();
   };
 
-  // Capture field distribution at key simulation points
   const captureFieldDistribution = () => {
     if (!canvasRef.current || !intentFieldRef.current) return null;
     
@@ -149,7 +147,6 @@ export const ParticleCanvas: React.FC<ParticleCanvasProps> = ({
     return captureIntentFieldAsImage(ctx, intentFieldRef.current, dimensions);
   };
 
-  // Generate CMB comparison image
   const generateCMBComparison = () => {
     if (!canvasRef.current) return null;
     

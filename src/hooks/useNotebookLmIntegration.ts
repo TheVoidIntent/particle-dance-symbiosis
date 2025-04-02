@@ -96,18 +96,27 @@ export function useNotebookLmIntegration() {
         if (atlasData) {
           mappedAtlasData = mapAtlasDataToSimulationFormat(atlasData);
           
-          simulationTypes.cern_comparison.atlasData = mappedAtlasData;
-          simulationTypes.cern_comparison.summary = {
-            ...(simulationTypes.cern_comparison.summary || {}),
-            atlasDatasetId: atlasData.id,
-            atlasDatasetName: atlasData.name,
-            atlasParticleCount: atlasData.particles.length,
-            atlasCollisionEnergy: atlasData.collisionEnergy,
-            correlationScore: calculateCorrelationScore(
-              simulationTypes.cern_comparison,
-              mappedAtlasData
-            )
-          };
+          if (simulationTypes.cern_comparison) {
+            if (typeof simulationTypes.cern_comparison === 'object') {
+              (simulationTypes.cern_comparison as any).atlasData = mappedAtlasData;
+              
+              if (!simulationTypes.cern_comparison.summary) {
+                simulationTypes.cern_comparison.summary = {};
+              }
+              
+              simulationTypes.cern_comparison.summary = {
+                ...(simulationTypes.cern_comparison.summary || {}),
+                atlasDatasetId: atlasData.id,
+                atlasDatasetName: atlasData.name,
+                atlasParticleCount: atlasData.particles.length,
+                atlasCollisionEnergy: atlasData.collisionEnergy,
+                correlationScore: calculateCorrelationScore(
+                  simulationTypes.cern_comparison,
+                  mappedAtlasData
+                )
+              };
+            }
+          }
           
           toast.success(
             "ATLAS Data Loaded",

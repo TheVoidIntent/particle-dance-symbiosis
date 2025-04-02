@@ -59,7 +59,7 @@ export const SimulationControlButtons: React.FC<SimulationControlButtonsProps> =
       </Button>
       
       <Button 
-        onClick={onResetSimulation}
+        onClick={() => onResetSimulation()}
         className="bg-red-600 text-white px-3 py-1 rounded text-xs"
         title="Reset the entire simulation"
       >

@@ -33,7 +33,6 @@ export function useSimulationReset({
 }: UseSimulationResetProps) {
   const { toast } = useToast();
   
-  // Changed to return void instead of any[]
   const resetSimulation = useCallback((): void => {
     clearPersistedState();
     clearSimulationData();
@@ -80,8 +79,6 @@ export function useSimulationReset({
       description: "The simulation has been completely reset.",
       variant: "default",
     });
-    
-    // No return statement needed as it's void
   }, [
     toast, 
     particlesRef, 

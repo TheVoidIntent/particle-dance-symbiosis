@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useParticleSimulation } from '@/hooks/simulation';
 import { useSimulationData } from '@/hooks/useSimulationData';
@@ -128,6 +129,11 @@ export const ParticleCanvas: React.FC<ParticleCanvasProps> = ({
     simulationTimeRef.current || 0
   );
 
+  // Creating a wrapper function that explicitly returns void
+  const handleResetSimulation = React.useCallback(() => {
+    resetSimulation();
+  }, [resetSimulation]);
+
   return (
     <div className="relative w-full h-full">
       <ParticleDisplay
@@ -145,7 +151,7 @@ export const ParticleCanvas: React.FC<ParticleCanvasProps> = ({
         dataCollectionActive={dataCollectionActiveRef.current}
         onExportData={handleExportData}
         onToggleDataCollection={toggleDataCollection}
-        onResetSimulation={() => resetSimulation()}
+        onResetSimulation={handleResetSimulation}
       />
     </div>
   );

@@ -1,160 +1,118 @@
 
-import { useState, useCallback, useEffect } from 'react';
-import { Particle } from '@/utils/particleUtils';
-import { SimulationConfig } from './types';
-import { playSimulationEvent } from '@/utils/audio/simulationAudioUtils';
+import { MutableRefObject } from 'react';
+import { Particle } from '@/types/simulation';
+import { ParticleCreationOptions } from './types';
 
-interface UseParticleCreationOptions {
-  maxParticles: number;
-  particleCreationRate: number;
-  intentFluctuationRate: number;
-  probabilisticIntent: boolean;
-  running: boolean;
-}
-
-export function useParticleCreation({
-  maxParticles,
-  particleCreationRate,
-  intentFluctuationRate,
-  probabilisticIntent,
-  running
-}: UseParticleCreationOptions) {
-  const [particles, setParticles] = useState<Particle[]>([]);
-  
-  // Create a new particle with properties based on environment
-  const createNewParticles = useCallback((count: number = 1): Particle[] => {
-    if (particles.length >= maxParticles) return [];
+/**
+ * Hook for creating particles in the simulation
+ */
+export function useParticleCreation(
+  particlesRef: MutableRefObject<Particle[]>,
+  canvasWidth: number,
+  canvasHeight: number
+) {
+  /**
+   * Create a new particle with optional customization
+   */
+  const createParticle = (options: ParticleCreationOptions = {}): Particle => {
+    const {
+      type = 'normal',
+      charge = Math.random() > 0.6 ? 'positive' : Math.random() > 0.5 ? 'negative' : 'neutral',
+      maxVelocity = 2,
+      maxIntent = 10,
+      maxEnergy = 100,
+      maxComplexity = 5,
+      isPostInflation = false
+    } = options;
     
-    const newParticlesArray: Particle[] = [];
+    // Generate random position within canvas
+    const x = Math.random() * canvasWidth;
+    const y = Math.random() * canvasHeight;
     
-    setParticles(prevParticles => {
-      const newParticles = [...prevParticles];
-      
-      for (let i = 0; i < count; i++) {
-        if (newParticles.length >= maxParticles) break;
-        
-        // Determine particle properties based on fluctuation and intent
-        const intent = Math.random() * 2 - 1; // Random intent between -1 and 1
-        let charge: 'positive' | 'negative' | 'neutral';
-        
-        // Determine charge based on intent value with some randomness
-        if (intent > 0.3) {
-          charge = 'positive';
-        } else if (intent < -0.3) {
-          charge = 'negative';
-        } else {
-          charge = 'neutral';
-        }
-        
-        // Add some randomness based on fluctuation rate
-        if (Math.random() < intentFluctuationRate * 0.5) {
-          // Sometimes override the charge determination with pure randomness
-          const randomValue = Math.random();
-          if (randomValue < 0.33) charge = 'positive';
-          else if (randomValue < 0.66) charge = 'negative';
-          else charge = 'neutral';
-        }
-        
-        // Determine type based on complexity factors
-        let type: 'standard' | 'high-energy' | 'quantum' | 'composite' | 'adaptive' = 'standard';
-        
-        // 10% chance of more complex particle types
-        const typeRandom = Math.random();
-        if (typeRandom < 0.05) {
-          type = 'high-energy';
-        } else if (typeRandom < 0.1) {
-          type = 'quantum';
-        } else if (typeRandom < 0.15 && newParticles.length > 10) {
-          type = 'composite';
-        } else if (typeRandom < 0.2) {
-          type = 'adaptive';
-        }
-        
-        // Set color based on charge and type
-        let color = '';
-        if (charge === 'positive') {
-          color = type === 'standard' ? '#ef4444' : // Red for standard positive 
-                 type === 'high-energy' ? '#f97316' : // Orange for high-energy positive
-                 type === 'quantum' ? '#ec4899' : // Pink for quantum positive
-                 type === 'composite' ? '#6366f1' : // Indigo for composite positive
-                 '#8b5cf6'; // Purple for adaptive positive
-        } else if (charge === 'negative') {
-          color = type === 'standard' ? '#3b82f6' : // Blue for standard negative
-                 type === 'high-energy' ? '#06b6d4' : // Cyan for high-energy negative
-                 type === 'quantum' ? '#1e40af' : // Dark blue for quantum negative
-                 type === 'composite' ? '#0891b2' : // Teal for composite negative
-                 '#0d9488'; // Teal for adaptive negative
-        } else {
-          color = type === 'standard' ? '#84cc16' : // Green for standard neutral
-                 type === 'high-energy' ? '#22c55e' : // Emerald for high-energy neutral
-                 type === 'quantum' ? '#14b8a6' : // Teal for quantum neutral
-                 type === 'composite' ? '#a3e635' : // Lime for composite neutral
-                 '#fcd34d'; // Amber for adaptive neutral
-        }
-        
-        // Add some saturation variation
-        color = color + Math.floor(Math.random() * 33).toString(16); // Add slight random variation
-        
-        // Set mass based on type
-        const mass = type === 'standard' ? 1.0 :
-                     type === 'high-energy' ? 0.8 :
-                     type === 'quantum' ? 0.5 :
-                     type === 'composite' ? 1.5 :
-                     1.2;
-        
-        // Create the new particle
-        const newParticle: Particle = {
-          id: Date.now() + Math.random(),
-          x: Math.random() * 800,
-          y: Math.random() * 600,
-          z: Math.random() * 10,
-          vx: (Math.random() - 0.5) * 2,
-          vy: (Math.random() - 0.5) * 2,
-          vz: (Math.random() - 0.5) * 2,
-          radius: 5 + Math.random() * 3,
-          mass,
-          charge,
-          type,
-          color,
-          knowledge: 0,
-          complexity: type === 'composite' ? 2 + Math.random() * 3 : 1,
-          intent: intent * (probabilisticIntent ? Math.random() : 1),
-          age: 0,
-          interactions: 0,
-          interactionCount: 0,
-          lastInteraction: 0,
-          intentDecayRate: 0.001 + Math.random() * 0.002,
-          energy: 1.0,
-          energyCapacity: 1.0,
-          created: Date.now()
-        };
-        
-        // Play creation sound occasionally (10% chance to avoid too many sounds)
-        if (Math.random() < 0.1) {
-          playSimulationEvent('particle_creation', { charge });
-        }
-        
-        newParticles.push(newParticle);
-        newParticlesArray.push(newParticle);
-      }
-      
-      return newParticles;
-    });
+    // Generate random velocities
+    const vx = (Math.random() - 0.5) * maxVelocity;
+    const vy = (Math.random() - 0.5) * maxVelocity;
     
-    return newParticlesArray;
-  }, [particles.length, maxParticles, intentFluctuationRate, probabilisticIntent]);
-  
-  // Initialize with some particles when simulation starts
-  useEffect(() => {
-    if (running && particles.length === 0) {
-      const initialCount = Math.min(5, maxParticles);
-      createNewParticles(initialCount);
+    // Set color based on charge
+    let color = '#FFFFFF'; // default: white
+    if (charge === 'positive') {
+      color = '#FF5555'; // red
+    } else if (charge === 'negative') {
+      color = '#5555FF'; // blue
+    } else {
+      color = '#55FF55'; // green for neutral
     }
-  }, [running, particles.length, maxParticles, createNewParticles]);
+    
+    // Calculate intent based on charge
+    let intent = Math.random() * maxIntent;
+    if (charge === 'positive') {
+      intent *= 1.5; // positive charges have higher intent
+    } else if (charge === 'negative') {
+      intent *= 0.5; // negative charges have lower intent
+    }
+    
+    // Generate energy level
+    const energy = Math.random() * maxEnergy;
+    
+    // Generate complexity
+    const complexity = Math.random() * maxComplexity;
+    
+    // Interaction tendency based on charge
+    let interactionTendency = Math.random();
+    if (charge === 'positive') {
+      interactionTendency *= 1.5; // positive charges more likely to interact
+    } else if (charge === 'negative') {
+      interactionTendency *= 0.5; // negative charges less likely to interact
+    }
+    
+    // Generate a particle with all required and optional fields
+    return {
+      id: `p-${Date.now()}-${Math.floor(Math.random() * 10000)}`,
+      x,
+      y,
+      vx,
+      vy,
+      radius: 3 + Math.random() * 3, // random size between 3-6
+      mass: 1 + Math.random() * 4,
+      charge,
+      color,
+      type,
+      intent,
+      energy,
+      knowledge: 0, // starts with no knowledge
+      complexity,
+      interactionTendency,
+      lastInteraction: 0,
+      interactionCount: 0,
+      z: Math.random() * 10, // random z position for 3D visualizations
+      age: 0, // starts at age 0
+      interactions: 0, // starts with no interactions
+      intentDecayRate: 0.001 + Math.random() * 0.005,
+      energyCapacity: maxEnergy * (0.8 + Math.random() * 0.4),
+      created: Date.now(),
+      isPostInflation,
+      scale: 1,
+      adaptiveScore: 0
+    };
+  };
+  
+  /**
+   * Add multiple particles to the simulation
+   */
+  const addParticles = (count: number, options: ParticleCreationOptions = {}): Particle[] => {
+    const newParticles: Particle[] = [];
+    
+    for (let i = 0; i < count; i++) {
+      const particle = createParticle(options);
+      newParticles.push(particle);
+    }
+    
+    particlesRef.current = [...particlesRef.current, ...newParticles];
+    return newParticles;
+  };
   
   return {
-    particles,
-    setParticles,
-    createNewParticles
+    createParticle,
+    addParticles
   };
 }

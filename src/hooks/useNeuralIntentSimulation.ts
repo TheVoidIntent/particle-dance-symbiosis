@@ -1,174 +1,308 @@
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { Particle } from '@/types/simulation';
 
-import { useState, useEffect, useCallback } from 'react';
-import { Particle } from '@/utils/particleUtils';
-import { SimulationStats } from '@/hooks/useSimulationData';
-import { toast } from 'sonner';
-import { generateNeuralArchitecture, predictParticleEvolution } from '@/utils/neuralNetworkUtils';
+interface UseNeuralIntentSimulationProps {
+  initialParticles?: Particle[];
+  width?: number;
+  height?: number;
+  intentLearningRate?: number;
+  shouldAutostart?: boolean;
+}
 
-// Type of neural network architecture
-type ArchitectureType = 'feedforward' | 'cnn' | 'rnn' | 'transformer' | 'gan';
-
-export function useNeuralIntentSimulation(particles: Particle[], stats: SimulationStats) {
-  const [isTraining, setIsTraining] = useState(false);
-  const [trainingProgress, setTrainingProgress] = useState(0);
-  const [modelAccuracy, setModelAccuracy] = useState(0);
-  const [insightScore, setInsightScore] = useState(0);
-  const [predictedParticles, setPredictedParticles] = useState<Particle[]>([]);
-  const [intentPredictions, setIntentPredictions] = useState<string[]>([]);
-  const [neuralArchitecture, setNeuralArchitecture] = useState<ArchitectureType>('feedforward');
+/**
+ * Hook for running a neural intent-based simulation
+ */
+export function useNeuralIntentSimulation({
+  initialParticles = [],
+  width = 800,
+  height = 600,
+  intentLearningRate = 0.01,
+  shouldAutostart = false
+}: UseNeuralIntentSimulationProps) {
+  const [particles, setParticles] = useState<Particle[]>(initialParticles);
+  const [isRunning, setIsRunning] = useState<boolean>(shouldAutostart);
+  const [emergenceIndex, setEmergenceIndex] = useState<number>(0);
+  const [intentFieldComplexity, setIntentFieldComplexity] = useState<number>(0);
   
-  // Function to train the neural model
-  const startTraining = useCallback(() => {
-    if (isTraining) return;
+  // Track simulation metrics
+  const interactionsRef = useRef<number>(0);
+  const frameCountRef = useRef<number>(0);
+  
+  // Update a particle's position and properties
+  const updateParticle = useCallback((particle: Particle): Particle => {
+    // Get all necessary properties, handling optional values
+    const x = particle.x;
+    const y = particle.y;
+    const vx = particle.vx;
+    const vy = particle.vy;
+    const radius = particle.radius;
+    const intent = particle.intent ?? 0;
+    const age = particle.age ?? 0;
+    const energy = particle.energy ?? 100;
     
-    setIsTraining(true);
-    setTrainingProgress(0);
+    // Calculate new position with boundaries
+    let newX = x + vx;
+    let newY = y + vy;
+    let newVx = vx;
+    let newVy = vy;
     
-    // Simulate training progress
-    const trainingInterval = setInterval(() => {
-      setTrainingProgress(prev => {
-        if (prev >= 100) {
-          clearInterval(trainingInterval);
-          setIsTraining(false);
-          return 100;
+    // Handle boundary collisions
+    if (newX - radius < 0) {
+      newX = radius;
+      newVx = -vx * 0.8;
+    } else if (newX + radius > width) {
+      newX = width - radius;
+      newVx = -vx * 0.8;
+    }
+    
+    if (newY - radius < 0) {
+      newY = radius;
+      newVy = -vy * 0.8;
+    } else if (newY + radius > height) {
+      newY = height - radius;
+      newVy = -vy * 0.8;
+    }
+    
+    // Add small random movements to simulate brownian motion
+    newVx += (Math.random() - 0.5) * 0.1;
+    newVy += (Math.random() - 0.5) * 0.1;
+    
+    // Update particle interactions - simulating interactions with intent field
+    const interactions = (particle.interactions ?? 0) + (Math.random() < 0.05 ? 1 : 0);
+    
+    // Adjust intent based on interactions and charge
+    let newIntent = intent;
+    if (particle.charge === 'positive') {
+      newIntent += Math.random() * intentLearningRate;
+    } else if (particle.charge === 'negative') {
+      newIntent -= Math.random() * intentLearningRate;
+    } else {
+      newIntent += (Math.random() - 0.5) * intentLearningRate;
+    }
+    
+    // Keep intent in reasonable bounds
+    newIntent = Math.max(0, Math.min(10, newIntent));
+    
+    // Update energy - particles slowly lose energy over time
+    const newEnergy = Math.max(0, energy - 0.01);
+    
+    // Return updated particle
+    return {
+      ...particle,
+      x: newX,
+      y: newY,
+      vx: newVx,
+      vy: newVy,
+      intent: newIntent,
+      energy: newEnergy,
+      age: age + 1,
+      interactions
+    };
+  }, [width, height, intentLearningRate]);
+  
+  // Update all particles and calculate interactions
+  const updateSimulation = useCallback(() => {
+    if (!isRunning || particles.length === 0) return;
+    
+    // Update each particle's position and properties
+    const updatedParticles = particles.map(updateParticle);
+    
+    // Check for interactions between particles
+    for (let i = 0; i < updatedParticles.length; i++) {
+      for (let j = i + 1; j < updatedParticles.length; j++) {
+        const p1 = updatedParticles[i];
+        const p2 = updatedParticles[j];
+        
+        // Calculate distance between particles
+        const dx = p2.x - p1.x;
+        const dy = p2.y - p1.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        
+        // Check for collision/interaction
+        if (distance < p1.radius + p2.radius + 5) {
+          // Calculate interaction probability based on charges
+          let interactionProbability = 0.5;
+          
+          if (p1.charge === 'positive' && p2.charge === 'positive') {
+            interactionProbability = 0.7; // Positive charges like to interact
+          } else if (p1.charge === 'negative' && p2.charge === 'negative') {
+            interactionProbability = 0.3; // Negative charges avoid interaction
+          } else if (
+            (p1.charge === 'positive' && p2.charge === 'negative') ||
+            (p1.charge === 'negative' && p2.charge === 'positive')
+          ) {
+            interactionProbability = 0.8; // Opposite charges strongly attract
+          }
+          
+          // Check if interaction occurs
+          if (Math.random() < interactionProbability) {
+            // Exchange knowledge/intent between particles
+            const p1Intent = p1.intent ?? 0;
+            const p2Intent = p2.intent ?? 0;
+            
+            const intentDiff = Math.abs(p1Intent - p2Intent);
+            const exchangeAmount = intentDiff * 0.1; // 10% knowledge transfer
+            
+            // Update particles based on interaction
+            if (p1Intent > p2Intent) {
+              updatedParticles[i] = {
+                ...updatedParticles[i],
+                intent: p1Intent - exchangeAmount * 0.2,
+                knowledge: (p1.knowledge ?? 0) + 0.1
+              };
+              
+              updatedParticles[j] = {
+                ...updatedParticles[j],
+                intent: p2Intent + exchangeAmount,
+                knowledge: (p2.knowledge ?? 0) + 0.2
+              };
+            } else {
+              updatedParticles[i] = {
+                ...updatedParticles[i],
+                intent: p1Intent + exchangeAmount,
+                knowledge: (p1.knowledge ?? 0) + 0.2
+              };
+              
+              updatedParticles[j] = {
+                ...updatedParticles[j],
+                intent: p2Intent - exchangeAmount * 0.2,
+                knowledge: (p2.knowledge ?? 0) + 0.1
+              };
+            }
+            
+            // Increment interaction counter
+            interactionsRef.current++;
+          }
         }
-        return prev + Math.floor(Math.random() * 5) + 1;
-      });
-    }, 100);
-    
-    // Simulate training completion
-    setTimeout(() => {
-      clearInterval(trainingInterval);
-      setIsTraining(false);
-      setTrainingProgress(100);
-      
-      // Calculate model "accuracy" based on particle data
-      const particleCount = particles.length;
-      const diversity = particles.reduce((acc, p) => {
-        return acc + (p.type === 'standard' ? 1 : 2);
-      }, 0) / (particleCount || 1);
-      
-      const interactionDepth = particles.reduce((acc, p) => {
-        // Handle the case where age might be undefined
-        const age = p.age || 0;
-        return acc + ((age > 10 ? 1 : 0.5) * (p.interactionCount || 0));
-      }, 0) / (particleCount || 1);
-      
-      const knowledgeAccumulation = particles.reduce((acc, p) => {
-        return acc + p.knowledge;
-      }, 0) / (particleCount || 1);
-      
-      const totalInteractions = particles.reduce((acc, p) => {
-        // Handle the case where interactions might be undefined
-        return acc + (p.interactions || 0);
-      }, 0);
-      
-      // Calculate combined accuracy score (0-100)
-      const accuracyBase = Math.min(85, 60 + Math.random() * 15);
-      const diversityBonus = diversity * 10;
-      const interactionBonus = interactionDepth * 5;
-      const knowledgeBonus = knowledgeAccumulation * 20;
-      
-      const calculatedAccuracy = Math.min(
-        99.5,
-        accuracyBase + diversityBonus + interactionBonus + knowledgeBonus
-      );
-      
-      setModelAccuracy(calculatedAccuracy);
-      
-      // Generate insight score (0-10)
-      const baseInsight = 5 + Math.random() * 2;
-      const complexityContribution = diversity * 0.8;
-      const diversityContribution = (particles.length > 20 ? 1 : 0.5) * 0.7;
-      const interactionDepthFactor = Math.min(1, totalInteractions / 100) * 1.2;
-      
-      // Architecture multiplier based on type
-      let architectureMultiplier = 1.0;
-      if (neuralArchitecture === 'cnn') architectureMultiplier = 1.05;
-      if (neuralArchitecture === 'rnn') architectureMultiplier = 1.1;
-      if (neuralArchitecture === 'transformer') architectureMultiplier = 1.2;
-      if (neuralArchitecture === 'gan') architectureMultiplier = 1.15;
-      
-      const calculatedInsight = Math.min(
-        10,
-        (baseInsight + complexityContribution + diversityContribution + interactionDepthFactor) * 
-        architectureMultiplier
-      );
-      
-      setInsightScore(calculatedInsight);
-      
-      // Generate some predictions
-      generatePredictions();
-      
-      toast.success(`Neural model training complete with ${calculatedAccuracy.toFixed(1)}% accuracy`);
-    }, 3000);
-  }, [isTraining, particles, neuralArchitecture]);
-  
-  // Generate predictions from the trained model
-  const generatePredictions = useCallback(() => {
-    if (modelAccuracy === 0 || particles.length === 0) return;
-    
-    // Generate predicted particles based on current ones
-    const predicted = predictParticleEvolution(particles, neuralArchitecture);
-    setPredictedParticles(predicted);
-    
-    // Generate textual predictions based on simulation state
-    const predictions = [
-      `Intent field will develop ${Math.random() > 0.5 ? 'positive' : 'negative'} polarity regions in the next ${2 + Math.floor(Math.random() * 5)} cycles.`,
-      `${Math.floor(Math.random() * 10) + 5} new particle formations predicted in high density regions.`,
-      `Knowledge transfer efficiency will increase by ${(Math.random() * 15).toFixed(1)}% with current interaction patterns.`,
-      `Adaptive particles will develop ${Math.random() > 0.6 ? 'enhanced' : 'specialized'} intent sensing capabilities.`,
-      `Particle clustering will intensify around ${Math.random() > 0.5 ? 'positive' : 'negative'} charge regions.`,
-      `Energy conservation patterns suggest emergent ${Math.random() > 0.7 ? 'oscillation' : 'stabilization'} behaviors.`
-    ];
-    
-    // Select a random subset of predictions
-    const selectedPredictions = [];
-    const indices = new Set<number>();
-    while (indices.size < 3) {
-      indices.add(Math.floor(Math.random() * predictions.length));
-    }
-    
-    indices.forEach(index => {
-      selectedPredictions.push(predictions[index]);
-    });
-    
-    setIntentPredictions(selectedPredictions);
-  }, [modelAccuracy, particles, neuralArchitecture]);
-  
-  // Toggle between different neural architectures
-  const toggleNeuralArchitecture = useCallback(() => {
-    setNeuralArchitecture(prev => {
-      switch (prev) {
-        case 'feedforward': return 'cnn';
-        case 'cnn': return 'rnn';
-        case 'rnn': return 'transformer';
-        case 'transformer': return 'gan';
-        case 'gan': return 'feedforward';
-        default: return 'feedforward';
       }
-    });
-    
-    toast.info(`Switched to ${neuralArchitecture} neural architecture`);
-  }, [neuralArchitecture]);
-  
-  // Create some initial predictions when particles change significantly
-  useEffect(() => {
-    if (particles.length > 10 && modelAccuracy > 0) {
-      generatePredictions();
     }
-  }, [particles.length, modelAccuracy, generatePredictions]);
+    
+    // Update state with new particles
+    setParticles(updatedParticles);
+    
+    // Update frame counter
+    frameCountRef.current++;
+    
+    // Calculate emergence and complexity metrics occasionally
+    if (frameCountRef.current % 60 === 0) {
+      // Calculate emergence index based on particle properties
+      const totalKnowledge = updatedParticles.reduce((sum, p) => sum + (p.knowledge ?? 0), 0);
+      const averageKnowledge = totalKnowledge / updatedParticles.length;
+      const complexityFactor = updatedParticles.reduce((sum, p) => sum + (p.complexity ?? 0), 0) / updatedParticles.length;
+      
+      const newEmergenceIndex = Math.min(1, (averageKnowledge / 100) * complexityFactor * (interactionsRef.current / 1000));
+      setEmergenceIndex(newEmergenceIndex);
+      
+      // Calculate intent field complexity
+      const chargeDistribution = {
+        positive: updatedParticles.filter(p => p.charge === 'positive').length,
+        negative: updatedParticles.filter(p => p.charge === 'negative').length,
+        neutral: updatedParticles.filter(p => p.charge === 'neutral').length
+      };
+      
+      const chargeRatio = Math.min(
+        chargeDistribution.positive, 
+        chargeDistribution.negative, 
+        chargeDistribution.neutral
+      ) / Math.max(1, updatedParticles.length);
+      
+      const newComplexity = (chargeRatio * 0.5) + (newEmergenceIndex * 0.5);
+      setIntentFieldComplexity(newComplexity);
+    }
+  }, [isRunning, particles, updateParticle]);
+  
+  // Animation frame loop
+  useEffect(() => {
+    if (!isRunning) return;
+    
+    let animationFrameId: number;
+    
+    const animate = () => {
+      updateSimulation();
+      animationFrameId = requestAnimationFrame(animate);
+    };
+    
+    animationFrameId = requestAnimationFrame(animate);
+    
+    return () => {
+      cancelAnimationFrame(animationFrameId);
+    };
+  }, [isRunning, updateSimulation]);
+  
+  // Create a new particle
+  const createParticle = useCallback((x?: number, y?: number): Particle => {
+    const posX = x ?? Math.random() * width;
+    const posY = y ?? Math.random() * height;
+    
+    // Determine charge randomly
+    const chargeRand = Math.random();
+    const charge = chargeRand < 0.33 ? 'positive' : chargeRand < 0.66 ? 'negative' : 'neutral';
+    
+    // Set color based on charge
+    let color = '#FFFFFF';
+    if (charge === 'positive') {
+      color = '#FF5555';
+    } else if (charge === 'negative') {
+      color = '#5555FF';
+    } else {
+      color = '#55FF55';
+    }
+    
+    return {
+      id: `p-${Date.now()}-${Math.floor(Math.random() * 10000)}`,
+      x: posX,
+      y: posY,
+      vx: (Math.random() - 0.5) * 2,
+      vy: (Math.random() - 0.5) * 2,
+      radius: 3 + Math.random() * 3,
+      mass: 1 + Math.random() * 4,
+      charge,
+      color,
+      type: 'normal',
+      intent: Math.random() * 5,
+      energy: 100,
+      knowledge: 0,
+      complexity: Math.random() * 5,
+      interactionTendency: Math.random(),
+      lastInteraction: 0,
+      interactionCount: 0,
+      z: Math.random() * 10,
+      age: 0,
+      interactions: 0
+    };
+  }, [width, height]);
+  
+  // Add multiple particles
+  const addParticles = useCallback((count: number) => {
+    const newParticles = Array.from({ length: count }, () => createParticle());
+    setParticles(currentParticles => [...currentParticles, ...newParticles]);
+  }, [createParticle]);
+  
+  // Reset the simulation
+  const resetSimulation = useCallback(() => {
+    setParticles([]);
+    interactionsRef.current = 0;
+    frameCountRef.current = 0;
+    setEmergenceIndex(0);
+    setIntentFieldComplexity(0);
+  }, []);
+  
+  // Start/stop the simulation
+  const toggleSimulation = useCallback(() => {
+    setIsRunning(prev => !prev);
+  }, []);
   
   return {
-    isTraining,
-    trainingProgress,
-    modelAccuracy,
-    insightScore,
-    predictedParticles,
-    intentPredictions,
-    neuralArchitecture,
-    startTraining,
-    generatePredictions,
-    toggleNeuralArchitecture
+    particles,
+    isRunning,
+    toggleSimulation,
+    resetSimulation,
+    addParticles,
+    createParticle,
+    emergenceIndex,
+    intentFieldComplexity,
+    interactionCount: interactionsRef.current
   };
 }
+
+export default useNeuralIntentSimulation;

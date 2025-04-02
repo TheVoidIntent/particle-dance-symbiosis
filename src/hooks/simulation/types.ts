@@ -1,64 +1,36 @@
-import { Particle as ParticleType } from '@/utils/particleUtils';
 
-export interface SimulationConfig {
-  intentFluctuationRate: number;
-  maxParticles: number;
-  learningRate: number;
-  particleCreationRate: number;
-  viewMode: '2d' | '3d';
-  renderMode?: 'particles' | 'field' | 'density' | 'combined';
-  useAdaptiveParticles?: boolean;
-  energyConservation?: boolean;
-  probabilisticIntent?: boolean;
-}
+import { Particle as BaseParticle } from '@/types/simulation';
 
-// Export the Particle type explicitly
-export type Particle = ParticleType;
+// Re-export the Particle type to make it available to other files
+export type Particle = BaseParticle;
 
 export interface SimulationState {
   particles: Particle[];
   intentField: number[][][];
-  dimensions: { width: number; height: number };
-  originalDimensions?: { width: number; height: number };
+  interactionsCount: number;
+  frameCount: number;
+  simulationTime: number;
+  isRunning: boolean;
+  intervalId: number | null;
 }
 
-export interface InflationEvent {
-  timestamp: number;
-  particlesBeforeInflation: number;
-  particlesAfterInflation: number;
-  intentInformation: any;
+export interface SimulationHookResult {
+  particles: Particle[];
+  intentField: number[][][];
+  interactionsCount: number;
+  simulationTime: number;
+  startSimulation: () => void;
+  stopSimulation: () => void;
+  resetSimulation: () => Particle[];
+  isRunning: boolean;
 }
 
-export interface NeuralNetworkLayer {
-  type: string;
-  neurons?: number;
-  activation?: string;
-  filters?: number;
-  kernelSize?: number;
-  units?: number;
-  returnSequences?: boolean;
-  poolSize?: number;
-  shape?: number[];
-  outputDim?: number;
-  heads?: number;
-  dimModel?: number;
-  dimFeedforward?: number;
-}
-
-export interface NeuralNetworkArchitecture {
-  layers?: NeuralNetworkLayer[];
-  generator?: NeuralNetworkLayer[];
-  discriminator?: NeuralNetworkLayer[];
-  description: string;
-}
-
-export interface NeuralNetworkInsight {
-  score: number;
-  metrics: {
-    baseInsight: number;
-    complexityContribution: number;
-    diversityContribution: number;
-    interactionDepth: number;
-    architectureMultiplier: number;
-  };
+export interface ParticleCreationOptions {
+  type?: string;
+  charge?: string;
+  maxVelocity?: number;
+  maxIntent?: number;
+  maxEnergy?: number;
+  maxComplexity?: number;
+  isPostInflation?: boolean;
 }

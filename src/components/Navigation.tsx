@@ -1,11 +1,10 @@
-
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from './ui/button';
 import { cn } from '@/lib/utils';
 import { 
   Home, 
   Info, 
-  Flask, 
+  Beaker, 
   BookOpen, 
   MessageSquare, 
   Menu, 
@@ -79,7 +78,7 @@ export default function Navigation() {
                   location.pathname === "/simulation" && "text-white bg-gray-800"
                 )}
               >
-                <Flask className="mr-2 h-4 w-4" />
+                <Beaker className="mr-2 h-4 w-4" />
                 Simulation
               </Button>
             </Link>
@@ -163,7 +162,7 @@ export default function Navigation() {
                     location.pathname === "/simulation" && "text-white bg-gray-800"
                   )}
                 >
-                  <Flask className="mr-2 h-4 w-4" />
+                  <Beaker className="mr-2 h-4 w-4" />
                   Simulation
                 </Button>
               </Link>

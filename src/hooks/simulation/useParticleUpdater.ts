@@ -1,305 +1,181 @@
 
-import { useCallback } from 'react';
-import { MutableRefObject } from 'react';
-import { updateIntentField } from '@/utils/fields';
-import { Particle } from '@/utils/particleUtils';
-import { SimulationConfig } from './types';
-import { playSimulationEvent } from '@/utils/audio/simulationAudioUtils';
+import { MutableRefObject, useCallback } from 'react';
+import { Particle } from '@/types/simulation';
 
+/**
+ * Hook for updating particles in the simulation
+ */
 export function useParticleUpdater(
-  config: SimulationConfig,
-  running: boolean,
-  isInitialized: boolean,
   particlesRef: MutableRefObject<Particle[]>,
   intentFieldRef: MutableRefObject<number[][][]>,
-  dimensionsRef: MutableRefObject<{ width: number; height: number }>,
-  frameCountRef: MutableRefObject<number>,
-  simulationTimeRef: MutableRefObject<number>,
-  checkInflationConditions: () => void
+  interactionsRef: MutableRefObject<number>,
+  canvasWidth: number,
+  canvasHeight: number
 ) {
-  // Update particle positions, interactions, etc.
-  const updateParticles = useCallback(() => {
-    if (!running || !isInitialized || !intentFieldRef.current || !particlesRef.current) {
-      return;
+  /**
+   * Update a particle's position based on its velocity
+   */
+  const updateParticlePosition = useCallback((particle: Particle): Particle => {
+    const { x, y, vx, vy, radius } = particle;
+    
+    // Calculate new position
+    let newX = x + vx;
+    let newY = y + vy;
+    
+    // Bounce off walls
+    let newVx = vx;
+    let newVy = vy;
+    
+    if (newX - radius < 0) {
+      newX = radius;
+      newVx = -vx * 0.8; // Reduce velocity a bit
+    } else if (newX + radius > canvasWidth) {
+      newX = canvasWidth - radius;
+      newVx = -vx * 0.8;
     }
     
-    frameCountRef.current += 1;
-    simulationTimeRef.current += 1;
-    
-    const particles = particlesRef.current;
-    const dimensions = dimensionsRef.current;
-    
-    // Update intent field with fluctuations
-    if (frameCountRef.current % 10 === 0) {
-      intentFieldRef.current = updateIntentField(
-        intentFieldRef.current, 
-        config.intentFluctuationRate, 
-        config.probabilisticIntent || false
-      );
-      
-      // Occasionally play field fluctuation sound (1% chance to avoid sound overload)
-      if (Math.random() < 0.01) {
-        // Get a random area of the field to sample
-        const z = Math.floor(Math.random() * intentFieldRef.current.length);
-        const y = Math.floor(Math.random() * intentFieldRef.current[z].length);
-        const x = Math.floor(Math.random() * intentFieldRef.current[z][y].length);
-        const intentStrength = intentFieldRef.current[z][y][x];
-        
-        if (Math.abs(intentStrength) > 0.5) {
-          playSimulationEvent('field_fluctuation', { intentStrength });
-        }
-      }
+    if (newY - radius < 0) {
+      newY = radius;
+      newVy = -vy * 0.8;
+    } else if (newY + radius > canvasHeight) {
+      newY = canvasHeight - radius;
+      newVy = -vy * 0.8;
     }
     
-    // Process each particle
-    for (let i = 0; i < particles.length; i++) {
-      const p = particles[i];
-      
-      // Update position based on velocity
-      p.x += p.vx;
-      p.y += p.vy;
-      p.z += p.vz || 0;
-      
-      // Apply boundary conditions
-      if (p.x < 0 || p.x > dimensions.width) p.vx = -p.vx * 0.9;
-      if (p.y < 0 || p.y > dimensions.height) p.vy = -p.vy * 0.9;
-      if ((p.z || 0) < 0 || (p.z || 0) > 10) p.vz = -(p.vz || 0) * 0.9;
-      
-      p.x = Math.max(0, Math.min(dimensions.width, p.x));
-      p.y = Math.max(0, Math.min(dimensions.height, p.y));
-      p.z = Math.max(0, Math.min(10, p.z || 0));
-      
-      // Find closest point in intent field
-      const fieldWidth = intentFieldRef.current[0][0].length;
-      const fieldHeight = intentFieldRef.current[0].length;
-      const fieldDepth = intentFieldRef.current.length;
-      
-      const cellSizeX = dimensions.width / fieldWidth;
-      const cellSizeY = dimensions.height / fieldHeight;
-      const cellSizeZ = 10 / fieldDepth;
-      
-      const fieldX = Math.min(fieldWidth - 1, Math.max(0, Math.floor(p.x / cellSizeX)));
-      const fieldY = Math.min(fieldHeight - 1, Math.max(0, Math.floor(p.y / cellSizeY)));
-      const fieldZ = Math.min(fieldDepth - 1, Math.max(0, Math.floor((p.z || 0) / cellSizeZ)));
-      
-      // Apply intent field influence on velocity
-      const fieldValue = intentFieldRef.current[fieldZ][fieldY][fieldX];
-      
-      // Different particle types respond differently to the intent field
-      let fieldMultiplier = 0.01;
-      
-      switch (p.type) {
-        case 'high-energy':
-          fieldMultiplier = 0.02; // More responsive
-          break;
-        case 'quantum':
-          fieldMultiplier = 0.005 * Math.cos(frameCountRef.current * 0.1); // Oscillating response
-          break;
-        case 'composite':
-          fieldMultiplier = 0.015 * (1 + p.complexity / 5); // Response increases with complexity
-          break;
-        case 'adaptive':
-          fieldMultiplier = p.adaptiveScore ? 0.01 * (1 + p.adaptiveScore) : 0.01; // Adapts based on success
-          break;
-      }
-      
-      // Apply charge-based response to intent field
-      switch (p.charge) {
-        case 'positive':
-          // Positive particles are attracted to positive field values
-          p.vx += fieldValue * fieldMultiplier;
-          p.vy += fieldValue * fieldMultiplier;
-          break;
-        case 'negative':
-          // Negative particles are attracted to negative field values
-          p.vx += -fieldValue * fieldMultiplier;
-          p.vy += -fieldValue * fieldMultiplier;
-          break;
-        case 'neutral':
-          // Neutral particles are influenced by field gradient
-          if (fieldX > 0 && fieldX < fieldWidth - 1) {
-            const gradientX = intentFieldRef.current[fieldZ][fieldY][fieldX + 1] - 
-                              intentFieldRef.current[fieldZ][fieldY][fieldX - 1];
-            p.vx += gradientX * fieldMultiplier * 0.5;
-          }
-          if (fieldY > 0 && fieldY < fieldHeight - 1) {
-            const gradientY = intentFieldRef.current[fieldZ][fieldY + 1][fieldX] - 
-                              intentFieldRef.current[fieldZ][fieldY - 1][fieldX];
-            p.vy += gradientY * fieldMultiplier * 0.5;
-          }
-          break;
-      }
-      
-      // Add some random motion
-      p.vx += (Math.random() - 0.5) * 0.1;
-      p.vy += (Math.random() - 0.5) * 0.1;
-      if (p.vz !== undefined) p.vz += (Math.random() - 0.5) * 0.05;
-      
-      // Apply damping
-      p.vx *= 0.98;
-      p.vy *= 0.98;
-      if (p.vz !== undefined) p.vz *= 0.98;
-      
-      // Increment age
-      p.age = (p.age || 0) + 1;
-      
-      // Decay intent over time
-      p.intent = p.intent * (1 - (p.intentDecayRate || 0.001));
-      
-      // Occasionally update energy based on intent field alignment
-      if (Math.random() < 0.05) {
-        const intentAlignment = p.charge === 'positive' ? fieldValue : 
-                               p.charge === 'negative' ? -fieldValue : 0;
-        p.energy = Math.min(p.energyCapacity, p.energy + (intentAlignment * 0.01));
-      }
-    }
+    // Apply some friction/damping
+    newVx *= 0.99;
+    newVy *= 0.99;
     
-    // Handle particle interactions
-    const interactionEvents = [];
-    for (let i = 0; i < particles.length; i++) {
-      for (let j = i + 1; j < particles.length; j++) {
-        const p1 = particles[i];
-        const p2 = particles[j];
-        
-        const dx = p2.x - p1.x;
-        const dy = p2.y - p1.y;
-        const dz = (p2.z || 0) - (p1.z || 0);
-        
-        // Calculate squared distance (more efficient than taking square root)
-        const distanceSquared = dx * dx + dy * dy + dz * dz;
-        const minDistance = p1.radius + p2.radius;
-        
-        if (distanceSquared < minDistance * minDistance) {
-          // Particles are interacting
-          
-          // Record interaction
-          p1.interactions = (p1.interactions || 0) + 1;
-          p2.interactions = (p2.interactions || 0) + 1;
-          p1.lastInteraction = Date.now();
-          p2.lastInteraction = Date.now();
-          p1.interactionCount = (p1.interactionCount || 0) + 1;
-          p2.interactionCount = (p2.interactionCount || 0) + 1;
-          
-          // Handle knowledge exchange based on particle types and charges
-          // Different charge combinations have different knowledge exchange effects
-          let p1KnowledgeGain = 0;
-          let p2KnowledgeGain = 0;
-          
-          if (p1.charge === p2.charge) {
-            // Same charge - less effective knowledge exchange
-            p1KnowledgeGain = 0.01 * (p2.knowledge || 0);
-            p2KnowledgeGain = 0.01 * (p1.knowledge || 0);
-          } else if ((p1.charge === 'positive' && p2.charge === 'negative') || 
-                     (p1.charge === 'negative' && p2.charge === 'positive')) {
-            // Opposite charges - enhanced knowledge exchange
-            p1KnowledgeGain = 0.05 * (p2.knowledge || 0);
-            p2KnowledgeGain = 0.05 * (p1.knowledge || 0);
-          } else {
-            // One neutral - moderate knowledge exchange
-            p1KnowledgeGain = 0.025 * (p2.knowledge || 0);
-            p2KnowledgeGain = 0.025 * (p1.knowledge || 0);
-          }
-          
-          // Apply knowledge exchange
-          p1.knowledge = (p1.knowledge || 0) + p1KnowledgeGain;
-          p2.knowledge = (p2.knowledge || 0) + p2KnowledgeGain;
-          
-          // Energy exchange
-          if (config.energyConservation) {
-            const energyTransfer = 0.1 * Math.min(p1.energy || 0, p2.energy || 0);
-            p1.energy = (p1.energy || 0) - energyTransfer;
-            p2.energy = (p2.energy || 0) + energyTransfer;
-          }
-          
-          // Complexity evolution for composite particles
-          if (p1.type === 'composite' || p2.type === 'composite') {
-            if (p1.type === 'composite') {
-              p1.complexity = (p1.complexity || 1) + 0.01;
-            }
-            if (p2.type === 'composite') {
-              p2.complexity = (p2.complexity || 1) + 0.01;
-            }
-          }
-          
-          // Handle physical collision effects - simplified
-          const distance = Math.sqrt(distanceSquared);
-          const nx = dx / distance;
-          const ny = dy / distance;
-          const nz = dz / distance;
-          
-          // Calculate relative velocity
-          const vx = p2.vx - p1.vx;
-          const vy = p2.vy - p1.vy;
-          const vz = (p2.vz || 0) - (p1.vz || 0);
-          
-          // Calculate dot product
-          const dotProduct = nx * vx + ny * vy + nz * vz;
-          
-          // Only bounce if particles are moving toward each other
-          if (dotProduct < 0) {
-            // Calculate impulse
-            const damping = 0.9; // Some energy loss
-            const impulse = 2 * dotProduct * damping;
-            
-            // Apply impulse based on mass
-            const m1 = p1.mass || 1;
-            const m2 = p2.mass || 1;
-            const m1Ratio = m2 / (m1 + m2);
-            const m2Ratio = m1 / (m1 + m2);
-            
-            p1.vx += impulse * nx * m1Ratio;
-            p1.vy += impulse * ny * m1Ratio;
-            if (p1.vz !== undefined) p1.vz += impulse * nz * m1Ratio;
-            
-            p2.vx -= impulse * nx * m2Ratio;
-            p2.vy -= impulse * ny * m2Ratio;
-            if (p2.vz !== undefined) p2.vz -= impulse * nz * m2Ratio;
-            
-            // Calculate interaction intensity for audio
-            const interactionIntensity = Math.abs(dotProduct) / 10;
-            
-            // Record audio-worthy interaction events (but limit to avoid too many sounds)
-            if (interactionIntensity > 0.3 && Math.random() < 0.1) {
-              interactionEvents.push({
-                intensity: interactionIntensity,
-                charge1: p1.charge,
-                charge2: p2.charge
-              });
-            }
-          }
-        }
-      }
-    }
+    // Update particle's properties based on intent field
+    // In a real implementation, this would interact with the intent field
     
-    // Play a random interaction sound from the recorded events
-    if (interactionEvents.length > 0 && Math.random() < 0.3) {
-      const randomEvent = interactionEvents[Math.floor(Math.random() * interactionEvents.length)];
-      playSimulationEvent('particle_interaction', randomEvent);
-    }
+    // Apply some small random fluctuations
+    newVx += (Math.random() - 0.5) * 0.1;
+    newVy += (Math.random() - 0.5) * 0.1;
     
-    // Remove dead particles if energy conservation is enabled
-    if (config.energyConservation) {
-      particlesRef.current = particles.filter(p => (p.energy || 0) > 0.1);
-    }
+    // Update age and decay energy if needed
+    const age = (particle.age || 0) + 1;
+    const energy = Math.max(0, (particle.energy || 100) - 0.01); // Slowly lose energy over time
     
-    // Occasionally check for inflation conditions
-    if (frameCountRef.current % 30 === 0) {
-      checkInflationConditions();
-    }
-    
-  }, [
-    running, 
-    isInitialized, 
-    dimensionsRef, 
-    particlesRef, 
-    intentFieldRef,
-    frameCountRef,
-    simulationTimeRef,
-    config.intentFluctuationRate,
-    config.probabilisticIntent,
-    config.energyConservation,
-    checkInflationConditions
-  ]);
+    return {
+      ...particle,
+      x: newX,
+      y: newY,
+      vx: newVx,
+      vy: newVy,
+      age,
+      energy
+    };
+  }, [canvasWidth, canvasHeight]);
   
-  return { updateParticles };
+  /**
+   * Calculate interaction between two particles
+   */
+  const calculateParticleInteraction = useCallback((p1: Particle, p2: Particle): [Particle, Particle, boolean] => {
+    const dx = p2.x - p1.x;
+    const dy = p2.y - p1.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    
+    // No interaction if particles are too far apart
+    if (distance > p1.radius + p2.radius + 10) {
+      return [p1, p2, false];
+    }
+    
+    // Calculate if interaction should occur based on intent and interaction tendency
+    const p1Intent = p1.intent || 0;
+    const p2Intent = p2.intent || 0;
+    const p1Tendency = p1.interactionTendency || 0.5;
+    const p2Tendency = p2.interactionTendency || 0.5;
+    
+    const interactionThreshold = 0.3; // Adjust as needed
+    const willInteract = Math.random() < (p1Tendency * p2Tendency) * interactionThreshold;
+    
+    if (!willInteract) {
+      return [p1, p2, false];
+    }
+    
+    // Calculate knowledge exchange
+    const p1Knowledge = p1.knowledge || 0;
+    const p2Knowledge = p2.knowledge || 0;
+    
+    // More knowledgeable particle shares with less knowledgeable
+    const knowledgeDiff = Math.abs(p1Knowledge - p2Knowledge);
+    const transferAmount = knowledgeDiff * 0.1; // 10% transfer rate
+    
+    let newP1Knowledge = p1Knowledge;
+    let newP2Knowledge = p2Knowledge;
+    
+    if (p1Knowledge > p2Knowledge) {
+      newP1Knowledge -= transferAmount * 0.5; // Lose some when teaching
+      newP2Knowledge += transferAmount;
+    } else {
+      newP1Knowledge += transferAmount;
+      newP2Knowledge -= transferAmount * 0.5;
+    }
+    
+    // Update interaction counters
+    const p1Interactions = (p1.interactions || 0) + 1;
+    const p2Interactions = (p2.interactions || 0) + 1;
+    
+    // Update particles with new knowledge and interaction data
+    const updatedP1: Particle = {
+      ...p1,
+      knowledge: newP1Knowledge,
+      lastInteraction: Date.now(),
+      interactionCount: (p1.interactionCount || 0) + 1,
+      interactions: p1Interactions
+    };
+    
+    const updatedP2: Particle = {
+      ...p2,
+      knowledge: newP2Knowledge,
+      lastInteraction: Date.now(),
+      interactionCount: (p2.interactionCount || 0) + 1,
+      interactions: p2Interactions
+    };
+    
+    // Update global interaction counter
+    interactionsRef.current += 1;
+    
+    return [updatedP1, updatedP2, true];
+  }, []);
+  
+  /**
+   * Update all particles in the simulation
+   */
+  const updateAllParticles = useCallback(() => {
+    if (particlesRef.current.length === 0) {
+      return [];
+    }
+    
+    const updatedParticles: Particle[] = [];
+    
+    // First update positions
+    for (let i = 0; i < particlesRef.current.length; i++) {
+      const updatedParticle = updateParticlePosition(particlesRef.current[i]);
+      updatedParticles.push(updatedParticle);
+    }
+    
+    // Then calculate interactions
+    for (let i = 0; i < updatedParticles.length; i++) {
+      for (let j = i + 1; j < updatedParticles.length; j++) {
+        const [newP1, newP2, interacted] = calculateParticleInteraction(
+          updatedParticles[i],
+          updatedParticles[j]
+        );
+        
+        updatedParticles[i] = newP1;
+        updatedParticles[j] = newP2;
+      }
+    }
+    
+    particlesRef.current = updatedParticles;
+    return updatedParticles;
+  }, [updateParticlePosition, calculateParticleInteraction]);
+  
+  return {
+    updateParticlePosition,
+    calculateParticleInteraction,
+    updateAllParticles
+  };
 }

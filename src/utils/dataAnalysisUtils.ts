@@ -1,200 +1,144 @@
 
-import { getSimulationData } from './dataExportUtils';
+import { getStoredDataPoints } from './dataExportUtils';
 
-export type AnalysisMetric = {
-  id: string;
-  name: string;
-  value: number | string;
-  change: number;
-  unit?: string;
-};
-
-export type TimeSeriesPoint = {
-  timestamp: number;
-  value: number;
-};
-
-export type AnalysisResult = {
-  metrics: AnalysisMetric[];
-  timeSeries: Record<string, TimeSeriesPoint[]>;
-  correlations: Record<string, Record<string, number>>;
-};
-
-// Calculate basic statistics for a series of numbers
-export function calculateStats(values: number[]) {
-  if (values.length === 0) return { mean: 0, median: 0, stdDev: 0, min: 0, max: 0 };
+/**
+ * Calculate the growth rate of complexity over time
+ */
+export function calculateComplexityGrowthRate() {
+  const dataPoints = getStoredDataPoints();
   
-  const sortedValues = [...values].sort((a, b) => a - b);
-  const sum = values.reduce((total, val) => total + val, 0);
-  const mean = sum / values.length;
-  const median = sortedValues.length % 2 === 0 
-    ? (sortedValues[sortedValues.length / 2 - 1] + sortedValues[sortedValues.length / 2]) / 2
-    : sortedValues[Math.floor(sortedValues.length / 2)];
-  
-  const squareDiffs = values.map(value => {
-    const diff = value - mean;
-    return diff * diff;
-  });
-  const variance = squareDiffs.reduce((total, val) => total + val, 0) / values.length;
-  const stdDev = Math.sqrt(variance);
-  
-  return {
-    mean,
-    median,
-    stdDev,
-    min: sortedValues[0],
-    max: sortedValues[sortedValues.length - 1]
-  };
-}
-
-// Calculate the correlation coefficient between two series
-export function calculateCorrelation(series1: number[], series2: number[]) {
-  if (series1.length !== series2.length || series1.length === 0) return 0;
-  
-  const stats1 = calculateStats(series1);
-  const stats2 = calculateStats(series2);
-  
-  let numerator = 0;
-  for (let i = 0; i < series1.length; i++) {
-    numerator += (series1[i] - stats1.mean) * (series2[i] - stats2.mean);
+  if (dataPoints.length < 2) {
+    return { growthRate: 0, timePeriod: 0 };
   }
   
-  const denominator = stats1.stdDev * stats2.stdDev * series1.length;
-  return denominator === 0 ? 0 : numerator / denominator;
-}
-
-// Analyze simulation data and return metrics, timeseries, and correlations
-export function analyzeSimulationData(): AnalysisResult {
-  const data = getSimulationData();
+  const firstPoint = dataPoints[0];
+  const lastPoint = dataPoints[dataPoints.length - 1];
   
-  if (data.length === 0) {
-    return {
-      metrics: [],
-      timeSeries: {},
-      correlations: {}
-    };
-  }
+  const initialComplexity = firstPoint.stats.complexityIndex || 0;
+  const finalComplexity = lastPoint.stats.complexityIndex || 0;
   
-  // Calculate key metrics
-  const lastDataPoint = data[data.length - 1];
-  const halfwayPoint = Math.floor(data.length / 2);
-  const midDataPoint = data[halfwayPoint];
+  const timePeriodMs = lastPoint.timestamp - firstPoint.timestamp;
+  const timePeriodSec = timePeriodMs / 1000;
   
-  // Extract time series data for analysis
-  const positiveParticles = data.map(d => ({ 
-    timestamp: d.timestamp, 
-    value: d.particle_counts.positive 
-  }));
-  
-  const negativeParticles = data.map(d => ({ 
-    timestamp: d.timestamp, 
-    value: d.particle_counts.negative 
-  }));
-  
-  const neutralParticles = data.map(d => ({ 
-    timestamp: d.timestamp, 
-    value: d.particle_counts.neutral 
-  }));
-  
-  const complexityIndex = data.map(d => ({ 
-    timestamp: d.timestamp, 
-    value: d.complexity_index 
-  }));
-  
-  const avgKnowledge = data.map(d => ({ 
-    timestamp: d.timestamp, 
-    value: d.avg_knowledge 
-  }));
-  
-  const systemEntropy = data.map(d => ({ 
-    timestamp: d.timestamp, 
-    value: d.system_entropy 
-  }));
-  
-  // Calculate change rates
-  const complexityChange = lastDataPoint.complexity_index - midDataPoint.complexity_index;
-  const knowledgeChange = lastDataPoint.avg_knowledge - midDataPoint.avg_knowledge;
-  const entropyChange = lastDataPoint.system_entropy - midDataPoint.system_entropy;
-  
-  // Calculate correlations
-  const positiveValues = positiveParticles.map(p => p.value);
-  const negativeValues = negativeParticles.map(p => p.value);
-  const neutralValues = neutralParticles.map(p => p.value);
-  const complexityValues = complexityIndex.map(p => p.value);
-  const knowledgeValues = avgKnowledge.map(p => p.value);
-  const entropyValues = systemEntropy.map(p => p.value);
-  
-  const metrics: AnalysisMetric[] = [
-    {
-      id: 'complexity_index',
-      name: 'Complexity Index',
-      value: lastDataPoint.complexity_index.toFixed(2),
-      change: complexityChange
-    },
-    {
-      id: 'avg_knowledge',
-      name: 'Average Knowledge',
-      value: lastDataPoint.avg_knowledge.toFixed(3),
-      change: knowledgeChange
-    },
-    {
-      id: 'system_entropy',
-      name: 'System Entropy',
-      value: lastDataPoint.system_entropy.toFixed(4),
-      change: entropyChange
-    },
-    {
-      id: 'total_particles',
-      name: 'Total Particles',
-      value: lastDataPoint.total_particles,
-      change: lastDataPoint.total_particles - midDataPoint.total_particles
-    },
-    {
-      id: 'total_interactions',
-      name: 'Total Interactions',
-      value: lastDataPoint.total_interactions,
-      change: lastDataPoint.total_interactions - midDataPoint.total_interactions
-    },
-    {
-      id: 'max_complexity',
-      name: 'Maximum Complexity',
-      value: lastDataPoint.max_complexity.toFixed(2),
-      change: lastDataPoint.max_complexity - midDataPoint.max_complexity
-    }
-  ];
-  
-  // Calculate correlations between different metrics
-  const correlations = {
-    'complexity': {
-      'knowledge': calculateCorrelation(complexityValues, knowledgeValues),
-      'entropy': calculateCorrelation(complexityValues, entropyValues),
-      'positive': calculateCorrelation(complexityValues, positiveValues),
-      'negative': calculateCorrelation(complexityValues, negativeValues),
-      'neutral': calculateCorrelation(complexityValues, neutralValues)
-    },
-    'knowledge': {
-      'entropy': calculateCorrelation(knowledgeValues, entropyValues),
-      'positive': calculateCorrelation(knowledgeValues, positiveValues),
-      'negative': calculateCorrelation(knowledgeValues, negativeValues),
-      'neutral': calculateCorrelation(knowledgeValues, neutralValues)
-    },
-    'entropy': {
-      'positive': calculateCorrelation(entropyValues, positiveValues),
-      'negative': calculateCorrelation(entropyValues, negativeValues),
-      'neutral': calculateCorrelation(entropyValues, neutralValues)
-    }
-  };
+  // Calculate rate of change per second
+  const growthRate = (finalComplexity - initialComplexity) / timePeriodSec;
   
   return {
-    metrics,
-    timeSeries: {
-      positive: positiveParticles,
-      negative: negativeParticles,
-      neutral: neutralParticles,
-      complexity: complexityIndex,
-      knowledge: avgKnowledge,
-      entropy: systemEntropy
-    },
-    correlations
+    growthRate,
+    timePeriod: timePeriodSec
   };
 }
+
+/**
+ * Calculate correlation between complexity and particle count
+ */
+export function calculateComplexityParticleCorrelation() {
+  const dataPoints = getStoredDataPoints();
+  
+  if (dataPoints.length < 3) {
+    return 0;
+  }
+  
+  // Extract complexity and particle count pairs
+  const pairs = dataPoints.map(point => ({
+    complexity: point.stats.complexityIndex || 0,
+    particleCount: point.stats.particleCount || 0
+  }));
+  
+  // Calculate correlation coefficient
+  const n = pairs.length;
+  
+  const sumComplexity = pairs.reduce((sum, pair) => sum + pair.complexity, 0);
+  const sumParticles = pairs.reduce((sum, pair) => sum + pair.particleCount, 0);
+  
+  const sumComplexitySq = pairs.reduce((sum, pair) => sum + (pair.complexity * pair.complexity), 0);
+  const sumParticlesSq = pairs.reduce((sum, pair) => sum + (pair.particleCount * pair.particleCount), 0);
+  
+  const sumProducts = pairs.reduce((sum, pair) => sum + (pair.complexity * pair.particleCount), 0);
+  
+  const numerator = (n * sumProducts) - (sumComplexity * sumParticles);
+  const denominator = Math.sqrt(
+    ((n * sumComplexitySq) - (sumComplexity * sumComplexity)) *
+    ((n * sumParticlesSq) - (sumParticles * sumParticles))
+  );
+  
+  if (denominator === 0) return 0;
+  
+  return numerator / denominator;
+}
+
+/**
+ * Find the time when complexity growth accelerated the most
+ */
+export function findComplexityAccelerationPoint() {
+  const dataPoints = getStoredDataPoints();
+  
+  if (dataPoints.length < 5) {
+    return null;
+  }
+  
+  let maxAcceleration = 0;
+  let accelerationPointIndex = 0;
+  
+  // Calculate first derivative (velocity) at each point
+  const velocities = [];
+  for (let i = 1; i < dataPoints.length; i++) {
+    const timeDelta = (dataPoints[i].timestamp - dataPoints[i-1].timestamp) / 1000;
+    const complexityDelta = (dataPoints[i].stats.complexityIndex || 0) - (dataPoints[i-1].stats.complexityIndex || 0);
+    velocities.push(complexityDelta / timeDelta);
+  }
+  
+  // Find the point of maximum acceleration by looking at the difference in velocities
+  for (let i = 1; i < velocities.length; i++) {
+    const acceleration = velocities[i] - velocities[i-1];
+    if (acceleration > maxAcceleration) {
+      maxAcceleration = acceleration;
+      accelerationPointIndex = i;
+    }
+  }
+  
+  if (maxAcceleration === 0) {
+    return null;
+  }
+  
+  // The point is actually the i+1 index in the original array (due to derivative calculation)
+  const accelerationPoint = dataPoints[accelerationPointIndex + 1];
+  
+  return {
+    timestamp: accelerationPoint.timestamp,
+    complexity: accelerationPoint.stats.complexityIndex,
+    particleCount: accelerationPoint.stats.particleCount,
+    acceleration: maxAcceleration
+  };
+}
+
+/**
+ * Calculate entropy trend over time
+ */
+export function calculateEntropyTrend() {
+  const dataPoints = getStoredDataPoints();
+  
+  if (dataPoints.length < 3) {
+    return { trend: 0, initialEntropy: 0, finalEntropy: 0 };
+  }
+  
+  // Extract entropy values
+  const entropyValues = dataPoints.map(point => point.stats.systemEntropy || 0);
+  
+  // Calculate linear regression slope
+  const n = entropyValues.length;
+  const xSum = (n * (n - 1)) / 2; // Sum of indices [0, 1, 2, ..., n-1]
+  const xSqSum = (n * (n - 1) * (2 * n - 1)) / 6; // Sum of squared indices
+  
+  const ySum = entropyValues.reduce((sum, val) => sum + val, 0);
+  const xySum = entropyValues.reduce((sum, val, i) => sum + (val * i), 0);
+  
+  const slope = (n * xySum - xSum * ySum) / (n * xSqSum - xSum * xSum);
+  
+  return {
+    trend: slope,
+    initialEntropy: entropyValues[0],
+    finalEntropy: entropyValues[entropyValues.length - 1]
+  };
+}
+

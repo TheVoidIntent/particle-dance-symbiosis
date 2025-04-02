@@ -57,6 +57,19 @@ export async function playAudio(url: string, volume: number = 1.0): Promise<void
   }
 }
 
+// Play audio with error handling wrapper
+export async function playAudioWithErrorHandling(url: string, volume: number = 1.0): Promise<void> {
+  try {
+    await playAudio(url, volume);
+    return Promise.resolve();
+  } catch (error) {
+    console.error('Error playing audio with error handling:', error);
+    // Try to create a fallback sound
+    createFallbackAudioIfNeeded();
+    return Promise.reject(error);
+  }
+}
+
 // Play looping audio
 export async function playLoopingAudio(url: string, volume: number = 1.0): Promise<void> {
   if (!audioContext) initAudioContext();
@@ -134,4 +147,30 @@ export function getAvailableAudioFiles(directory: string): Promise<string[]> {
     'anomaly_detected.mp3',
     'simulation_start.mp3'
   ]);
+}
+
+// Create fallback audio for error cases
+export function createFallbackAudioIfNeeded(): boolean {
+  try {
+    if (!audioContext) initAudioContext();
+    
+    const oscillator = audioContext!.createOscillator();
+    const gainNode = audioContext!.createGain();
+    
+    oscillator.type = 'sawtooth';
+    oscillator.frequency.value = 220;
+    
+    gainNode.gain.value = 0.1;
+    
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext!.destination);
+    
+    oscillator.start();
+    oscillator.stop(audioContext!.currentTime + 0.2);
+    
+    return true;
+  } catch (error) {
+    console.error('Error creating fallback audio:', error);
+    return false;
+  }
 }

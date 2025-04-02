@@ -5,6 +5,10 @@ const audioSources: { [key: string]: AudioBufferSourceNode } = {};
 const audioBuffers: { [key: string]: AudioBuffer } = {};
 const audioVolumes: { [key: string]: GainNode } = {};
 
+// Streaming audio state
+let isStreamingAudio = false;
+let streamGainNode: GainNode | null = null;
+
 // Initialize audio context (needs to be called after user interaction)
 export function initAudioContext(): AudioContext {
   if (!audioContext) {
@@ -89,6 +93,27 @@ export async function playSound(
   }
 }
 
+// Play simulation audio from a category and filename
+export async function playSimulationAudio(category: string, filename: string): Promise<void> {
+  const url = `/audio/${category}/${filename}.mp3`;
+  
+  try {
+    await playSound(url, { volume: 0.7 });
+    return Promise.resolve();
+  } catch (error) {
+    console.error(`Error playing simulation audio (${category}/${filename}):`, error);
+    // Try alternative path
+    const alternativeUrl = `/audio/${filename}.mp3`;
+    try {
+      await playSound(alternativeUrl, { volume: 0.7 });
+      return Promise.resolve();
+    } catch (altError) {
+      console.error(`Error playing alternative simulation audio (${filename}):`, altError);
+      return Promise.reject(altError);
+    }
+  }
+}
+
 // Play event-based sounds
 export function playSimulationEvent(
   eventType: 'particle_creation' | 'particle_interaction' | 'field_fluctuation' | 'anomaly_detected' | 'inflation_event',
@@ -153,8 +178,89 @@ export function playSimulationEvent(
   }
 }
 
-// Stop all audio
-export function stopAllAudio(): void {
+// Set global volume for audio
+export function setSimulationAudioVolume(volumePercent: number): void {
+  const volume = volumePercent / 100;
+  
+  // Apply to streaming audio if active
+  if (streamGainNode) {
+    streamGainNode.gain.value = volume;
+  }
+  
+  // Apply to all current gain nodes
+  Object.values(audioVolumes).forEach(gainNode => {
+    gainNode.gain.value = volume;
+  });
+}
+
+// Generate soundscape based on particle data
+export function generateParticleSoundscape(particles: any[]): void {
+  if (!audioContext) initAudioContext();
+  
+  // Stop any existing streams
+  stopSimulationAudioStream();
+  
+  const positiveCount = particles.filter(p => p.charge === 'positive').length;
+  const negativeCount = particles.filter(p => p.charge === 'negative').length;
+  const neutralCount = particles.filter(p => p.charge === 'neutral').length;
+  
+  const totalParticles = particles.length;
+  
+  // Generate base frequency based on particle counts
+  const baseFreq = 200 + (positiveCount * 2) - (negativeCount * 1.5);
+  
+  // Create oscillators for different particle types
+  if (positiveCount > 0) {
+    playSound('/audio/positive_ambient.mp3', {
+      volume: 0.1 * (positiveCount / totalParticles),
+      loop: true,
+      playbackRate: 0.8 + (positiveCount / totalParticles) * 0.4
+    });
+  }
+  
+  if (negativeCount > 0) {
+    playSound('/audio/negative_ambient.mp3', {
+      volume: 0.1 * (negativeCount / totalParticles),
+      loop: true,
+      playbackRate: 0.8 + (negativeCount / totalParticles) * 0.4
+    });
+  }
+  
+  if (neutralCount > 0) {
+    playSound('/audio/neutral_ambient.mp3', {
+      volume: 0.1 * (neutralCount / totalParticles),
+      loop: true,
+      playbackRate: 0.8 + (neutralCount / totalParticles) * 0.4
+    });
+  }
+  
+  isStreamingAudio = true;
+}
+
+// Start simulation audio stream
+export function startSimulationAudioStream(stats: any): void {
+  if (!audioContext) initAudioContext();
+  
+  // Stop any existing streams
+  stopSimulationAudioStream();
+  
+  // Create a gain node for the stream
+  streamGainNode = audioContext!.createGain();
+  streamGainNode.gain.value = 0.2;
+  streamGainNode.connect(audioContext!.destination);
+  
+  // Start base ambient sound
+  playSound('/audio/ambient_loop.mp3', {
+    volume: 0.2,
+    loop: true
+  });
+  
+  isStreamingAudio = true;
+}
+
+// Stop simulation audio stream
+export function stopSimulationAudioStream(): void {
+  // Stop all audio sources
   Object.values(audioSources).forEach(source => {
     try {
       source.stop();
@@ -162,6 +268,25 @@ export function stopAllAudio(): void {
       // Ignore errors from already stopped sources
     }
   });
+  
+  // Clear stored sources
+  Object.keys(audioSources).forEach(key => {
+    delete audioSources[key];
+  });
+  
+  // Reset streaming state
+  isStreamingAudio = false;
+  streamGainNode = null;
+}
+
+// Check if simulation audio is playing
+export function isSimulationAudioPlaying(): boolean {
+  return isStreamingAudio;
+}
+
+// Stop all audio
+export function stopAllAudio(): void {
+  stopSimulationAudioStream();
 }
 
 // Suspend audio context to save resources
@@ -177,3 +302,4 @@ export function resumeAudio(): void {
     audioContext.resume();
   }
 }
+

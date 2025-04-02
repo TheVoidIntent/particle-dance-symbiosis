@@ -23,7 +23,6 @@ import {
   initAudioContext,
   setSimulationAudioVolume
 } from '@/utils/audio/simulationAudioUtils';
-import { Particle } from '@/utils/particleUtils';
 import { SimulationStats } from '@/hooks/useSimulationData';
 import { toast } from "sonner";
 import {
@@ -34,7 +33,7 @@ import {
 } from "@/components/ui/tooltip";
 
 interface SimulationAudioControlsProps {
-  particles: Particle[];
+  particles: any[];
   stats: SimulationStats;
   isRunning: boolean;
 }
@@ -51,14 +50,15 @@ const SimulationAudioControls: React.FC<SimulationAudioControlsProps> = ({
   
   const handleInitAudio = () => {
     if (!audioInitialized) {
-      // Initialize audio context with user interaction
-      const initialized = initAudioContext();
-      setAudioInitialized(initialized);
-      if (initialized) {
+      try {
+        // Initialize audio context with user interaction
+        initAudioContext();
+        setAudioInitialized(true);
         toast.success("Audio system initialized");
         // Apply volume setting
         setSimulationAudioVolume(volume);
-      } else {
+      } catch (error) {
+        console.error("Failed to initialize audio:", error);
         toast.error("Failed to initialize audio system");
       }
     }
@@ -136,7 +136,7 @@ const SimulationAudioControls: React.FC<SimulationAudioControlsProps> = ({
     playSimulationAudio(category, filename);
   };
   
-  const playTestEvent = (eventType: string) => {
+  const playTestEvent = (eventType: 'particle_creation' | 'particle_interaction' | 'field_fluctuation' | 'anomaly_detected' | 'inflation_event') => {
     handleInitAudio();
     
     if (!audioInitialized) {

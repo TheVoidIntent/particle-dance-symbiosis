@@ -3,14 +3,17 @@
 export * from './audioFileUtils';
 export * from './audioGenerationUtils';
 export * from './simulationAudioUtils';
+export * from './audioPlaybackUtils';
 
-// Export from audioPlaybackUtils but rename the duplicated function
+// Re-export specific functions with new names to avoid conflicts
 import { 
-  playAudioWithErrorHandling,
-  createFallbackAudioIfNeeded as createFallbackAudio 
+  initAudioContext as initPlaybackAudioContext,
+  getAvailableAudioFiles as getPlaybackAudioFiles,
+  createFallbackAudioIfNeeded as createPlaybackFallbackAudio
 } from './audioPlaybackUtils';
 
 export {
-  playAudioWithErrorHandling,
-  createFallbackAudio
+  initPlaybackAudioContext,
+  getPlaybackAudioFiles,
+  createPlaybackFallbackAudio
 };

@@ -1,134 +1,60 @@
 
-import { exportDataToJSON } from './dataExportUtils';
+import { toast } from 'sonner';
+import { exportDataAsJson } from './dataExportUtils';
 
-interface ExportCallbacks {
-  onExportStart?: () => void;
-  onExportComplete?: (filename: string) => void;
-  onExportError?: (error: Error) => void;
+// Schedule daily exports
+let dailyExportTimeout: NodeJS.Timeout | null = null;
+
+// Start daily export schedule
+export function startDailyExport() {
+  // Clear any existing schedule
+  if (dailyExportTimeout) {
+    clearTimeout(dailyExportTimeout);
+  }
+  
+  // Calculate time until next export (midnight)
+  const now = new Date();
+  const tomorrow = new Date(now);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  tomorrow.setHours(0, 0, 0, 0);
+  
+  const msUntilMidnight = tomorrow.getTime() - now.getTime();
+  
+  // Schedule export
+  dailyExportTimeout = setTimeout(() => {
+    performDailyExport();
+    // Reschedule for next day
+    startDailyExport();
+  }, msUntilMidnight);
+  
+  console.log(`Daily export scheduled for ${tomorrow.toLocaleString()}`);
+  return tomorrow;
 }
 
-/**
- * Schedule for daily exports - configurable via parameters
- */
-export const exportSchedule = {
-  // Default to midnight (0), 8:00 (8), and 16:00 (16)
-  hours: [0, 8, 16], 
-  // Minutes past the hour for export
-  minute: 0
-};
-
-/**
- * Get the nearest future export time
- */
-export const getNearestExportTime = (): Date => {
-  const now = new Date();
-  const today = new Date(now);
-  
-  // Find the next export time
-  let nextExport: Date | null = null;
-  
-  // Check today's remaining times
-  for (const hour of exportSchedule.hours) {
-    const exportTime = new Date(today);
-    exportTime.setHours(hour, exportSchedule.minute, 0, 0);
-    
-    if (exportTime > now) {
-      nextExport = exportTime;
-      break;
-    }
+// Cancel scheduled export
+export function cancelDailyExport() {
+  if (dailyExportTimeout) {
+    clearTimeout(dailyExportTimeout);
+    dailyExportTimeout = null;
+    console.log('Daily export canceled');
+    return true;
   }
-  
-  // If no times left today, check tomorrow
-  if (!nextExport) {
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    tomorrow.setHours(exportSchedule.hours[0], exportSchedule.minute, 0, 0);
-    nextExport = tomorrow;
-  }
-  
-  return nextExport;
-};
+  return false;
+}
 
-/**
- * Sets up the daily data export scheduler
- */
-export const setupDailyDataExport = (callbacks: ExportCallbacks = {}) => {
-  // Immediately perform an export when started
-  setTimeout(() => performExport(callbacks), 5000);
-  
-  // Schedule future exports
-  const checkSchedule = () => {
-    const now = new Date();
-    const nextExportTime = getNearestExportTime();
-    
-    // Time difference in milliseconds
-    const timeDiff = nextExportTime.getTime() - now.getTime();
-    
-    // Schedule the next export
-    const timeoutId = setTimeout(() => {
-      performExport(callbacks);
-      // Set up the next export after this one completes
-      checkSchedule();
-    }, timeDiff);
-    
-    // Return cleanup function
-    return () => clearTimeout(timeoutId);
-  };
-  
-  // Start the scheduler
-  const cleanup = checkSchedule();
-  
-  return { 
-    cleanup,
-    getNextExportTime: getNearestExportTime
-  };
-};
-
-/**
- * Performs the data export process
- */
-const performExport = async (callbacks: ExportCallbacks = {}) => {
+// Perform export now
+export function performDailyExport() {
   try {
-    if (callbacks.onExportStart) {
-      callbacks.onExportStart();
-    }
-    
-    // Construct a date-based filename
     const date = new Date();
-    const dateStr = date.toISOString().slice(0, 10); // YYYY-MM-DD
-    const timeStr = date.toTimeString().slice(0, 8).replace(/:/g, '-'); // HH-MM-SS
-    
-    const filename = `intentsim_daily_${dateStr}_${timeStr}`;
-    
-    // Export the data
-    await exportDataToJSON(true);
-    
-    if (callbacks.onExportComplete) {
-      callbacks.onExportComplete(filename);
-    }
-    
-    console.log(`✅ Daily data export completed: ${filename}`);
-    
-    // After exporting data, we could clean up older data points to prevent memory issues
-    // This would need to be implemented based on your specific requirements
-    
-    return filename;
+    const dateStr = date.toISOString().split('T')[0];
+    exportDataAsJson(`daily_export_${dateStr}`);
+    console.log(`Daily export performed on ${date.toLocaleString()}`);
+    toast.success('Daily data export completed');
+    return true;
   } catch (error) {
-    console.error("❌ Error during daily data export:", error);
-    
-    if (callbacks.onExportError && error instanceof Error) {
-      callbacks.onExportError(error);
-    }
-    
-    return null;
+    console.error('Error during daily export:', error);
+    toast.error('Daily data export failed');
+    return false;
   }
-};
+}
 
-/**
- * Get the export history - could be extended to read from localStorage
- */
-export const getExportHistory = () => {
-  // Implement to track history of exports
-  // For now, return an empty array
-  return [];
-};

@@ -23,9 +23,14 @@ const AudioOptionsSection: React.FC = () => {
   const [audioInitialized, setAudioInitialized] = useState(false);
   
   const initAudio = () => {
-    const initialized = initAudioContext();
-    setAudioInitialized(initialized);
-    return initialized;
+    try {
+      initAudioContext();
+      setAudioInitialized(true);
+      return true;
+    } catch (error) {
+      console.error("Failed to initialize audio:", error);
+      return false;
+    }
   };
   
   useEffect(() => {

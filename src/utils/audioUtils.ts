@@ -7,7 +7,6 @@ export * from './audio/audioFileUtils';
 // Explicitly re-export from audioGenerationUtils to avoid name collision
 import { 
   generateSampleAudio, 
-  // Rename this to avoid ambiguity with the one from audioPlaybackUtils
   createFallbackAudioIfNeeded as createGenerationFallbackAudio 
 } from './audio/audioGenerationUtils';
 
@@ -17,18 +16,17 @@ export {
 };
 
 // Provide a simplified API for common audio operations
-import { playAudioWithErrorHandling } from './audio/audioPlaybackUtils';
+import { playAudio } from './audio/audioPlaybackUtils';
 import { checkAudioFileExists } from './audio/audioFileUtils';
 
 // Re-export explicitly to avoid ambiguity
 export {
-  playAudioWithErrorHandling,
   checkAudioFileExists
 };
 
 // Export common audio utility functions - renamed to avoid collision
 export const playSound = (url: string): Promise<void> => {
-  return playAudioWithErrorHandling(url);
+  return playAudio(url);
 };
 
 export const generateBeep = (duration: number = 0.5, frequency: number = 440): void => {

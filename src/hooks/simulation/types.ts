@@ -1,4 +1,3 @@
-
 import { Particle as ParticleType } from '@/utils/particleUtils';
 
 export interface SimulationConfig {
@@ -13,6 +12,7 @@ export interface SimulationConfig {
   probabilisticIntent?: boolean;
 }
 
+// Export the Particle type explicitly
 export type Particle = ParticleType;
 
 export interface SimulationState {

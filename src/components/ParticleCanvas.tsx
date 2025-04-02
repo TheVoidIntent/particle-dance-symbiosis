@@ -72,7 +72,7 @@ export const ParticleCanvas: React.FC<ParticleCanvasProps> = ({
     useAdaptiveParticles,
     energyConservation,
     probabilisticIntent,
-    onAnomalyDetected: handleAnomalyWithAudio,
+    onAnomalyDetected,
     onInflationDetected: handleInflationWithAudio,
     onStatsUpdate
   });
@@ -130,8 +130,7 @@ export const ParticleCanvas: React.FC<ParticleCanvasProps> = ({
   );
 
   const handleResetSimulation = (): Particle[] => {
-    const resetParticles = resetSimulation();
-    return resetParticles;
+    return resetSimulation();
   };
 
   const captureFieldDistribution = () => {

@@ -1,8 +1,47 @@
 
 // Re-export audio utilities from the audio subdirectories
-export * from './audio/audioPlaybackUtils';
+// But avoid duplicate exports by being more selective
+
+// Import specific functions from audioPlaybackUtils
+import { 
+  playAudio, 
+  playAudioWithErrorHandling,
+  playLoopingAudio,
+  stopLoopingAudio,
+  setLoopingAudioVolume,
+  resumeAudioContext,
+  createFallbackAudioIfNeeded as createPlaybackFallbackAudio,
+  // Import but don't re-export directly to avoid duplicate
+  initAudioContext as importedInitAudioContext
+} from './audio/audioPlaybackUtils';
+
+// Explicitly re-export with unique namespace to avoid ambiguity
+export {
+  playAudio,
+  playAudioWithErrorHandling,
+  playLoopingAudio,
+  stopLoopingAudio,
+  setLoopingAudioVolume,
+  resumeAudioContext,
+  createPlaybackFallbackAudio,
+  // Export with original name since it's specifically referenced this way
+  importedInitAudioContext as initAudioContext
+};
+
+// Import and re-export from simulationAudioUtils
 export * from './audio/simulationAudioUtils';
-export * from './audio/audioFileUtils';
+
+// Import specific functions from audioFileUtils to avoid duplicate imports
+import { 
+  checkAudioFileExists,
+  getAudioFileMetadata
+} from './audio/audioFileUtils';
+
+// Explicitly re-export to avoid ambiguity
+export {
+  checkAudioFileExists,
+  getAudioFileMetadata
+};
 
 // Explicitly re-export from audioGenerationUtils to avoid name collision
 import { 
@@ -16,16 +55,6 @@ export {
 };
 
 // Provide a simplified API for common audio operations
-import { playAudio, playAudioWithErrorHandling } from './audio/audioPlaybackUtils';
-import { checkAudioFileExists } from './audio/audioFileUtils';
-
-// Re-export explicitly to avoid ambiguity
-export {
-  checkAudioFileExists,
-  playAudioWithErrorHandling
-};
-
-// Export common audio utility functions - renamed to avoid collision
 export const playSound = (url: string): Promise<void> => {
   return playAudio(url);
 };

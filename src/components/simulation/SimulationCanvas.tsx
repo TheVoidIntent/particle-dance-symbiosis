@@ -1,4 +1,3 @@
-
 import React, { useRef, useEffect, useState } from 'react';
 import { Particle } from '@/types/simulation';
 import { simulationOptions } from '@/utils/simulation/config';
@@ -13,6 +12,15 @@ interface SimulationCanvasProps {
   showChargeColors?: boolean;
   fieldOpacity?: number;
   className?: string;
+  intentFluctuationRate?: number;
+  maxParticles?: number;
+  particleCreationRate?: number;
+  positiveChargeBehavior?: number;
+  negativeChargeBehavior?: number;
+  neutralChargeBehavior?: number;
+  probabilisticIntent?: boolean;
+  visualizationMode?: 'particles' | 'field' | 'both';
+  running?: boolean;
 }
 
 const SimulationCanvas: React.FC<SimulationCanvasProps> = ({ 
@@ -24,7 +32,16 @@ const SimulationCanvas: React.FC<SimulationCanvasProps> = ({
   showFields = false,
   showChargeColors = true,
   fieldOpacity = 0.2,
-  className = ""
+  className = "",
+  intentFluctuationRate,
+  maxParticles,
+  particleCreationRate,
+  positiveChargeBehavior,
+  negativeChargeBehavior,
+  neutralChargeBehavior,
+  probabilisticIntent,
+  visualizationMode,
+  running
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [canvasWidth, setCanvasWidth] = useState(width);
@@ -32,10 +49,8 @@ const SimulationCanvas: React.FC<SimulationCanvasProps> = ({
   const [devicePixelRatio, setDevicePixelRatio] = useState(1);
   const animationFrameRef = useRef<number | null>(null);
   
-  // Container ref to measure available space
   const containerRef = useRef<HTMLDivElement>(null);
   
-  // Animation control
   const startAnimation = () => {
     if (animationFrameRef.current) {
       cancelAnimationFrame(animationFrameRef.current);
@@ -50,30 +65,26 @@ const SimulationCanvas: React.FC<SimulationCanvasProps> = ({
     }
   };
   
-  // Rendering functions
   const renderParticles = (ctx: CanvasRenderingContext2D, particles: Particle[], options: { showChargeColors: boolean }) => {
     particles.forEach(particle => {
       const radius = particle.radius || 3;
       
-      // Determine color based on charge
       let color = particle.color || '#FFFFFF';
       if (options.showChargeColors) {
         if (particle.charge === 'positive') {
-          color = '#FF5555'; // Red for positive
+          color = '#FF5555';
         } else if (particle.charge === 'negative') {
-          color = '#5555FF'; // Blue for negative
+          color = '#5555FF';
         } else {
-          color = '#55FF55'; // Green for neutral
+          color = '#55FF55';
         }
       }
       
-      // Draw particle
       ctx.beginPath();
       ctx.arc(particle.x, particle.y, radius, 0, Math.PI * 2);
       ctx.fillStyle = color;
       ctx.fill();
       
-      // Draw information indicator if knowledge is high
       if (particle.knowledge && particle.knowledge > 0.5) {
         ctx.beginPath();
         ctx.arc(particle.x, particle.y, radius * 1.5, 0, Math.PI * 2);
@@ -88,7 +99,6 @@ const SimulationCanvas: React.FC<SimulationCanvasProps> = ({
     ctx.strokeStyle = 'rgba(100, 100, 100, 0.1)';
     ctx.lineWidth = 1;
     
-    // Draw vertical lines
     for (let x = 0; x <= width; x += spacing) {
       ctx.beginPath();
       ctx.moveTo(x, 0);
@@ -96,7 +106,6 @@ const SimulationCanvas: React.FC<SimulationCanvasProps> = ({
       ctx.stroke();
     }
     
-    // Draw horizontal lines
     for (let y = 0; y <= height; y += spacing) {
       ctx.beginPath();
       ctx.moveTo(0, y);
@@ -106,22 +115,19 @@ const SimulationCanvas: React.FC<SimulationCanvasProps> = ({
   };
   
   const renderIntentFields = (ctx: CanvasRenderingContext2D, width: number, height: number, opacity: number) => {
-    // This is a placeholder - in a real implementation, you'd get the intent field data
-    // and render it based on field strength
     const cellSize = 40;
     const rows = Math.ceil(height / cellSize);
     const cols = Math.ceil(width / cellSize);
     
     for (let y = 0; y < rows; y++) {
       for (let x = 0; x < cols; x++) {
-        // Generate a sample value based on position (for visualization)
         const value = Math.sin(x * 0.2) * Math.cos(y * 0.2);
         
         if (Math.abs(value) > 0.1) {
           const alpha = Math.min(0.3, Math.abs(value)) * opacity;
           ctx.fillStyle = value > 0 
-            ? `rgba(100, 200, 255, ${alpha})` // Positive intent
-            : `rgba(255, 100, 100, ${alpha})`; // Negative intent
+            ? `rgba(100, 200, 255, ${alpha})`
+            : `rgba(255, 100, 100, ${alpha})`;
           
           ctx.fillRect(
             x * cellSize, 
@@ -134,7 +140,6 @@ const SimulationCanvas: React.FC<SimulationCanvasProps> = ({
     }
   };
   
-  // Render frame function
   const renderFrame = () => {
     if (!canvasRef.current) return;
     
@@ -142,29 +147,23 @@ const SimulationCanvas: React.FC<SimulationCanvasProps> = ({
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
     
-    // Clear canvas
     ctx.clearRect(0, 0, canvasWidth, canvasHeight);
     
-    // Draw grid if enabled
     if (showGrid) {
       renderGrid(ctx, canvasWidth, canvasHeight, simulationOptions.gridSpacing);
     }
     
-    // Draw intent fields if enabled
     if (showFields) {
       renderIntentFields(ctx, canvasWidth, canvasHeight, fieldOpacity);
     }
     
-    // Draw particles
     renderParticles(ctx, particles, { showChargeColors });
     
-    // Continue animation if running
     if (isRunning) {
       animationFrameRef.current = requestAnimationFrame(renderFrame);
     }
   };
   
-  // Adjust canvas size based on container and device pixel ratio
   useEffect(() => {
     const updateCanvasSize = () => {
       if (containerRef.current) {
@@ -184,34 +183,29 @@ const SimulationCanvas: React.FC<SimulationCanvasProps> = ({
     return () => window.removeEventListener('resize', updateCanvasSize);
   }, []);
   
-  // Set canvas dimensions with device pixel ratio for sharp rendering
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     
-    // Set display size
     canvas.style.width = `${canvasWidth}px`;
     canvas.style.height = `${canvasHeight}px`;
     
-    // Set actual pixel size scaled by device pixel ratio
     canvas.width = Math.floor(canvasWidth * devicePixelRatio);
     canvas.height = Math.floor(canvasHeight * devicePixelRatio);
     
-    // Adjust rendering context for DPR
     const ctx = canvas.getContext('2d');
     if (ctx) {
       ctx.scale(devicePixelRatio, devicePixelRatio);
     }
   }, [canvasWidth, canvasHeight, devicePixelRatio]);
   
-  // Start/stop animation based on isRunning prop
   useEffect(() => {
     if (isRunning) {
       startAnimation();
     } else {
       stopAnimation();
     }
-    // Cleanup on unmount
+    
     return () => stopAnimation();
   }, [isRunning, particles, showGrid, showFields, showChargeColors, fieldOpacity]);
   

@@ -1,176 +1,164 @@
 
-let audioContext: AudioContext | null = null;
-let gainNode: GainNode | null = null;
-let loopingAudio: { source: AudioBufferSourceNode | null; url: string } = { source: null, url: '' };
+/**
+ * Utilities for audio playback
+ */
 
-// Initialize audio context
-export function initAudioContext(): AudioContext {
-  if (audioContext) return audioContext;
-  
+// Shared audio context for all playback
+let audioContext: AudioContext | null = null;
+
+// Initialize or get the audio context
+export const initAudioContext = (): AudioContext => {
+  if (!audioContext) {
+    try {
+      audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      console.log('Audio context initialized successfully');
+    } catch (error) {
+      console.error('Failed to create audio context:', error);
+      throw error;
+    }
+  }
+  return audioContext;
+};
+
+// Resume the audio context (needed for autoplay policy)
+export const resumeAudioContext = async (): Promise<boolean> => {
   try {
-    audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-    gainNode = audioContext.createGain();
-    gainNode.connect(audioContext.destination);
-    console.log('Audio context initialized');
-    return audioContext;
+    const context = initAudioContext();
+    if (context.state === 'suspended') {
+      await context.resume();
+      console.log('Audio context resumed successfully');
+    }
+    return true;
   } catch (error) {
-    console.error('Failed to create audio context:', error);
+    console.error('Failed to resume audio context:', error);
+    return false;
+  }
+};
+
+// Play an audio file with basic error handling
+export const playAudio = async (url: string): Promise<void> => {
+  try {
+    await resumeAudioContext();
+    const audio = new Audio(url);
+    audio.volume = 0.5; // Default volume
+    return audio.play();
+  } catch (error) {
+    console.error(`Error playing audio ${url}:`, error);
     throw error;
   }
-}
+};
 
-// Load audio file
-export async function loadAudioFile(url: string): Promise<AudioBuffer> {
-  if (!audioContext) initAudioContext();
-  
+// Play audio with fallback for error handling
+export const playAudioWithErrorHandling = async (url: string): Promise<boolean> => {
   try {
+    await playAudio(url);
+    return true;
+  } catch (error) {
+    console.warn(`Error playing ${url}, using fallback:`, error);
+    createFallbackAudioIfNeeded();
+    return false;
+  }
+};
+
+// For looping background audio
+let loopingAudio: HTMLAudioElement | null = null;
+let loopingGainNode: GainNode | null = null;
+let loopingSource: AudioBufferSourceNode | null = null;
+
+// Play looping audio (for background sounds)
+export const playLoopingAudio = async (url: string, volume: number = 0.3): Promise<boolean> => {
+  try {
+    stopLoopingAudio(); // Stop any existing looping audio
+    
+    const context = initAudioContext();
+    await resumeAudioContext();
+    
+    // Fetch the audio data
     const response = await fetch(url);
     const arrayBuffer = await response.arrayBuffer();
-    const audioBuffer = await audioContext!.decodeAudioData(arrayBuffer);
-    return audioBuffer;
-  } catch (error) {
-    console.error('Error loading audio file:', error);
-    throw error;
-  }
-}
-
-// Play audio once
-export async function playAudio(url: string, volume: number = 1.0): Promise<void> {
-  if (!audioContext) initAudioContext();
-  
-  try {
-    const audioBuffer = await loadAudioFile(url);
-    const source = audioContext!.createBufferSource();
-    source.buffer = audioBuffer;
+    const audioBuffer = await context.decodeAudioData(arrayBuffer);
     
-    const localGainNode = audioContext!.createGain();
-    localGainNode.gain.value = volume;
+    // Create source and gain nodes
+    loopingSource = context.createBufferSource();
+    loopingGainNode = context.createGain();
     
-    source.connect(localGainNode);
-    localGainNode.connect(audioContext!.destination);
+    // Connect nodes
+    loopingSource.buffer = audioBuffer;
+    loopingSource.loop = true;
+    loopingSource.connect(loopingGainNode);
+    loopingGainNode.connect(context.destination);
     
-    source.start(0);
-    return Promise.resolve();
-  } catch (error) {
-    console.error('Error playing audio:', error);
-    return Promise.reject(error);
-  }
-}
-
-// Play audio with error handling wrapper
-export async function playAudioWithErrorHandling(url: string, volume: number = 1.0): Promise<void> {
-  try {
-    await playAudio(url, volume);
-    return Promise.resolve();
-  } catch (error) {
-    console.error('Error playing audio with error handling:', error);
-    // Try to create a fallback sound
-    createFallbackAudioIfNeeded();
-    return Promise.reject(error);
-  }
-}
-
-// Play looping audio
-export async function playLoopingAudio(url: string, volume: number = 1.0): Promise<void> {
-  if (!audioContext) initAudioContext();
-  
-  // Stop any currently playing looping audio
-  if (loopingAudio.source) {
-    try {
-      loopingAudio.source.stop();
-      loopingAudio.source = null;
-    } catch (e) {
-      // Ignore errors from already stopped sources
-    }
-  }
-  
-  try {
-    const audioBuffer = await loadAudioFile(url);
-    const source = audioContext!.createBufferSource();
-    source.buffer = audioBuffer;
-    source.loop = true;
-    
-    if (!gainNode) {
-      gainNode = audioContext!.createGain();
-      gainNode.connect(audioContext!.destination);
-    }
-    
-    gainNode.gain.value = volume;
-    source.connect(gainNode);
-    
-    source.start(0);
-    loopingAudio = { source, url };
-    
-    return Promise.resolve();
-  } catch (error) {
-    console.error('Error playing looping audio:', error);
-    return Promise.reject(error);
-  }
-}
-
-// Stop looping audio
-export function stopLoopingAudio(): void {
-  if (loopingAudio.source) {
-    try {
-      loopingAudio.source.stop();
-      loopingAudio.source = null;
-    } catch (e) {
-      // Ignore errors from already stopped sources
-    }
-  }
-}
-
-// Set looping audio volume
-export function setLoopingAudioVolume(volume: number): void {
-  if (gainNode) {
-    gainNode.gain.value = volume;
-  }
-}
-
-// Resume audio context (needed after user interaction in some browsers)
-export function resumeAudioContext(): Promise<void> {
-  if (audioContext && audioContext.state === 'suspended') {
-    return audioContext.resume();
-  }
-  return Promise.resolve();
-}
-
-// Get a list of available audio files
-export function getAvailableAudioFiles(directory: string): Promise<string[]> {
-  // This is a mock implementation - in a real app, you'd need a server endpoint to list files
-  // For now, return some hardcoded examples
-  return Promise.resolve([
-    'ambient_loop.mp3',
-    'particle_creation.mp3',
-    'particle_interaction.mp3',
-    'field_fluctuation.mp3',
-    'anomaly_detected.mp3',
-    'simulation_start.mp3'
-  ]);
-}
-
-// Create fallback audio for error cases
-export function createFallbackAudioIfNeeded(): boolean {
-  try {
-    if (!audioContext) initAudioContext();
-    
-    const oscillator = audioContext!.createOscillator();
-    oscillator.type = 'sine';
-    oscillator.frequency.setValueAtTime(440, audioContext!.currentTime); // A4 note
-    
-    const gainNode = audioContext!.createGain();
-    gainNode.gain.setValueAtTime(0.1, audioContext!.currentTime);
-    gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext!.currentTime + 0.5);
-    
-    oscillator.connect(gainNode);
-    gainNode.connect(audioContext!.destination);
-    
-    oscillator.start();
-    oscillator.stop(audioContext!.currentTime + 0.5);
+    // Set volume and start
+    loopingGainNode.gain.setValueAtTime(volume, context.currentTime);
+    loopingSource.start(0);
     
     return true;
   } catch (error) {
-    console.error('Failed to create fallback audio:', error);
+    console.error('Error playing looping audio:', error);
     return false;
   }
-}
+};
+
+// Stop the looping audio
+export const stopLoopingAudio = (): void => {
+  try {
+    if (loopingSource) {
+      loopingSource.stop();
+      loopingSource.disconnect();
+      loopingSource = null;
+    }
+    
+    if (loopingGainNode) {
+      loopingGainNode.disconnect();
+      loopingGainNode = null;
+    }
+    
+    if (loopingAudio) {
+      loopingAudio.pause();
+      loopingAudio.currentTime = 0;
+      loopingAudio = null;
+    }
+  } catch (error) {
+    console.error('Error stopping looping audio:', error);
+  }
+};
+
+// Adjust looping audio volume
+export const setLoopingAudioVolume = (volume: number): void => {
+  try {
+    if (loopingGainNode && audioContext) {
+      loopingGainNode.gain.setValueAtTime(
+        Math.max(0, Math.min(1, volume)), 
+        audioContext.currentTime
+      );
+    } else if (loopingAudio) {
+      loopingAudio.volume = Math.max(0, Math.min(1, volume));
+    }
+  } catch (error) {
+    console.error('Error setting looping audio volume:', error);
+  }
+};
+
+// Create a fallback audio for error cases
+export const createFallbackAudioIfNeeded = (): void => {
+  try {
+    const context = initAudioContext();
+    const oscillator = context.createOscillator();
+    const gainNode = context.createGain();
+    
+    oscillator.type = 'sine';
+    oscillator.frequency.setValueAtTime(440, context.currentTime);
+    
+    gainNode.gain.setValueAtTime(0, context.currentTime);
+    gainNode.gain.linearRampToValueAtTime(0.2, context.currentTime + 0.05);
+    gainNode.gain.linearRampToValueAtTime(0, context.currentTime + 0.3);
+    
+    oscillator.connect(gainNode);
+    gainNode.connect(context.destination);
+    
+    oscillator.start();
+    oscillator.stop(context.currentTime + 0.3);
+  } catch (error) {
+    console.error('Error creating fallback audio:', error);
+  }
+};

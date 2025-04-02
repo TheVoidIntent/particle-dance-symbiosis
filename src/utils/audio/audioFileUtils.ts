@@ -1,4 +1,3 @@
-
 import { toast } from "sonner";
 
 /**
@@ -51,4 +50,52 @@ export const getAvailableAudioFiles = async (directory: string): Promise<string[
   }
   
   return existingFiles;
+};
+
+/**
+ * Get audio file metadata (duration, format, etc.)
+ * This is a stub as browser API limitations make this difficult without server support
+ */
+export const getAudioFileMetadata = async (url: string): Promise<{ 
+  duration?: number; 
+  format?: string;
+  sampleRate?: number;
+  error?: any;
+}> => {
+  try {
+    // Create an audio element to load the file
+    const audio = new Audio();
+    audio.src = url;
+    
+    // Return a promise that resolves when metadata is loaded
+    return new Promise((resolve) => {
+      audio.addEventListener('loadedmetadata', () => {
+        resolve({
+          duration: audio.duration,
+          format: url.split('.').pop() || 'unknown',
+          sampleRate: 44100 // Default value as this isn't easily accessible
+        });
+      });
+      
+      audio.addEventListener('error', (error) => {
+        resolve({ 
+          error: error 
+        });
+      });
+      
+      // Set a timeout in case the metadata loading hangs
+      setTimeout(() => {
+        if (!audio.duration) {
+          resolve({ 
+            error: new Error('Timeout while loading audio metadata') 
+          });
+        }
+      }, 5000);
+    });
+  } catch (error) {
+    console.error(`Error getting audio metadata for ${url}:`, error);
+    return { 
+      error 
+    };
+  }
 };

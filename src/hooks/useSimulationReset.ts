@@ -1,3 +1,4 @@
+
 import { useCallback } from 'react';
 import { toast } from 'sonner';
 
@@ -63,7 +64,7 @@ export function useSimulationReset({
       description: "Particles cleared, counters reset. Intent field preserved."
     });
     
-    // Return the reset particles array
+    // Make sure to explicitly return the reset particles array
     return particlesRef.current;
   }, [
     particlesRef,

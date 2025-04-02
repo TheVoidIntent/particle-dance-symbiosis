@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useParticleSimulation } from '@/hooks/simulation';
 import { useSimulationData } from '@/hooks/useSimulationData';
@@ -129,6 +130,7 @@ export const ParticleCanvas: React.FC<ParticleCanvasProps> = ({
     simulationTimeRef.current || 0
   );
 
+  // Fix: Make sure to explicitly return the result of resetSimulation
   const handleResetSimulation = (): any[] => {
     return resetSimulation();
   };

@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -38,6 +37,7 @@ interface IntentAssistantProps {
   placeholder?: string;
   className?: string;
   voiceStyle?: 'professor' | 'researcher' | 'casual';
+  onAdvice?: (advice: string) => void;
 }
 
 const IntentAssistant: React.FC<IntentAssistantProps> = ({
@@ -45,6 +45,7 @@ const IntentAssistant: React.FC<IntentAssistantProps> = ({
   placeholder = "Ask about intent fields, particles, research findings, or upload media for analysis...",
   className = "",
   voiceStyle = 'professor',
+  onAdvice
 }) => {
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
@@ -78,81 +79,56 @@ const IntentAssistant: React.FC<IntentAssistantProps> = ({
     scrollToBottom();
   }, [messages]);
 
-  // Simulated voice synthesis
   const synthesizeVoice = async (text: string): Promise<void> => {
     console.log(`Synthesizing voice (${selectedVoice} style): ${text}`);
-    // In a real implementation, this would call an API like ElevenLabs
     toast.info("Voice synthesis would play here with Oxford professor style");
-    
-    // Mock audio playback delay
     await new Promise(resolve => setTimeout(resolve, 500));
   };
 
-  // Simulated deep research function
   const performDeepResearch = async (query: string): Promise<string[]> => {
     console.log(`Performing deep research on: ${query}`);
     setIsResearching(true);
-    
-    // Simulate research delay
     await new Promise(resolve => setTimeout(resolve, 3000));
-    
-    // Mock research results based on query keywords
     const results: string[] = [];
-    
     if (query.toLowerCase().includes('intent')) {
       results.push("Found 37 research papers on intent field dynamics");
       results.push("ATLAS data correlation with intent fields: 76% certainty");
       results.push("Recent simulation shows emergent complexity in intent fluctuations");
     }
-    
     if (query.toLowerCase().includes('particle')) {
       results.push("Particle emergence patterns match theoretical predictions (p<0.005)");
       results.push("Charge-intent relationship confirmed in 12 independent studies");
       results.push("Self-organizing particle clusters exhibit knowledge-seeking behavior");
     }
-    
     if (query.toLowerCase().includes('simulation')) {
       results.push("Simulation parameters optimized for maximum correlation with observed data");
       results.push("Neural network predictions match simulation outcomes at 89% accuracy");
       results.push("Computational complexity scales with intent field resolution in O(n²) time");
     }
-    
-    // Add some generic research findings if results are empty
     if (results.length === 0) {
       results.push("Found 8 relevant research papers in the IntentSim database");
       results.push("Data correlation analysis complete: 82% confidence interval");
       results.push("Hypothesis testing confirms primary assumptions (p<0.01)");
     }
-    
     setIsResearching(false);
     return results;
   };
 
-  // This is a simulated response generator
   const generateAssistantResponse = async (userMessage: string, mediaContent?: MediaProcessingResult): Promise<string> => {
-    // Simulate API delay
     await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    // If there's media content, generate a response based on the media type
     if (mediaContent) {
       switch (mediaContent.type) {
         case 'image':
           return `I've analyzed the image you provided. ${mediaContent.metadata.insights?.join(' ')} This visual data aligns with our intent field fluctuation models, particularly in how patterns emerge from seemingly random energy distributions. Would you like me to explain how this relates to specific aspects of the IntentSim model?`;
-          
         case 'audio':
           return `I've processed your audio input. ${mediaContent.metadata.insights?.join(' ')} The audio patterns contain frequencies that correlate with intent field fluctuations in our simulation. The ${mediaContent.metadata.duration?.toFixed(2)} seconds of audio provide interesting data points for further analysis. Would you like me to elaborate on any specific aspect?`;
-          
         case 'video':
           return `Thank you for sharing this video. ${mediaContent.metadata.insights?.join(' ')} The temporal patterns in this ${mediaContent.metadata.duration?.toFixed(2)}-second clip show remarkable similarities to the evolution of intent fields in our simulations. The complexity index calculated from this video is particularly informative. Would you like me to explain how this relates to our theoretical framework?`;
-          
         default:
           return "I've processed your media input and found some interesting patterns that relate to our intent-based universe model. Would you like me to analyze specific aspects in more detail?";
       }
     }
-    
-    // Text-based response logic
     const userMessageLower = userMessage.toLowerCase();
-    
     if (userMessageLower.includes('intent') && userMessageLower.includes('field')) {
       return "The intent field is the foundational conceptual space of our universe model. It represents fluctuations that give rise to particles with varying charges. Positive fluctuations create positive charges, negative fluctuations create negative charges, and neutral fluctuations create neutral particles. These intent field fluctuations are the seed of all complexity in our model. Our simulations show that these fields exhibit self-organizing properties that align remarkably well with ATLAS data from CERN.";
     } else if (userMessageLower.includes('particle') && (userMessageLower.includes('create') || userMessageLower.includes('formation'))) {
@@ -183,7 +159,6 @@ const IntentAssistant: React.FC<IntentAssistantProps> = ({
 
     setIsProcessing(true);
 
-    // Process media file if present
     if (mediaFile) {
       try {
         const fileType = mediaFile.type.split('/')[0];
@@ -216,7 +191,6 @@ const IntentAssistant: React.FC<IntentAssistantProps> = ({
       }
     }
 
-    // Add user message
     const userMessage: ChatMessage = {
       id: Date.now().toString(),
       text: userText,
@@ -229,10 +203,8 @@ const IntentAssistant: React.FC<IntentAssistantProps> = ({
     setInput('');
 
     try {
-      // Get assistant response
       const response = await generateAssistantResponse(userText, media);
       
-      // Add assistant message
       const assistantMessage: ChatMessage = {
         id: (Date.now() + 1).toString(),
         text: response,
@@ -242,7 +214,10 @@ const IntentAssistant: React.FC<IntentAssistantProps> = ({
 
       setMessages(prev => [...prev, assistantMessage]);
       
-      // Synthesize voice for the response
+      if (onAdvice) {
+        onAdvice(`IntentSim suggests: ${response.substring(0, 60)}...`);
+      }
+      
       synthesizeVoice(response);
     } catch (error) {
       console.error('Error generating response:', error);
@@ -308,11 +283,9 @@ const IntentAssistant: React.FC<IntentAssistantProps> = ({
     const results = await performDeepResearch(researchQuery.trim());
     setResearchResults(results);
     
-    // Add research results to chat
     if (results.length > 0) {
       const researchSummary = `Research on "${researchQuery}":\n\n${results.join('\n')}`;
       
-      // Add system message with research results
       const researchMessage: ChatMessage = {
         id: Date.now().toString(),
         text: researchSummary,

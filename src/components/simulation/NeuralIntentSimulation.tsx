@@ -2,8 +2,7 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { Particle } from '@/types/simulation';
-import { SimulationStats } from '@/types/simulation';
+import { Particle, SimulationStats } from '@/types/simulation';
 import ParticleCanvas from '@/components/simulation/ParticleCanvas';
 import { Brain, Activity, Cpu } from 'lucide-react';
 

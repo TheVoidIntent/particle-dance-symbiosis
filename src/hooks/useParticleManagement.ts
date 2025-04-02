@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Particle } from '@/utils/particleUtils';
 import { useParticleSimulation, InflationEvent } from '@/hooks/simulation';
@@ -48,6 +49,7 @@ export function useParticleManagement({
     canvasRef
   });
 
+  // Destructure all required properties from simulation
   const {
     particles,
     intentField,

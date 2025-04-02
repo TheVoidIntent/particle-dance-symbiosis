@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,7 +27,7 @@ const IntentAssistant: React.FC<IntentAssistantProps> = ({ onAdvice }) => {
     e.preventDefault();
     if (!input.trim()) return;
 
-    const userMessage = { role: 'user', content: input };
+    const userMessage = { role: 'user' as const, content: input };
     setMessages(prev => [...prev, userMessage]);
     setInput('');
     setIsTyping(true);
@@ -34,7 +35,7 @@ const IntentAssistant: React.FC<IntentAssistantProps> = ({ onAdvice }) => {
     // Simulate assistant response
     setTimeout(() => {
       const assistantMessage = {
-        role: 'assistant',
+        role: 'assistant' as const,
         content: `IntentSim says: ${input}? That's an interesting question!`
       };
       setMessages(prev => [...prev, assistantMessage]);

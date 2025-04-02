@@ -1,7 +1,6 @@
-
 import React, { useState } from 'react';
 import { Helmet } from 'react-helmet';
-import IntentAssistant from '@/components/assistant/IntentAssistant';
+import IntentAssistant from '@/components/IntentAssistant';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';

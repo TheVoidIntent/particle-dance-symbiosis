@@ -14,6 +14,11 @@ interface UseParticleSimulationProps {
   onInflationEvent?: (event: InflationEvent) => void;
 }
 
+interface UpdateResult {
+  updatedParticles: Particle[];
+  interactionCount: number;
+}
+
 export function useParticleSimulation({
   initialParticleCount = 50,
   config = {},
@@ -72,6 +77,8 @@ export function useParticleSimulation({
     isAnimatingRef,
     isInflatedRef,
     inflationTimeRef,
+    isInitialized,
+    setIsInitialized,
     state,
     setState
   } = simulationState;
@@ -112,11 +119,11 @@ export function useParticleSimulation({
   );
 
   const particleUpdater = useParticleUpdater({
-    dimensions,
-    intentField,
-    boundaryCondition: fullConfig.boundaryCondition,
-    interactionRadius: fullConfig.interactionRadius,
-    particleLifetime: fullConfig.particleLifetime
+    particlesRef,
+    intentFieldRef,
+    interactionsRef,
+    canvasWidth: dimensions.width,
+    canvasHeight: dimensions.height
   });
 
   const inflationHandler = useInflationHandler({
@@ -139,13 +146,10 @@ export function useParticleSimulation({
       currentParticles = inflationHandler.handleInflation(currentParticles);
     }
     
-    const result = particleUpdater.updateAllParticles(currentParticles);
-    const updatedParticles = result.updatedParticles;
-    const interactionCount = result.interactionCount;
+    const result = particleUpdater.updateAllParticles();
     
-    setInteractionsCount(prev => prev + interactionCount);
-    
-    setParticles(updatedParticles);
+    setInteractionsCount(prev => prev + result.interactionCount);
+    setParticles(result.updatedParticles);
     
     animationFrameIdRef.current = requestAnimationFrame(animate);
   }, [isRunning, particleUpdater, inflationHandler, setParticles, setSimulationTime, setFrameCount, setInteractionsCount]);
@@ -317,12 +321,14 @@ export function useParticleSimulation({
     isAnimatingRef,
     isInflatedRef,
     inflationTimeRef,
+    isInitialized,
     initializeSimulation: (canvas: HTMLCanvasElement) => {
       if (canvas) {
         dimensionsRef.current = {
           width: canvas.width, 
           height: canvas.height
         };
+        setIsInitialized(true);
       }
     },
     updateParticles: () => {

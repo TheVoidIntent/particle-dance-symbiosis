@@ -1,97 +1,136 @@
 
 /**
- * Initialize an intent field with the specified dimensions
- * @param width Canvas width
- * @param height Canvas height 
- * @param depth Optional depth for 3D fields (default 10)
- * @param resolution Cell size in pixels (default 20)
- * @returns A 3D array representing the intent field
+ * Initialize the intent field
  */
-export function initializeIntentField(width: number, height: number, depth: number = 10, resolution: number = 20): number[][][] {
+export function initializeIntentField(
+  width: number, 
+  height: number, 
+  depth: number = 10, 
+  resolution: number = 20
+): number[][][] {
   const field: number[][][] = [];
   
-  const cols = Math.ceil(width / resolution);
-  const rows = Math.ceil(height / resolution);
-  const layers = depth;
+  const cols = Math.max(3, Math.ceil(width / resolution));
+  const rows = Math.max(3, Math.ceil(height / resolution));
+  const layers = Math.max(1, depth);
   
   for (let z = 0; z < layers; z++) {
-    const plane: number[][] = [];
+    const layer: number[][] = [];
     for (let y = 0; y < rows; y++) {
       const row: number[] = [];
       for (let x = 0; x < cols; x++) {
-        // Initialize with small random fluctuations around zero
-        const value = (Math.random() * 0.4) - 0.2;
-        row.push(value);
+        // Random value between -1 and 1
+        row.push(Math.random() * 2 - 1);
       }
-      plane.push(row);
+      layer.push(row);
     }
-    field.push(plane);
+    field.push(layer);
   }
   
   return field;
 }
 
 /**
- * Get the intent value at a specific position in the field
- * @param field The intent field 
- * @param x X position
- * @param y Y position
- * @param z Z position (default 0)
- * @returns The intent value at the specified position
+ * Update intent field with random fluctuations
  */
-export function getIntentAtPosition(field: number[][][], x: number, y: number, z: number = 0): number {
+export function updateIntentField(
+  field: number[][][],
+  fluctuationRate: number = 0.01,
+  probabilistic: boolean = false
+): number[][][] {
+  const updatedField = JSON.parse(JSON.stringify(field));
+  
+  for (let z = 0; z < field.length; z++) {
+    for (let y = 0; y < field[z].length; y++) {
+      for (let x = 0; x < field[z][y].length; x++) {
+        // Apply random fluctuation
+        let fluctuation = (Math.random() * 2 - 1) * fluctuationRate;
+        
+        // If probabilistic, sometimes have larger fluctuations
+        if (probabilistic && Math.random() < 0.05) {
+          fluctuation *= 5; // Occasional larger fluctuations
+        }
+        
+        updatedField[z][y][x] += fluctuation;
+        
+        // Clamp to range [-1, 1]
+        updatedField[z][y][x] = Math.max(-1, Math.min(1, updatedField[z][y][x]));
+      }
+    }
+  }
+  
+  return updatedField;
+}
+
+/**
+ * Get value from intent field at a specific position
+ */
+export function getIntentFieldValueAtPosition(
+  field: number[][][],
+  x: number, 
+  y: number, 
+  z: number = 0, 
+  dimensions: { width: number, height: number, depth?: number } = { width: 800, height: 600 }
+): number {
   if (!field || field.length === 0 || field[0].length === 0 || field[0][0].length === 0) {
     return 0;
   }
   
-  const layerCount = field.length;
-  const rowCount = field[0].length;
-  const colCount = field[0][0].length;
+  const depth = field.length;
+  const rows = field[0].length;
+  const cols = field[0][0].length;
   
-  // Make sure z is within bounds
-  z = Math.max(0, Math.min(layerCount - 1, Math.floor(z)));
+  // Scale coordinates to field dimensions
+  const fieldX = Math.floor((x / dimensions.width) * cols);
+  const fieldY = Math.floor((y / dimensions.height) * rows);
+  const fieldZ = Math.floor((z / (dimensions.depth || 10)) * depth);
   
-  // Calculate grid cell coordinates
-  const gridX = Math.max(0, Math.min(colCount - 1, Math.floor(x)));
-  const gridY = Math.max(0, Math.min(rowCount - 1, Math.floor(y)));
+  // Clamp to valid indices
+  const safeX = Math.max(0, Math.min(cols - 1, fieldX));
+  const safeY = Math.max(0, Math.min(rows - 1, fieldY));
+  const safeZ = Math.max(0, Math.min(depth - 1, fieldZ));
   
-  return field[z][gridY][gridX];
+  return field[safeZ][safeY][safeX];
 }
 
 /**
- * Set the intent value at a specific position in the field
- * @param field The intent field to modify
- * @param x X position 
- * @param y Y position
- * @param z Z position (default 0)
- * @param value The new intent value
- * @returns The updated field
+ * Create a field visualization
  */
-export function setIntentAtPosition(field: number[][][], x: number, y: number, z: number = 0, value: number): number[][][] {
-  if (!field || field.length === 0 || field[0].length === 0 || field[0][0].length === 0) {
-    return field;
+export function createFieldVisualization(
+  field: number[][][],
+  ctx: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+  layer: number = 0
+): void {
+  if (!field || field.length === 0 || !ctx) return;
+  
+  const safeLayer = Math.min(Math.max(0, layer), field.length - 1);
+  const rows = field[safeLayer].length;
+  const cols = field[safeLayer][0].length;
+  
+  const cellWidth = width / cols;
+  const cellHeight = height / rows;
+  
+  for (let y = 0; y < rows; y++) {
+    for (let x = 0; x < cols; x++) {
+      const value = field[safeLayer][y][x];
+      
+      // Map value to color
+      let color;
+      if (value > 0) {
+        // Positive values: red
+        const intensity = Math.min(1, value);
+        color = `rgba(255, ${Math.floor(255 * (1 - intensity))}, ${Math.floor(255 * (1 - intensity))}, 0.5)`;
+      } else {
+        // Negative values: blue
+        const intensity = Math.min(1, Math.abs(value));
+        color = `rgba(${Math.floor(255 * (1 - intensity))}, ${Math.floor(255 * (1 - intensity))}, 255, 0.5)`;
+      }
+      
+      // Draw cell
+      ctx.fillStyle = color;
+      ctx.fillRect(x * cellWidth, y * cellHeight, cellWidth, cellHeight);
+    }
   }
-  
-  const layerCount = field.length;
-  const rowCount = field[0].length;
-  const colCount = field[0][0].length;
-  
-  // Make sure z is within bounds
-  z = Math.max(0, Math.min(layerCount - 1, Math.floor(z)));
-  
-  // Calculate grid cell coordinates
-  const gridX = Math.max(0, Math.min(colCount - 1, Math.floor(x)));
-  const gridY = Math.max(0, Math.min(rowCount - 1, Math.floor(y)));
-  
-  // Create a deep copy of the field
-  const newField = JSON.parse(JSON.stringify(field));
-  newField[z][gridY][gridX] = value;
-  
-  return newField;
 }
-
-export default {
-  initializeIntentField,
-  getIntentAtPosition,
-  setIntentAtPosition,
-};

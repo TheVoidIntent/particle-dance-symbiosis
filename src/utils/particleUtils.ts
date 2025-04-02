@@ -1,4 +1,3 @@
-
 import { v4 as uuidv4 } from 'uuid';
 
 // Define types
@@ -35,7 +34,8 @@ export interface AnomalyEvent {
   description: string;
   particles: string[];
   timestamp: number;
-  severity: 'low' | 'medium' | 'high';
+  severity: number;
+  affectedParticles: number;
 }
 
 // Create a particle from intent field value
@@ -367,4 +367,78 @@ export function calculateSystemEntropy(particles: Particle[]): number {
   
   // Normalize to [0, 1]
   return entropy / Math.log2(3); // 3 is the number of charge types
+}
+
+// Add the missing function for anomaly detection
+export function detectAnomalies(
+  particles: Particle[],
+  previousState: any,
+  currentState: any,
+  frameCount: number
+): AnomalyEvent[] {
+  const anomalies: AnomalyEvent[] = [];
+  
+  // Simple anomaly detection based on entropy changes
+  if (previousState && currentState) {
+    // Detect entropy spikes
+    if (Math.abs(currentState.entropy - previousState.entropy) > 0.2) {
+      anomalies.push({
+        type: 'entropy_spike',
+        description: `Significant change in system entropy detected at frame ${frameCount}`,
+        particles: particles.slice(0, 5).map(p => p.id),
+        timestamp: frameCount,
+        severity: 0.7,
+        affectedParticles: Math.floor(particles.length * 0.3)
+      });
+    }
+    
+    // Detect cluster formation
+    if (currentState.clusterCount > previousState.clusterCount * 1.5) {
+      anomalies.push({
+        type: 'cluster_formation',
+        description: `Rapid formation of particle clusters detected at frame ${frameCount}`,
+        particles: particles.slice(0, 5).map(p => p.id),
+        timestamp: frameCount,
+        severity: 0.6,
+        affectedParticles: Math.floor(particles.length * 0.2)
+      });
+    }
+  }
+  
+  return anomalies;
+}
+
+// Add the missing function for creating a particle (used by useInflationHandler)
+export function createParticle(
+  x: number,
+  y: number,
+  z: number,
+  charge: 'positive' | 'negative' | 'neutral',
+  type: string,
+  timestamp: number
+): Particle {
+  return {
+    id: uuidv4(),
+    x,
+    y,
+    z,
+    vx: (Math.random() - 0.5) * 2,
+    vy: (Math.random() - 0.5) * 2,
+    vz: (Math.random() - 0.5) * 0.5,
+    charge,
+    radius: 3 + Math.random() * 2,
+    color: charge === 'positive' 
+      ? 'rgba(239, 68, 68, 0.8)' 
+      : charge === 'negative' 
+        ? 'rgba(147, 51, 234, 0.8)' 
+        : 'rgba(74, 222, 128, 0.8)',
+    intent: Math.random() * 2 - 1,
+    interactionTendency: charge === 'positive' ? 0.7 : charge === 'negative' ? 0.3 : 0.5,
+    knowledge: 0.1 + Math.random() * 0.2,
+    complexity: 1,
+    energy: 1 + Math.random(),
+    type: type as any,
+    age: 0,
+    creationTime: timestamp
+  };
 }

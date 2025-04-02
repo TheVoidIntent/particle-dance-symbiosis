@@ -1,7 +1,6 @@
 
 import { useCallback } from 'react';
-import { Particle, detectAnomalies } from '@/utils/particleUtils';
-import { AnomalyEvent } from '@/utils/particleUtils';
+import { Particle, AnomalyEvent, detectAnomalies } from '@/utils/particleUtils';
 
 export function useAnomalyDetection(
   running: boolean,
@@ -54,3 +53,5 @@ export function useAnomalyDetection(
 
   return { detectSimulationAnomalies };
 }
+
+export default useAnomalyDetection;

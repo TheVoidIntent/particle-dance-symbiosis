@@ -1,38 +1,51 @@
 
-import { useCallback } from 'react';
-import { AnomalyEvent } from '@/utils/particleUtils';
-import { InflationEvent } from '@/hooks/simulation';
-import { playSimulationEvent } from '@/utils/audio/simulationAudioUtils';
+import { useState, useEffect, useCallback } from 'react';
 
-export function useAudioEvents(
-  onAnomalyDetected?: (anomaly: AnomalyEvent) => void,
-  onInflationDetected?: (event: InflationEvent) => void,
-) {
-  const handleAnomalyWithAudio = useCallback((anomaly: AnomalyEvent) => {
-    if (onAnomalyDetected) {
-      onAnomalyDetected(anomaly);
-    }
-    
-    playSimulationEvent('anomaly_detected', {
-      severity: anomaly.severity || 0.5,
-      type: anomaly.type
-    });
-  }, [onAnomalyDetected]);
+// Define the valid event types for audio
+export type AudioEventType = 
+  | 'particle_creation' 
+  | 'cluster_formation' 
+  | 'robot_evolution' 
+  | 'inflation_event'
+  | 'anomaly_detected'
+  | 'interaction'
+  | 'field_fluctuation';
+
+interface AudioEventOptions {
+  intensity?: number;
+  count?: number;
+}
+
+export function useAudioEvents() {
+  const [audioEnabled, setAudioEnabled] = useState<boolean>(true);
   
-  const handleInflationWithAudio = useCallback((event: InflationEvent) => {
-    if (onInflationDetected) {
-      onInflationDetected(event);
-    }
+  const triggerAudioEvent = useCallback((eventType: AudioEventType, options: AudioEventOptions = {}) => {
+    if (!audioEnabled) return;
     
-    playSimulationEvent('inflation_event', {
-      timestamp: event.timestamp,
-      particlesBeforeInflation: event.particlesBeforeInflation,
-      particlesAfterInflation: event.particlesAfterInflation
+    // Log the event for debugging
+    console.log(`Audio event triggered: ${eventType}`, options);
+    
+    // Dispatch a custom event that the audio system can listen for
+    const event = new CustomEvent('audio-event', {
+      detail: {
+        type: eventType,
+        ...options
+      }
     });
-  }, [onInflationDetected]);
-
+    
+    window.dispatchEvent(event);
+  }, [audioEnabled]);
+  
+  const toggleAudio = useCallback(() => {
+    setAudioEnabled(prev => !prev);
+  }, []);
+  
   return {
-    handleAnomalyWithAudio,
-    handleInflationWithAudio
+    audioEnabled,
+    setAudioEnabled,
+    triggerAudioEvent,
+    toggleAudio
   };
 }
+
+export default useAudioEvents;

@@ -37,7 +37,7 @@ const AnomaliesTab: React.FC<AnomaliesTabProps> = ({ anomalies }) => {
                 <p className="text-sm mb-2">{anomaly.description}</p>
                 <div className="flex justify-between text-xs text-gray-500">
                   <span>Affected Particles: {anomaly.affectedParticles}</span>
-                  <span>Severity: {(anomaly.severity * 100).toFixed(0)}%</span>
+                  <span>Severity: {Math.floor(anomaly.severity * 100)}%</span>
                 </div>
               </div>
             ))}

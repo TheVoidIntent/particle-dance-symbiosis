@@ -4,13 +4,15 @@ import { Helmet } from 'react-helmet';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { BarChart, Calendar, FileText, Settings, Upload, Download, Clipboard, Database, Atom } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { SimulationStatus } from '@/components/simulation/SimulationStatus';
+import { toast } from 'sonner';
 
 const CreatorDashboard: React.FC = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [lastUpdated, setLastUpdated] = useState<string>('');
   
   useEffect(() => {
@@ -24,6 +26,11 @@ const CreatorDashboard: React.FC = () => {
     
     return () => clearInterval(interval);
   }, []);
+
+  const handleNavigation = (path: string, actionName: string) => {
+    navigate(path);
+    toast.success(`Navigating to ${actionName}`);
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 text-white p-4 md:p-8">
@@ -140,7 +147,13 @@ const CreatorDashboard: React.FC = () => {
                         </div>
                       </div>
                     </div>
-                    <Button variant="ghost" size="sm">View</Button>
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => handleNavigation(`/creator/simulation?type=${sim.type}`, `${sim.name} Simulation`)}
+                    >
+                      View
+                    </Button>
                   </div>
                 ))}
               </div>
@@ -154,23 +167,38 @@ const CreatorDashboard: React.FC = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
-                  <Link to="/creator/simulation">
-                    <Button variant="outline" className="w-full justify-start">
-                      <Atom className="mr-2 h-4 w-4" />
-                      New Simulation
-                    </Button>
-                  </Link>
-                  <Link to="/creator/notebook">
-                    <Button variant="outline" className="w-full justify-start">
-                      <FileText className="mr-2 h-4 w-4" />
-                      Open Notebook
-                    </Button>
-                  </Link>
-                  <Button variant="outline" className="w-full justify-start">
+                  <Button 
+                    variant="outline" 
+                    className="w-full justify-start"
+                    onClick={() => handleNavigation('/creator/simulation', 'New Simulation')}
+                  >
+                    <Atom className="mr-2 h-4 w-4" />
+                    New Simulation
+                  </Button>
+                  
+                  <Button 
+                    variant="outline" 
+                    className="w-full justify-start"
+                    onClick={() => handleNavigation('/creator/notebook', 'Notebook')}
+                  >
+                    <FileText className="mr-2 h-4 w-4" />
+                    Open Notebook
+                  </Button>
+                  
+                  <Button 
+                    variant="outline" 
+                    className="w-full justify-start"
+                    onClick={() => toast.info('Analytics view coming soon')}
+                  >
                     <BarChart className="mr-2 h-4 w-4" />
                     View Analytics
                   </Button>
-                  <Button variant="outline" className="w-full justify-start">
+                  
+                  <Button 
+                    variant="outline" 
+                    className="w-full justify-start"
+                    onClick={() => toast.info('Settings view coming soon')}
+                  >
                     <Settings className="mr-2 h-4 w-4" />
                     Settings
                   </Button>

@@ -9,10 +9,9 @@ import { getAvailableAudioFiles } from '@/utils/audio/audioFileUtils';
 import { 
   playSimulationAudio,
   playSimulationEvent,
-  setSimulationAudioVolume
+  setSimulationAudioVolume,
+  initAudioContext
 } from '@/utils/audio/simulationAudioUtils';
-
-import { initAudioContext } from '@/utils/audio/audioPlaybackUtils';
 
 const AudioOptionsSection: React.FC = () => {
   const [audioEnabled, setAudioEnabled] = useState(false);
@@ -99,10 +98,8 @@ const AudioOptionsSection: React.FC = () => {
     if (fileName.includes('inflation')) category = 'inflation';
     if (fileName.includes('field')) category = 'field';
     
-    // Extract file basename without extension
-    const baseName = fileName.split('.')[0];
-    
-    playSimulationAudio(category);
+    // Play the audio using the simulation event system
+    playSimulationEvent(category);
     
     // Automatically reset playing state after a reasonable time (5 seconds)
     setTimeout(() => {

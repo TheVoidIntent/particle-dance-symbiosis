@@ -2,66 +2,83 @@
 // Re-export audio utilities from the audio subdirectories
 // But avoid duplicate exports by being more selective
 
-// Import specific functions from audioPlaybackUtils
+// Import from audioPlaybackUtils
 import { 
-  playAudio, 
+  playAudio as playAudioBuffer, 
   playAudioWithErrorHandling,
   playLoopingAudio,
   stopLoopingAudio,
   setLoopingAudioVolume,
   resumeAudioContext,
-  createFallbackAudioIfNeeded as createPlaybackFallbackAudio,
-  initAudioContext
+  createFallbackAudioIfNeeded as createPlaybackFallbackAudio
 } from './audio/audioPlaybackUtils';
 
-// Explicitly re-export with unique namespace to avoid ambiguity
+// Import from simulationAudioUtils
+import {
+  initAudioContext,
+  playSimulationAudio,
+  playSimulationEvent
+} from './audio/simulationAudioUtils';
+
+// Import from audioFileUtils
+import { 
+  checkAudioFileExists,
+  getAudioFileMetadata
+} from './audio/audioFileUtils';
+
+// Import from audioGenerationUtils
+import { 
+  generateSampleAudio,
+  createFallbackAudioIfNeeded as createGenerationFallbackAudio
+} from './audio/audioGenerationUtils';
+
+// Re-export for convenience
 export {
-  playAudio,
+  playAudioBuffer,
   playAudioWithErrorHandling,
   playLoopingAudio,
   stopLoopingAudio,
   setLoopingAudioVolume,
   resumeAudioContext,
   createPlaybackFallbackAudio,
-  initAudioContext
-};
-
-// Import and re-export from simulationAudioUtils
-export * from './audio/simulationAudioUtils';
-
-// Import specific functions from audioFileUtils to avoid duplicate imports
-import { 
+  initAudioContext,
+  playSimulationAudio,
+  playSimulationEvent,
   checkAudioFileExists,
-  getAudioFileMetadata
-} from './audio/audioFileUtils';
-
-// Explicitly re-export to avoid ambiguity
-export {
-  checkAudioFileExists,
-  getAudioFileMetadata
-};
-
-// Explicitly re-export from audioGenerationUtils to avoid name collision
-import { 
-  generateSampleAudio, 
-  createFallbackAudioIfNeeded as createGenerationFallbackAudio 
-} from './audio/audioGenerationUtils';
-
-export {
+  getAudioFileMetadata,
   generateSampleAudio,
   createGenerationFallbackAudio
 };
 
 // Provide a simplified API for common audio operations
-export const playSound = (url: string): Promise<void> => {
-  return playAudio(url);
+export const playSound = async (url: string): Promise<void> => {
+  try {
+    const audioContext = initAudioContext();
+    const response = await fetch(url);
+    const arrayBuffer = await response.arrayBuffer();
+    const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+    playAudioBuffer(audioBuffer, 0.5);
+  } catch (error) {
+    console.error('Error playing sound:', error);
+  }
 };
 
 export const generateBeep = (duration: number = 0.5, frequency: number = 440): void => {
-  generateSampleAudio(duration, 'sine', frequency);
+  const buffer = generateSampleAudio(frequency, duration, 'sine');
+  if (buffer) {
+    playAudioBuffer(buffer, 0.3);
+  }
 };
 
 export const generateErrorSound = (): void => {
-  generateSampleAudio(0.1, 'sawtooth', 220);
-  setTimeout(() => generateSampleAudio(0.2, 'sawtooth', 180), 150);
+  const buffer1 = generateSampleAudio(220, 0.1, 'sawtooth');
+  if (buffer1) {
+    playAudioBuffer(buffer1, 0.3);
+    setTimeout(() => {
+      const buffer2 = generateSampleAudio(180, 0.2, 'sawtooth');
+      if (buffer2) {
+        playAudioBuffer(buffer2, 0.3);
+      }
+    }, 150);
+  }
 };

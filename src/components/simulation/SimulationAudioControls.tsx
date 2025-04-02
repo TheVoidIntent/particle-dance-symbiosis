@@ -19,9 +19,9 @@ import {
   playSimulationAudio,
   playSimulationEvent,
   generateParticleSoundscape,
-  setSimulationAudioVolume
+  setSimulationAudioVolume,
+  initAudioContext
 } from '@/utils/audio/simulationAudioUtils';
-import { initAudioContext } from '@/utils/audio/audioPlaybackUtils';
 import { SimulationStats } from '@/hooks/useSimulationData';
 import { toast } from "sonner";
 import {
@@ -102,7 +102,7 @@ const SimulationAudioControls: React.FC<SimulationAudioControlsProps> = ({
         return;
       }
       
-      startSimulationAudioStream(stats);
+      startSimulationAudioStream();
       setIsPlaying(true);
     }
   };
@@ -124,18 +124,7 @@ const SimulationAudioControls: React.FC<SimulationAudioControlsProps> = ({
     setIsPlaying(true);
   };
   
-  const playTestAudio = (eventType: string) => {
-    handleInitAudio();
-    
-    if (!audioInitialized) {
-      toast.error("Please wait for audio system to initialize");
-      return;
-    }
-    
-    playSimulationAudio(eventType);
-  };
-  
-  const playTestEvent = (eventType: 'particle_creation' | 'particle_interaction' | 'field_fluctuation' | 'anomaly_detected' | 'inflation_event') => {
+  const playTestEvent = (eventType: string) => {
     handleInitAudio();
     
     if (!audioInitialized) {

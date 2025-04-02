@@ -7,9 +7,13 @@ import { Button } from "@/components/ui/button";
 import { Play, Pause, Download, Info, Music2 } from "lucide-react";
 import { toast } from "sonner";
 import AudioOptionsSection from '@/components/simulation/AudioOptionsSection';
-import { playLoopingAudio, stopLoopingAudio, setLoopingAudioVolume } from '@/utils/audio/audioPlaybackUtils';
+import { 
+  playLoopingAudio, 
+  stopLoopingAudio, 
+  setLoopingAudioVolume 
+} from '@/utils/audio/audioPlaybackUtils';
 import { getAvailableAudioFiles } from '@/utils/audio/audioFileUtils';
-import { initAudioContext } from '@/utils/audio/audioPlaybackUtils';
+import { initAudioContext } from '@/utils/audio/simulationAudioUtils';
 
 interface Particle {
   x: number;
@@ -132,10 +136,10 @@ const VisitorSimulator: React.FC = () => {
     if (newState) {
       initAudioContext();
       
-      playLoopingAudio('https://notebooklm.google.com/notebook/b2d28cf3-eebe-436c-9cfe-0015c99f99ac/audio', audioVolume / 100);
+      playLoopingAudio('https://notebooklm.google.com/notebook/b2d28cf3-eebe-436c-9cfe-0015c99f99ac/audio', 'background', audioVolume / 100);
       toast.success("Background audio enabled - Click anywhere if you don't hear sound");
     } else {
-      stopLoopingAudio();
+      stopLoopingAudio('background');
       toast.info("Background audio disabled");
     }
   };

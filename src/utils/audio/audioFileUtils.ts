@@ -15,19 +15,29 @@ export const checkAudioFileExists = async (filePath: string): Promise<boolean> =
 /**
  * Get metadata for an audio file
  */
-export const getAudioFileMetadata = async (filePath: string): Promise<any> => {
+export const getAudioFileMetadata = async (filePath: string): Promise<{
+  exists: boolean;
+  path: string;
+  filename: string;
+  timestamp: number;
+}> => {
   try {
     // In a real implementation, this would extract metadata from the audio file
-    // For now, just return a basic object
+    const exists = await checkAudioFileExists(filePath);
     return {
-      exists: await checkAudioFileExists(filePath),
+      exists,
       path: filePath,
       filename: filePath.split('/').pop() || '',
       timestamp: Date.now()
     };
   } catch (error) {
     console.error('Error getting audio file metadata:', error);
-    return null;
+    return {
+      exists: false,
+      path: filePath,
+      filename: filePath.split('/').pop() || '',
+      timestamp: Date.now()
+    };
   }
 };
 

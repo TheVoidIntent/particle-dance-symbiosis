@@ -51,6 +51,29 @@ export const generateSampleAudio = (frequency: number = 440, duration: number = 
 };
 
 /**
+ * Create a fallback audio in case of errors
+ */
+export const createFallbackAudioIfNeeded = (): void => {
+  const audioContext = initAudioContext();
+  
+  try {
+    // Create a silent buffer
+    const buffer = audioContext.createBuffer(1, audioContext.sampleRate * 0.1, audioContext.sampleRate);
+    const source = audioContext.createBufferSource();
+    
+    source.buffer = buffer;
+    source.connect(audioContext.destination);
+    
+    source.start();
+    source.stop(audioContext.currentTime + 0.1);
+    
+    console.log('Created fallback audio');
+  } catch (error) {
+    console.error('Error creating fallback audio:', error);
+  }
+};
+
+/**
  * Generate a tone specifically for particles
  */
 export const generateParticleTone = (

@@ -19,7 +19,8 @@ export {
 
 export {
   generateSampleAudio,
-  generateParticleTone
+  generateParticleTone,
+  createFallbackAudioIfNeeded
 } from './audioGenerationUtils';
 
 // Export from audioPlaybackUtils

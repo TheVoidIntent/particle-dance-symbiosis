@@ -52,7 +52,6 @@ export const convertAnyDataToPDF = async (
  */
 export const exportSimulationDataAsPDF = async (simulationData: any): Promise<string | null> => {
   const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
-  const filename = `intentSim_simulation_${timestamp}`;
   
   // Check if we have ATLAS/CERN comparison data
   const hasAtlasData = simulationData && 
@@ -61,9 +60,10 @@ export const exportSimulationDataAsPDF = async (simulationData: any): Promise<st
        (sim: any) => sim?.atlasData || sim?.metadata?.source === 'ATLAS'
      )));
   
-  // Add a note about ATLAS/CERN comparison in the filename if applicable
+  // Create the filename with ATLAS comparison info if applicable
+  let filename = `intentSim_simulation_${timestamp}`;
   if (hasAtlasData) {
-    filename += '_with_ATLAS_comparison';
+    filename = `${filename}_with_ATLAS_comparison`;
   }
   
   try {

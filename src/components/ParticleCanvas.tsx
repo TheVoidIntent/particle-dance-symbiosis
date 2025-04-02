@@ -129,10 +129,10 @@ export const ParticleCanvas: React.FC<ParticleCanvasProps> = ({
     simulationTimeRef.current || 0
   );
 
-  // Creating a wrapper function that explicitly returns void
-  const handleResetSimulation = React.useCallback((): void => {
+  // Creating a wrapper function that explicitly has void return type
+  const handleResetSimulation = (): void => {
     resetSimulation();
-  }, [resetSimulation]);
+  };
 
   return (
     <div className="relative w-full h-full">

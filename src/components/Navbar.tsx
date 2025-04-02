@@ -1,58 +1,62 @@
 
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { Button } from './ui/button';
-import { Home, Info, Beaker, BookOpen, BookText, Bot, LayoutDashboard } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
+import { 
+  Beaker, // Using Beaker instead of Flask which doesn't exist in lucide-react
+  BookOpen, 
+  Brain, 
+  Code, 
+  Home, 
+  Settings 
+} from 'lucide-react';
 
-const Navbar: React.FC = () => {
-  const location = useLocation();
-  
-  const isActive = (path: string) => {
-    return location.pathname === path;
-  };
-  
-  const navItems = [
-    { path: '/', label: 'Home', icon: <Home className="h-4 w-4 mr-2" /> },
-    { path: '/about', label: 'About', icon: <Info className="h-4 w-4 mr-2" /> },
-    { path: '/simulation', label: 'Simulation', icon: <Beaker className="h-4 w-4 mr-2" /> },
-    { path: '/universe', label: 'Universe', icon: <LayoutDashboard className="h-4 w-4 mr-2" /> },
-    { path: '/research', label: 'Research', icon: <BookOpen className="h-4 w-4 mr-2" /> },
-    { path: '/notebook', label: 'Notebook', icon: <BookText className="h-4 w-4 mr-2" /> },
-    { path: '/intentsimon', label: 'IntentSimon', icon: <Bot className="h-4 w-4 mr-2" /> },
-  ];
-  
+// Add the interface to define the component props
+interface NavbarProps {
+  isCreatorVersion?: boolean;
+}
+
+const Navbar: React.FC<NavbarProps> = ({ isCreatorVersion = false }) => {
   return (
-    <nav className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 sticky top-0 z-50">
-      <div className="container mx-auto px-4">
-        <div className="flex justify-between h-16">
-          <div className="flex items-center">
-            <Link to="/" className="flex-shrink-0 flex items-center">
-              <span className="text-xl font-bold text-gray-900 dark:text-white">
-                Intent<span className="text-indigo-600">Sim</span>
-              </span>
+    <header className="border-b border-gray-200 bg-white">
+      <div className="container flex h-16 items-center justify-between">
+        <div className="flex items-center gap-6">
+          <Link to="/" className="flex items-center gap-2 text-xl font-bold text-indigo-600">
+            <Beaker className="h-6 w-6" />
+            <span>IntentSim.org</span>
+          </Link>
+          
+          <nav className="hidden md:flex gap-6">
+            <Link to="/" className="text-sm font-medium hover:text-indigo-600">Home</Link>
+            <Link to="/universe" className="text-sm font-medium hover:text-indigo-600">Simulation</Link>
+            <Link to="/theory" className="text-sm font-medium hover:text-indigo-600">Theory</Link>
+            <Link to="/notebook" className="text-sm font-medium hover:text-indigo-600">Notebook</Link>
+            <Link to="/assistant" className="text-sm font-medium hover:text-indigo-600">Assistant</Link>
+          </nav>
+        </div>
+        
+        <div className="flex items-center gap-4">
+          {isCreatorVersion ? (
+            <Button variant="outline" size="sm" className="hidden md:flex gap-1">
+              <Code className="h-4 w-4" />
+              <span>Creator Mode</span>
+            </Button>
+          ) : (
+            <Link to="/auth">
+              <Button variant="outline" size="sm" className="hidden md:flex gap-1">
+                <Settings className="h-4 w-4" />
+                <span>Settings</span>
+              </Button>
             </Link>
-          </div>
+          )}
           
-          <div className="hidden md:flex items-center space-x-1">
-            {navItems.map((item) => (
-              <Link key={item.path} to={item.path}>
-                <Button
-                  variant={isActive(item.path) ? "default" : "ghost"}
-                  className={isActive(item.path) ? "bg-indigo-600 text-white" : ""}
-                >
-                  {item.icon}
-                  {item.label}
-                </Button>
-              </Link>
-            ))}
-          </div>
-          
-          <div className="md:hidden flex items-center">
-            {/* Mobile menu button would go here */}
-          </div>
+          <Button className="flex gap-1">
+            <Brain className="h-4 w-4" />
+            <span className="hidden md:inline">Explore</span>
+          </Button>
         </div>
       </div>
-    </nav>
+    </header>
   );
 };
 

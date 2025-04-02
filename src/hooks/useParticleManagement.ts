@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Particle } from '@/utils/particleUtils';
 import { useParticleSimulation, InflationEvent } from '@/hooks/simulation';
@@ -37,46 +36,51 @@ export function useParticleManagement({
   const [particleCount, setParticleCount] = useState(0);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   
-  // Initialize simulation hooks
+  const simulation = useParticleSimulation({
+    initialParticleCount: 10,
+    config: {
+      maxParticles,
+      intentFluctuationRate,
+      interactionRadius: 30,
+      boundaryCondition: 'wrap',
+      inflationEnabled: true
+    },
+    canvasRef
+  });
+
   const {
+    particles,
+    intentField,
+    isRunning,
+    simulationTime,
+    interactionsCount,
+    frameCount,
+    startSimulation,
+    stopSimulation,
+    resetSimulation,
+    addParticles,
+    createParticle,
+    emergenceIndex,
+    intentFieldComplexity,
     particlesRef,
     intentFieldRef,
-    dimensionsRef,
     interactionsRef,
     frameCountRef,
     simulationTimeRef,
+    dimensionsRef,
     isInitialized,
     isAnimatingRef,
-    isInflatedRef,
-    inflationTimeRef,
     initializeSimulation,
     updateParticles,
     createNewParticles,
     detectSimulationAnomalies
-  } = useParticleSimulation(
-    {
-      intentFluctuationRate,
-      maxParticles,
-      learningRate,
-      particleCreationRate,
-      viewMode,
-      renderMode,
-      useAdaptiveParticles,
-      energyConservation,
-      probabilisticIntent
-    },
-    running,
-    onAnomalyDetected,
-    onInflationDetected
-  );
+  } = simulation;
 
-  // Update particle count for UI display - fixed to avoid infinite updates
   useEffect(() => {
     const updateInterval = setInterval(() => {
       if (particlesRef.current) {
         setParticleCount(particlesRef.current.length);
         
-        // Make sure we're updating stats even if no simulation step has happened yet
         if (particlesRef.current.length > 0) {
           onStatsUpdate({
             particleCount: particlesRef.current.length,
@@ -98,21 +102,19 @@ export function useParticleManagement({
             complexityIndex: particlesRef.current.length > 0
               ? particlesRef.current.reduce((sum, p) => sum + (p.complexity || 1), 0) / particlesRef.current.length
               : 0,
-            systemEntropy: 0.1 + Math.random() * 0.4 // Simple placeholder until real calculation is implemented
+            systemEntropy: 0.1 + Math.random() * 0.4
           });
         }
       }
-    }, 500); // Update every 500ms
+    }, 500);
     
     return () => clearInterval(updateInterval);
   }, [onStatsUpdate, particlesRef, intentFieldRef, interactionsRef, frameCountRef, simulationTimeRef]);
 
-  // Initialize canvas and start simulation
   const handleCanvasReady = useCallback((canvas: HTMLCanvasElement) => {
     initializeSimulation(canvas);
   }, [initializeSimulation]);
 
-  // Manage particle creation based on simulation parameters
   useEffect(() => {
     if (!running || !isInitialized || !intentFieldRef.current || intentFieldRef.current.length === 0) return;
     

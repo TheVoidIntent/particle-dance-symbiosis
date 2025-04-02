@@ -1,4 +1,3 @@
-
 // Define the basic particle interface
 export interface Particle {
   id: number;
@@ -22,12 +21,17 @@ export interface Particle {
   neighbours?: Particle[];
   type?: string;
   
-  // Additional properties needed based on errors
+  // Properties needed based on errors
   knowledge?: number;
   lastInteraction?: number;
   age?: number;
   interactions?: number;
   interactionTendency?: number;
+  intentDecayRate?: number;
+  created?: number;
+  scale?: number;
+  adaptiveScore?: number;
+  energyCapacity?: number;
 }
 
 // Define the simulation state

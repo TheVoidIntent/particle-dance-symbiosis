@@ -67,14 +67,14 @@ export function useParticleCreation(
     
     // Generate a particle with all required and optional fields
     return {
-      id: `p-${Date.now()}-${Math.floor(Math.random() * 10000)}`,
+      id: Date.now() + Math.floor(Math.random() * 10000), // Convert to number
       x,
       y,
       vx,
       vy,
       radius: 3 + Math.random() * 3, // random size between 3-6
       mass: 1 + Math.random() * 4,
-      charge,
+      charge: charge as 'positive' | 'negative' | 'neutral', // Explicitly cast to the allowed values
       color,
       type,
       intent,

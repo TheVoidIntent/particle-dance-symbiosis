@@ -1,4 +1,3 @@
-
 import { Particle } from '@/types/simulation';
 
 // Define AnomalyEvent interface
@@ -187,7 +186,8 @@ export const analyzeParticleClusters = (particles: Particle[]) => {
     averageClusterSize: particles.length / Math.max(1, Math.floor(particles.length / 10)),
     clusterLifetime: 0,
     informationDensity: 0.5,
-    kolmogorovComplexity: 0.3
+    kolmogorovComplexity: 0.3,
+    clusterEntropyDelta: 0.2 // Add this missing property
   };
 };
 
@@ -222,6 +222,77 @@ export const detectAnomalies = (
   }
   
   return anomalies;
+};
+
+// Add the missing createParticleFromField function
+export const createParticleFromField = (
+  intentValue: number,
+  x: number,
+  y: number,
+  z: number,
+  id: number
+): Particle => {
+  // Determine charge based on intent field value
+  let charge: 'positive' | 'negative' | 'neutral';
+  if (intentValue > 0.3) {
+    charge = 'positive';
+  } else if (intentValue < -0.3) {
+    charge = 'negative';
+  } else {
+    charge = 'neutral';
+  }
+  
+  // Set color based on charge
+  let color = '';
+  switch (charge) {
+    case 'positive':
+      color = '#4ECDC4'; // Teal
+      break;
+    case 'negative':
+      color = '#FF6B6B'; // Red
+      break;
+    case 'neutral':
+      color = '#5E60CE'; // Purple
+      break;
+    default:
+      color = '#FFFFFF'; // White
+  }
+  
+  // Intent level based on the field value
+  const intent = Math.abs(intentValue) * 10;
+  
+  // Create a particle
+  return {
+    id,
+    x,
+    y,
+    z,
+    vx: (Math.random() - 0.5) * (intentValue * 2),
+    vy: (Math.random() - 0.5) * (intentValue * 2),
+    vz: (Math.random() - 0.5) * (intentValue * 2),
+    radius: 3 + Math.random() * 2,
+    mass: 1 + Math.random() * 4,
+    charge,
+    color,
+    energy: Math.random() * 100,
+    intent,
+    complexity: 0,
+    isPostInflation: false,
+    knowledgeLevel: 0,
+    lifetime: 0,
+    interactionCount: 0,
+    type: 'standard',
+    knowledge: 0,
+    lastInteraction: 0,
+    age: 0,
+    interactions: 0,
+    interactionTendency: Math.random(),
+    intentDecayRate: 0.001 + Math.random() * 0.005,
+    energyCapacity: 100,
+    created: Date.now(),
+    scale: 1,
+    adaptiveScore: 0
+  };
 };
 
 // Properly export Particle type

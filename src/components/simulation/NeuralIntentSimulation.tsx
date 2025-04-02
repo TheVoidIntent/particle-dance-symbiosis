@@ -1,173 +1,103 @@
 
-import React from 'react';
-import { Card, CardContent } from '@/components/ui/card';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Particle } from '@/types/simulation';
-import ParticleCanvas from '@/components/ParticleCanvas';
-import { Brain, Play, Pause, RefreshCw, Network, ZapIcon } from 'lucide-react';
+import { SimulationStats } from '@/types/simulation';
+import ParticleCanvas from '@/components/simulation/ParticleCanvas';
+import { Brain, Activity, Cpu } from 'lucide-react';
 
-// Props interface with optional neural training properties
 interface NeuralIntentSimulationProps {
   particles: Particle[];
+  stats?: SimulationStats; // Make stats prop optional
   isRunning: boolean;
-  toggleSimulation: () => void;
-  resetSimulation: () => void;
-  addParticles: (count: number) => void;
-  createParticle: (x?: number, y?: number) => Particle;
-  emergenceIndex: number;
-  intentFieldComplexity: number;
-  interactionCount: number;
-  isTraining?: boolean;
   trainingProgress?: number;
   modelAccuracy?: number;
   insightScore?: number;
-  predictedParticles?: Particle[];
-  intentPredictions?: number[][][];
-  neuralArchitecture?: string;
-  startTraining?: () => void;
-  generatePredictions?: () => void;
-  toggleNeuralArchitecture?: () => void;
 }
 
 const NeuralIntentSimulation: React.FC<NeuralIntentSimulationProps> = ({
   particles,
+  stats,
   isRunning,
-  toggleSimulation,
-  resetSimulation,
-  addParticles,
-  createParticle,
-  emergenceIndex,
-  intentFieldComplexity,
-  interactionCount,
-  isTraining = false,
   trainingProgress = 0,
   modelAccuracy = 0,
-  insightScore = 0,
-  predictedParticles = [],
-  intentPredictions = [],
-  neuralArchitecture = "standard",
-  startTraining = () => console.log("Training not implemented"),
-  generatePredictions = () => console.log("Predictions not implemented"),
-  toggleNeuralArchitecture = () => console.log("Architecture toggle not implemented")
+  insightScore = 0
 }) => {
+  const [isTraining, setIsTraining] = useState(false);
+  const [architecture, setArchitecture] = useState<'feedforward' | 'recurrent'>('feedforward');
+  
+  const startTraining = () => {
+    setIsTraining(true);
+    // Training logic would go here
+    setTimeout(() => setIsTraining(false), 3000);
+  };
+  
+  const toggleArchitecture = () => {
+    setArchitecture(arch => arch === 'feedforward' ? 'recurrent' : 'feedforward');
+  };
+  
   return (
-    <Card className="h-full flex flex-col">
-      <CardContent className="p-4 flex-1 flex flex-col">
-        <div className="bg-gray-900 rounded-lg flex-1 mb-4 overflow-hidden">
-          <ParticleCanvas 
-            particles={particles}
-            showIntentField={true}
-            className="w-full h-full"
-          />
-        </div>
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <h3 className="text-sm font-semibold text-white mb-1 flex items-center">
+          <Brain className="h-4 w-4 mr-1" />
+          Neural Intent Simulation
+        </h3>
         
-        <div className="grid grid-cols-2 gap-4 mb-4">
-          <div className="bg-gray-100 dark:bg-gray-800 p-3 rounded-md">
-            <div className="flex justify-between items-center mb-2">
-              <h3 className="text-sm font-semibold">Neural Training</h3>
-              {isTraining && (
-                <span className="text-xs bg-blue-500 text-white px-2 py-0.5 rounded-full animate-pulse">
-                  Training
-                </span>
-              )}
-            </div>
-            
-            {isTraining && (
-              <Progress value={trainingProgress} className="h-2 mb-2" />
-            )}
-            
-            <div className="text-xs text-gray-600 dark:text-gray-400">
-              Model Accuracy: {modelAccuracy.toFixed(2)}%
-            </div>
+        <Button 
+          size="sm" 
+          variant={architecture === 'feedforward' ? 'default' : 'outline'}
+          onClick={toggleArchitecture}
+          className="h-7 text-xs py-0"
+        >
+          <Cpu className="h-3 w-3 mr-1" />
+          {architecture === 'feedforward' ? 'Feedforward' : 'Recurrent'}
+        </Button>
+      </div>
+      
+      {isTraining ? (
+        <div className="space-y-2">
+          <div className="flex justify-between text-xs text-gray-300">
+            <span>Training neural model...</span>
+            <span>{Math.round(trainingProgress)}%</span>
           </div>
-          
-          <div className="bg-gray-100 dark:bg-gray-800 p-3 rounded-md">
-            <h3 className="text-sm font-semibold mb-2">Emergence Metrics</h3>
-            <div className="grid grid-cols-2 gap-2 text-xs">
-              <div>Emergence Index:</div>
-              <div className="text-right">{emergenceIndex.toFixed(2)}</div>
-              
-              <div>Field Complexity:</div>
-              <div className="text-right">{intentFieldComplexity.toFixed(2)}</div>
-              
-              <div>Insight Score:</div>
-              <div className="text-right">{insightScore.toFixed(2)}</div>
-            </div>
+          <Progress value={trainingProgress} className="h-1" />
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 gap-2 mb-3">
+          <Button size="sm" disabled={!isRunning} onClick={startTraining} className="text-xs h-8">
+            Train Model
+          </Button>
+          <Button size="sm" variant="outline" disabled={!isRunning} className="text-xs h-8">
+            Generate Predictions
+          </Button>
+        </div>
+      )}
+      
+      <div className="grid grid-cols-2 gap-2 text-xs">
+        <div className="bg-gray-800 rounded p-2">
+          <div className="text-gray-400 mb-1">Model Accuracy</div>
+          <div className="flex items-center">
+            <Activity className="h-3 w-3 text-blue-400 mr-1" />
+            <span className="font-mono">{modelAccuracy.toFixed(2)}</span>
           </div>
         </div>
-        
-        <div className="flex justify-between">
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={toggleSimulation}
-              className="flex items-center"
-            >
-              {isRunning ? (
-                <>
-                  <Pause className="h-4 w-4 mr-1" />
-                  Pause
-                </>
-              ) : (
-                <>
-                  <Play className="h-4 w-4 mr-1" />
-                  Resume
-                </>
-              )}
-            </Button>
-            
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={resetSimulation}
-              className="flex items-center"
-            >
-              <RefreshCw className="h-4 w-4 mr-1" />
-              Reset
-            </Button>
-          </div>
-          
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={startTraining}
-              disabled={isTraining}
-              className="flex items-center"
-            >
-              <Brain className="h-4 w-4 mr-1" />
-              Train
-            </Button>
-            
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={generatePredictions}
-              className="flex items-center"
-            >
-              <ZapIcon className="h-4 w-4 mr-1" />
-              Predict
-            </Button>
-            
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={toggleNeuralArchitecture}
-              className="flex items-center"
-            >
-              <Network className="h-4 w-4 mr-1" />
-              Architecture
-            </Button>
+        <div className="bg-gray-800 rounded p-2">
+          <div className="text-gray-400 mb-1">Insight Score</div>
+          <div className="flex items-center">
+            <Brain className="h-3 w-3 text-purple-400 mr-1" />
+            <span className="font-mono">{insightScore.toFixed(2)}</span>
           </div>
         </div>
-        
-        <div className="mt-4 text-xs text-center text-gray-500 dark:text-gray-400">
-          Neural Intent Architecture: {neuralArchitecture} | Interactions: {interactionCount}
-        </div>
-      </CardContent>
-    </Card>
+      </div>
+      
+      <ParticleCanvas
+        particles={particles}
+        showIntentField={true}
+        className="mt-3 h-40 w-full rounded border border-gray-700"
+      />
+    </div>
   );
 };
 

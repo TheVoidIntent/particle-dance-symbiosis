@@ -249,7 +249,7 @@ export function useNeuralIntentSimulation({
     }
     
     return {
-      id: `p-${Date.now()}-${Math.floor(Math.random() * 10000)}`,
+      id: Date.now() + Math.floor(Math.random() * 10000), // Convert to number
       x: posX,
       y: posY,
       vx: (Math.random() - 0.5) * 2,

@@ -130,7 +130,8 @@ export const ParticleCanvas: React.FC<ParticleCanvasProps> = ({
   );
 
   const handleResetSimulation = (): any[] => {
-    return resetSimulation();
+    const resetResult = resetSimulation();
+    return resetResult;
   };
 
   const captureFieldDistribution = () => {

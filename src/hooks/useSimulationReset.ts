@@ -1,10 +1,7 @@
-
 import { useCallback } from 'react';
-import { clearPersistedState, clearSimulationData } from '@/utils/dataExportUtils';
-import { useToast } from '@/hooks/use-toast';
-import { SimulationStats } from '@/hooks/useSimulationData';
+import { toast } from 'sonner';
 
-type UseSimulationResetProps = {
+interface UseSimulationResetProps {
   particlesRef: React.MutableRefObject<any[]>;
   intentFieldRef: React.MutableRefObject<number[][][]>;
   interactionsRef: React.MutableRefObject<number>;
@@ -17,9 +14,9 @@ type UseSimulationResetProps = {
     interactionsCount: number,
     frameCount: number,
     simulationTime: number
-  ) => SimulationStats;
-  onStatsUpdate: (stats: SimulationStats) => void;
-};
+  ) => any;
+  onStatsUpdate: (stats: any) => void;
+}
 
 export function useSimulationReset({
   particlesRef,
@@ -31,69 +28,53 @@ export function useSimulationReset({
   processSimulationData,
   onStatsUpdate
 }: UseSimulationResetProps) {
-  const { toast } = useToast();
-  
-  // Modified to return an empty array instead of void
   const resetSimulation = useCallback((): any[] => {
-    clearPersistedState();
-    clearSimulationData();
+    // Reset particles
     particlesRef.current = [];
+    
+    // Reset interactions
     interactionsRef.current = 0;
+    
+    // Reset frame count and simulation time but don't reset intent field
+    // as we want to keep the last field state
     frameCountRef.current = 0;
     simulationTimeRef.current = 0;
     
+    // Clear canvas if it exists
     if (canvasRef.current) {
-      const { width, height } = canvasRef.current.getBoundingClientRect();
-      const fieldResolution = 10;
-      const fieldWidth = Math.ceil(width / fieldResolution);
-      const fieldHeight = Math.ceil(height / fieldResolution);
-      const fieldDepth = 10;
-      
-      const newField: number[][][] = [];
-      
-      for (let z = 0; z < fieldDepth; z++) {
-        const plane: number[][] = [];
-        for (let y = 0; y < fieldHeight; y++) {
-          const row: number[] = [];
-          for (let x = 0; x < fieldWidth; x++) {
-            row.push(Math.random() * 2 - 1);
-          }
-          plane.push(row);
-        }
-        newField.push(plane);
+      const ctx = canvasRef.current.getContext('2d');
+      if (ctx) {
+        ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
       }
-      
-      intentFieldRef.current = newField;
     }
     
-    const emptyStats = processSimulationData(
+    // Process and update stats
+    const updatedStats = processSimulationData(
       particlesRef.current,
-      intentFieldRef.current || [],
-      interactionsRef.current || 0,
-      frameCountRef.current || 0,
-      simulationTimeRef.current || 0
+      intentFieldRef.current,
+      interactionsRef.current,
+      frameCountRef.current,
+      simulationTimeRef.current
     );
-    onStatsUpdate(emptyStats);
     
-    toast({
-      title: "Simulation Reset",
-      description: "The simulation has been completely reset.",
-      variant: "default",
+    onStatsUpdate(updatedStats);
+    
+    toast.success("Simulation reset", {
+      description: "Particles cleared, counters reset. Intent field preserved."
     });
     
-    // Return an empty array to satisfy the type requirement
-    return [];
+    // Return the reset particles array
+    return particlesRef.current;
   }, [
-    toast, 
-    particlesRef, 
-    interactionsRef, 
-    frameCountRef, 
-    simulationTimeRef, 
-    intentFieldRef, 
-    processSimulationData, 
-    onStatsUpdate,
-    canvasRef
+    particlesRef,
+    intentFieldRef,
+    interactionsRef,
+    frameCountRef,
+    simulationTimeRef,
+    canvasRef,
+    processSimulationData,
+    onStatsUpdate
   ]);
-
+  
   return { resetSimulation };
 }

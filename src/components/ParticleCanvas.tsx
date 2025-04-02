@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useParticleSimulation } from '@/hooks/simulation';
 import { useSimulationData } from '@/hooks/useSimulationData';
@@ -10,6 +11,7 @@ import { useParticleManagement } from '@/hooks/useParticleManagement';
 import { ParticleControls } from '@/components/simulation/ParticleControls';
 import { useAudioEvents } from '@/hooks/useAudioEvents';
 import { useSimulationReset } from '@/hooks/useSimulationReset';
+import { captureIntentFieldAsImage, createCMBComparisonImage } from '@/utils/pdfExportUtils';
 
 type ParticleCanvasProps = {
   intentFluctuationRate: number;
@@ -130,6 +132,33 @@ export const ParticleCanvas: React.FC<ParticleCanvasProps> = ({
 
   const handleResetSimulation = (): any[] => {
     return resetSimulation();
+  };
+
+  // Capture field distribution at key simulation points
+  const captureFieldDistribution = () => {
+    if (!canvasRef.current || !intentFieldRef.current) return null;
+    
+    const ctx = canvasRef.current.getContext('2d');
+    if (!ctx) return null;
+    
+    const dimensions = {
+      width: canvasRef.current.width,
+      height: canvasRef.current.height
+    };
+    
+    return captureIntentFieldAsImage(ctx, intentFieldRef.current, dimensions);
+  };
+
+  // Generate CMB comparison image
+  const generateCMBComparison = () => {
+    if (!canvasRef.current) return null;
+    
+    const dimensions = {
+      width: canvasRef.current.width,
+      height: canvasRef.current.height
+    };
+    
+    return createCMBComparisonImage(dimensions);
   };
 
   return (

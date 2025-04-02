@@ -33,7 +33,7 @@ export function useSimulationReset({
 }: UseSimulationResetProps) {
   const { toast } = useToast();
   
-  // Fixed to explicitly return an array
+  // Explicitly return an array to match the expected type
   const resetSimulation = useCallback((): any[] => {
     clearPersistedState();
     clearSimulationData();

@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useParticleSimulation } from '@/hooks/simulation';
 import { useSimulationData } from '@/hooks/useSimulationData';
@@ -129,9 +128,8 @@ export const ParticleCanvas: React.FC<ParticleCanvasProps> = ({
     simulationTimeRef.current || 0
   );
 
-  // Creating a wrapper function that explicitly has void return type
-  const handleResetSimulation = (): void => {
-    resetSimulation();
+  const handleResetSimulation = (): any[] => {
+    return resetSimulation();
   };
 
   return (

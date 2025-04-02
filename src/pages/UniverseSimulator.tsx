@@ -3,9 +3,12 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Helmet } from 'react-helmet';
 import SimulationCanvas from '@/components/simulation/SimulationCanvas';
 import SimulationControls from '@/components/simulation/SimulationControls';
+import SimulationStats from '@/components/simulation/SimulationStats';
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
+import { useParticleSimulation } from '@/hooks/simulation';
+import { SimulationStats as StatsType } from '@/types/simulation';
 
 const UniverseSimulator: React.FC = () => {
   // Simulation parameters
@@ -23,8 +26,40 @@ const UniverseSimulator: React.FC = () => {
   // Visualization options
   const [visualizationMode, setVisualizationMode] = useState<'particles' | 'field' | 'both'>('particles');
   
+  // Simulation stats
+  const [stats, setStats] = useState<StatsType>({
+    particleCount: 0,
+    positiveParticles: 0,
+    negativeParticles: 0,
+    neutralParticles: 0,
+    highEnergyParticles: 0,
+    quantumParticles: 0,
+    compositeParticles: 0,
+    adaptiveParticles: 0,
+    totalInteractions: 0,
+    complexityIndex: 0,
+    averageKnowledge: 0,
+    maxComplexity: 0,
+    clusterCount: 0,
+    averageClusterSize: 0,
+    systemEntropy: 0,
+    intentFieldComplexity: 0
+  });
+
   const { toast } = useToast();
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  
+  const simulation = useParticleSimulation({
+    initialParticleCount: 30,
+    config: {
+      maxParticles,
+      intentFluctuationRate,
+      interactionRadius: 30,
+      boundaryCondition: 'wrap',
+      inflationEnabled: true
+    },
+    canvasRef
+  });
 
   // Show welcome toast when component mounts
   useEffect(() => {
@@ -33,6 +68,67 @@ const UniverseSimulator: React.FC = () => {
       description: "Adjust parameters to see how particles emerge and interact based on intent field fluctuations.",
     });
   }, [toast]);
+
+  // Update stats when the simulation changes
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (simulation.particles.length > 0) {
+        const positiveParticles = simulation.particles.filter(p => p.charge === 'positive').length;
+        const negativeParticles = simulation.particles.filter(p => p.charge === 'negative').length;
+        const neutralParticles = simulation.particles.filter(p => p.charge === 'neutral').length;
+        const highEnergyParticles = simulation.particles.filter(p => p.type === 'high-energy').length || 0;
+        const quantumParticles = simulation.particles.filter(p => p.type === 'quantum').length || 0;
+        const compositeParticles = simulation.particles.filter(p => p.type === 'composite').length || 0;
+        const adaptiveParticles = simulation.particles.filter(p => p.type === 'adaptive').length || 0;
+        
+        const totalKnowledge = simulation.particles.reduce((sum, p) => sum + (p.knowledge || 0), 0);
+        const averageKnowledge = simulation.particles.length > 0 ? totalKnowledge / simulation.particles.length : 0;
+        
+        setStats({
+          particleCount: simulation.particles.length,
+          positiveParticles,
+          negativeParticles,
+          neutralParticles,
+          highEnergyParticles,
+          quantumParticles,
+          compositeParticles,
+          adaptiveParticles,
+          totalInteractions: simulation.interactionsCount,
+          complexityIndex: simulation.emergenceIndex,
+          averageKnowledge,
+          maxComplexity: 1,
+          clusterCount: 0,
+          averageClusterSize: 0,
+          systemEntropy: 0,
+          intentFieldComplexity: simulation.intentFieldComplexity
+        });
+      }
+    }, 500);
+    
+    return () => clearInterval(interval);
+  }, [simulation]);
+
+  // Toggle simulation based on running state
+  useEffect(() => {
+    if (running) {
+      simulation.startSimulation();
+    } else {
+      simulation.stopSimulation();
+    }
+  }, [running, simulation]);
+
+  // Handle particle creation rate
+  useEffect(() => {
+    if (!running) return;
+    
+    const createParticlesInterval = setInterval(() => {
+      if (simulation.particles.length < maxParticles) {
+        simulation.createParticle();
+      }
+    }, 1000 / particleCreationRate);
+    
+    return () => clearInterval(createParticlesInterval);
+  }, [running, simulation, particleCreationRate, maxParticles]);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 text-white p-4 md:p-8">
@@ -56,15 +152,13 @@ const UniverseSimulator: React.FC = () => {
           <Card className="bg-gray-800/50 border-gray-700">
             <CardContent className="p-0">
               <SimulationCanvas 
-                intentFluctuationRate={intentFluctuationRate}
-                maxParticles={maxParticles}
-                particleCreationRate={particleCreationRate}
-                positiveChargeBehavior={positiveChargeBehavior}
-                negativeChargeBehavior={negativeChargeBehavior}
-                neutralChargeBehavior={neutralChargeBehavior}
-                probabilisticIntent={probabilisticIntent}
-                visualizationMode={visualizationMode}
-                running={running}
+                particles={simulation.particles}
+                intentField={simulation.intentField}
+                showIntentField={visualizationMode === 'field' || visualizationMode === 'both'}
+                width={800}
+                height={500}
+                backgroundColor="rgb(17, 24, 39)"
+                className="w-full h-[500px] rounded-md"
               />
             </CardContent>
           </Card>
@@ -180,27 +274,7 @@ const UniverseSimulator: React.FC = () => {
           <Card className="bg-gray-800/50 border-gray-700">
             <CardContent className="p-4">
               <h3 className="text-lg font-medium mb-2">Simulation Stats</h3>
-              <div className="space-y-2">
-                <div className="grid grid-cols-2 gap-x-4 gap-y-1">
-                  <div className="text-sm text-gray-400">Positive Particles:</div>
-                  <div className="text-sm text-right">0</div>
-                  
-                  <div className="text-sm text-gray-400">Negative Particles:</div>
-                  <div className="text-sm text-right">0</div>
-                  
-                  <div className="text-sm text-gray-400">Neutral Particles:</div>
-                  <div className="text-sm text-right">0</div>
-                  
-                  <div className="text-sm text-gray-400">Total Interactions:</div>
-                  <div className="text-sm text-right">0</div>
-                  
-                  <div className="text-sm text-gray-400">Average Knowledge:</div>
-                  <div className="text-sm text-right">0</div>
-                  
-                  <div className="text-sm text-gray-400">Complexity Index:</div>
-                  <div className="text-sm text-right">0</div>
-                </div>
-              </div>
+              <SimulationStats stats={stats} />
             </CardContent>
           </Card>
         </div>

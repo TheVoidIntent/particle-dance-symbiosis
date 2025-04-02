@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Particle } from '@/utils/particleUtils';
 import { useParticleCreation } from './useParticleCreation';
@@ -12,11 +13,6 @@ interface UseParticleSimulationProps {
   config?: Partial<SimulationConfig>;
   canvasRef?: React.RefObject<HTMLCanvasElement>;
   onInflationEvent?: (event: InflationEvent) => void;
-}
-
-interface UpdateResult {
-  updatedParticles: Particle[];
-  interactionCount: number;
 }
 
 export function useParticleSimulation({
@@ -52,8 +48,7 @@ export function useParticleSimulation({
       10, 
       fullConfig.fieldResolution
     ),
-    dimensions,
-    canvasRef
+    dimensions
   });
 
   const { 
@@ -99,7 +94,7 @@ export function useParticleSimulation({
             canvas.width = displayWidth;
             canvas.height = displayHeight;
             
-            setDimensions({ width: displayWidth, height: displayWidth });
+            setDimensions({ width: displayWidth, height: displayHeight });
           }
         }
       };
@@ -119,13 +114,13 @@ export function useParticleSimulation({
     dimensions.height
   );
 
-  const particleUpdater = useParticleUpdater({
+  const particleUpdater = useParticleUpdater(
     particlesRef,
     intentFieldRef,
     interactionsRef,
-    canvasWidth: dimensions.width,
-    canvasHeight: dimensions.height
-  });
+    dimensions.width,
+    dimensions.height
+  );
 
   const inflationHandler = useInflationHandler({
     config: fullConfig,

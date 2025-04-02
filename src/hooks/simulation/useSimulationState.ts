@@ -3,11 +3,19 @@ import { useRef, useState } from 'react';
 import { Particle } from '@/types/simulation';
 import { SimulationState } from './types';
 
+interface UseSimulationStateProps {
+  initialParticles?: Particle[];
+  initialIntentField?: number[][][];
+  dimensions?: { width: number; height: number };
+  canvasRef?: React.RefObject<HTMLCanvasElement>;
+}
+
 export function useSimulationState({
   initialParticles = [],
   initialIntentField = [],
   dimensions = { width: 800, height: 600 },
-} = {}) {
+  canvasRef
+} = {} as UseSimulationStateProps) {
   const [isInitialized, setIsInitialized] = useState(false);
   const [particles, setParticles] = useState<Particle[]>(initialParticles);
   const [intentField, setIntentField] = useState<number[][][]>(initialIntentField);

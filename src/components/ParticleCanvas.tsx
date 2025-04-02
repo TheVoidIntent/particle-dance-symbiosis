@@ -87,7 +87,7 @@ export const ParticleCanvas: React.FC<ParticleCanvasProps> = ({
 
   const { renderSimulation } = useCanvasRenderer();
 
-  // Fix: Update the useSimulationReset hook to properly return any[] from resetSimulation
+  // Using the resetSimulation function that returns any[]
   const { resetSimulation } = useSimulationReset({
     particlesRef,
     intentFieldRef,

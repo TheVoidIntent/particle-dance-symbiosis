@@ -19,7 +19,7 @@ export function useParticleCreation(options: UseParticleCreationOptions = {}) {
     }
 
     const newParticle: Particle = {
-      id: `p-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+      id: Date.now() + Math.floor(Math.random() * 10000),
       position: position || { x: Math.random() * 100, y: Math.random() * 100 },
       velocity: { x: (Math.random() - 0.5) * 2, y: (Math.random() - 0.5) * 2 },
       charge: type,
@@ -27,7 +27,14 @@ export function useParticleCreation(options: UseParticleCreationOptions = {}) {
       energy: 1.0,
       age: 0,
       lifespan: 100 + Math.random() * 900,
-      creationTime: Date.now()
+      creationTime: Date.now(),
+      clusterAffinity: Math.random(),
+      knowledgeBase: {},
+      learningRate: 0.05 + Math.random() * 0.1,
+      adaptiveIndex: 0,
+      isInCluster: false,
+      clusterId: null,
+      insightScore: 0
     };
     
     setParticles(prev => [...prev, newParticle]);

@@ -1,12 +1,14 @@
 // Define the basic particle interface
 export interface Particle {
-  id: number;
-  x: number;
-  y: number;
+  id: number | string;
+  x?: number;
+  y?: number;
   z?: number;
-  vx: number;
-  vy: number;
+  vx?: number;
+  vy?: number;
   vz?: number;
+  position?: { x: number, y: number, z?: number };
+  velocity?: { x: number, y: number, z?: number };
   radius?: number;
   mass?: number;
   charge: 'positive' | 'negative' | 'neutral';
@@ -32,6 +34,17 @@ export interface Particle {
   scale?: number;
   adaptiveScore?: number;
   energyCapacity?: number;
+  lifespan?: number;
+  creationTime?: number;
+  
+  // Advanced properties for intelligent clusters
+  clusterAffinity?: number;
+  knowledgeBase?: Record<string, any>;
+  learningRate?: number;
+  adaptiveIndex?: number;
+  isInCluster?: boolean;
+  clusterId?: number | null;
+  insightScore?: number;
 }
 
 // Define the simulation state
@@ -75,6 +88,12 @@ export interface SimulationStats {
   interactions?: number;
   frame?: number;
   time?: number;
+  
+  // New properties for advanced simulation
+  robotCount?: number;
+  clusterCoherence?: number;
+  intelligenceIndex?: number;
+  knowledgeNetwork?: Record<string, number>;
 }
 
 // Define simulation configuration

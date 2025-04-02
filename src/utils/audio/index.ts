@@ -1,19 +1,34 @@
 
-// Export all audio utilities from this index file
-export * from './audioFileUtils';
-export * from './audioGenerationUtils';
-export * from './simulationAudioUtils';
-export * from './audioPlaybackUtils';
+// Export audio utilities from individual files
+export { 
+  playSimulationAudio,
+  playSimulationEvent,
+  generateParticleSoundscape,
+  startSimulationAudioStream,
+  stopSimulationAudioStream,
+  isSimulationAudioPlaying,
+  setSimulationAudioVolume
+} from './simulationAudioUtils';
 
-// Re-export specific functions with new names to avoid conflicts
-import { 
-  initAudioContext as initPlaybackAudioContext,
-  getAvailableAudioFiles as getPlaybackAudioFiles,
+export {
+  checkAudioFileExists,
+  getAudioFileMetadata
+} from './audioFileUtils';
+
+export {
+  generateSampleAudio
+} from './audioGenerationUtils';
+
+// Export from audioPlaybackUtils with unique names
+export {
+  playAudio,
+  playAudioWithErrorHandling,
+  playLoopingAudio,
+  stopLoopingAudio,
+  setLoopingAudioVolume,
+  resumeAudioContext,
   createFallbackAudioIfNeeded as createPlaybackFallbackAudio
 } from './audioPlaybackUtils';
 
-export {
-  initPlaybackAudioContext,
-  getPlaybackAudioFiles,
-  createPlaybackFallbackAudio
-};
+// Export initialization function with namespace
+export { initAudioContext } from './audioPlaybackUtils';

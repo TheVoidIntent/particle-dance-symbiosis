@@ -155,22 +155,22 @@ export function createFallbackAudioIfNeeded(): boolean {
     if (!audioContext) initAudioContext();
     
     const oscillator = audioContext!.createOscillator();
+    oscillator.type = 'sine';
+    oscillator.frequency.setValueAtTime(440, audioContext!.currentTime); // A4 note
+    
     const gainNode = audioContext!.createGain();
-    
-    oscillator.type = 'sawtooth';
-    oscillator.frequency.value = 220;
-    
-    gainNode.gain.value = 0.1;
+    gainNode.gain.setValueAtTime(0.1, audioContext!.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext!.currentTime + 0.5);
     
     oscillator.connect(gainNode);
     gainNode.connect(audioContext!.destination);
     
     oscillator.start();
-    oscillator.stop(audioContext!.currentTime + 0.2);
+    oscillator.stop(audioContext!.currentTime + 0.5);
     
     return true;
   } catch (error) {
-    console.error('Error creating fallback audio:', error);
+    console.error('Failed to create fallback audio:', error);
     return false;
   }
 }

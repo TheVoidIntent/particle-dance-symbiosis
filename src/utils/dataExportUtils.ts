@@ -1,9 +1,8 @@
 
 import { saveAs } from 'file-saver';
-import { parse } from 'date-fns';
 import { SimulationStats } from '@/types/simulation';
 import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
+import 'jspdf-autotable';
 
 // Types
 interface DataPoint {
@@ -150,7 +149,7 @@ export function exportDataAsPdf(filename: string = 'simulation_report'): void {
     ['Avg. Knowledge (Final)', lastPoint.stats.averageKnowledge?.toFixed(2) || 'N/A']
   ];
   
-  autoTable(doc, {
+  (doc as any).autoTable({
     head: [['Metric', 'Value']],
     body: summaryData,
     startY: 45,
@@ -172,10 +171,10 @@ export function exportDataAsPdf(filename: string = 'simulation_report'): void {
     ];
   });
   
-  autoTable(doc, {
+  (doc as any).autoTable({
     head: [['Timestamp', 'Particles', 'Complexity', 'Knowledge']],
     body: sampleData,
-    startY: doc.lastAutoTable.finalY + 15,
+    startY: (doc as any).lastAutoTable.finalY + 15,
     theme: 'grid',
     headStyles: { fillColor: [66, 135, 245] }
   });

@@ -65,6 +65,7 @@ export function updateSimulation() {
   
   // Collect data periodically
   if (simulationState.frameCount % 30 === 0) {
+    // Calculate metrics for data recording
     const clusterAnalysis = analyzeParticleClusters(simulationState.particles);
     const entropyAnalysis = calculateSystemEntropy(simulationState.particles, simulationState.intentField);
     const fieldAnalysis = analyzeIntentField(simulationState.intentField);
@@ -93,25 +94,29 @@ export function updateSimulation() {
                            (compositeParticles * maxComplexity) +
                            (adaptiveParticles * 2);
     
-    // Record data point
+    // Add data to the record
+    const stats = {
+      particleCount: simulationState.particles.length,
+      positiveParticles,
+      negativeParticles,
+      neutralParticles,
+      highEnergyParticles,
+      quantumParticles,
+      compositeParticles,
+      adaptiveParticles,
+      totalInteractions: simulationState.interactionsCount,
+      complexityIndex,
+      averageKnowledge: totalKnowledge / Math.max(1, simulationState.particles.length),
+      maxComplexity,
+      clusterCount: clusterAnalysis.clusterCount,
+      averageClusterSize: clusterAnalysis.averageClusterSize,
+      systemEntropy: entropyAnalysis.systemEntropy,
+      intentFieldComplexity: fieldAnalysis.complexity
+    };
+    
+    // Record data point if data collection is active
     if (simulationState.frameCount % 60 === 0) { // Record less frequently for efficiency
-      recordDataPoint(
-        simulationState.simulationTime,
-        simulationState.particles,
-        simulationState.intentField,
-        simulationState.interactionsCount,
-        clusterAnalysis,
-        entropyAnalysis.systemEntropy,
-        complexityIndex,
-        {
-          shannonEntropy: entropyAnalysis.shannonEntropy,
-          spatialEntropy: entropyAnalysis.spatialEntropy,
-          fieldOrderParameter: entropyAnalysis.fieldOrderParameter,
-          temporalEntropy: entropyAnalysis.temporalEntropy,
-          informationDensity: clusterAnalysis.informationDensity,
-          kolmogorovComplexity: clusterAnalysis.kolmogorovComplexity
-        }
-      );
+      recordDataPoint(stats, simulationState.particles);
     }
   }
   

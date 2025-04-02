@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Download, BarChart, Database } from "lucide-react";
-import { StatCard } from "@/components/simulation/SimulationStats";
+import StatCard from "@/components/simulation/StatCard";
 import { SimulationStats } from "@/types/simulation";
 import { toast } from "sonner";
 import { exportDataAsCsv, exportDataAsJson, getStoredDataPoints } from "@/utils/dataExportUtils";

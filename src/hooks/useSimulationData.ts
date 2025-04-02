@@ -10,8 +10,6 @@ import {
   getDataPointCount
 } from '@/utils/dataExportUtils';
 
-export { SimulationStats };
-
 export function useSimulationData(particles: any[] = []) {
   const [stats, setStats] = useState<SimulationStats>({
     particleCount: 0,
@@ -124,3 +122,5 @@ export function useSimulationData(particles: any[] = []) {
     exportData: handleExportData
   };
 }
+
+export type { SimulationStats };

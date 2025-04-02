@@ -16,12 +16,13 @@ export {
 };
 
 // Provide a simplified API for common audio operations
-import { playAudio } from './audio/audioPlaybackUtils';
+import { playAudio, playAudioWithErrorHandling } from './audio/audioPlaybackUtils';
 import { checkAudioFileExists } from './audio/audioFileUtils';
 
 // Re-export explicitly to avoid ambiguity
 export {
-  checkAudioFileExists
+  checkAudioFileExists,
+  playAudioWithErrorHandling
 };
 
 // Export common audio utility functions - renamed to avoid collision

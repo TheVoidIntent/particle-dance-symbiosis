@@ -2,7 +2,7 @@
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
-import { clearSimulationData, clearPersistedState } from '@/utils/dataExportUtils';
+import { clearSimulationData } from '@/utils/dataExportUtils';
 import { useToast } from "@/hooks/use-toast";
 import { Particle } from '@/utils/particleUtils';
 

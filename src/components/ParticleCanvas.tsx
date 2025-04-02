@@ -87,7 +87,7 @@ export const ParticleCanvas: React.FC<ParticleCanvasProps> = ({
 
   const { renderSimulation } = useCanvasRenderer();
 
-  // Here's the issue - we need to make sure the return type matches
+  // The type signature has been updated to match useSimulationReset's return type (void)
   const { resetSimulation } = useSimulationReset({
     particlesRef,
     intentFieldRef,

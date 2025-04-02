@@ -9,7 +9,7 @@ interface SimulationControlButtonsProps {
   dataCollectionActive: boolean;
   onExportData: () => void;
   onToggleDataCollection: () => void;
-  onResetSimulation: () => void; // Changed from any[] to void
+  onResetSimulation: () => void;
 }
 
 export const SimulationControlButtons: React.FC<SimulationControlButtonsProps> = ({

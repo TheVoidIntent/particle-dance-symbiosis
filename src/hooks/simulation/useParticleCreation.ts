@@ -1,6 +1,7 @@
 
 import { useState, useCallback, useEffect } from 'react';
-import { Particle } from './types';
+import { Particle } from '@/utils/particleUtils';
+import { SimulationConfig } from './types';
 import { playSimulationEvent } from '@/utils/audio/simulationAudioUtils';
 
 interface UseParticleCreationOptions {

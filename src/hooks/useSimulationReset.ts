@@ -1,7 +1,7 @@
 
 import { MutableRefObject } from 'react';
 import { Particle } from '@/utils/particleUtils';
-import { SimulationStats } from './useSimulationData';
+import { initializeIntentField } from '@/utils/fields';
 
 interface UseSimulationResetProps {
   particlesRef: MutableRefObject<Particle[]>;
@@ -10,17 +10,11 @@ interface UseSimulationResetProps {
   frameCountRef: MutableRefObject<number>;
   simulationTimeRef: MutableRefObject<number>;
   canvasRef: MutableRefObject<HTMLCanvasElement | null>;
-  processSimulationData: (
-    particles: Particle[],
-    intentField: number[][][],
-    interactions: number,
-    frameCount: number,
-    simulationTime: number
-  ) => SimulationStats;
+  processSimulationData: (particles: Particle[], intentField: number[][][], interactions: number, frameCount: number, simulationTime: number) => any;
   onStatsUpdate: (stats: any) => void;
 }
 
-export const useSimulationReset = ({
+export function useSimulationReset({
   particlesRef,
   intentFieldRef,
   interactionsRef,
@@ -29,53 +23,35 @@ export const useSimulationReset = ({
   canvasRef,
   processSimulationData,
   onStatsUpdate
-}: UseSimulationResetProps) => {
-  // Reset the simulation to its initial state
+}: UseSimulationResetProps) {
   const resetSimulation = (): Particle[] => {
-    // Clear particles
-    particlesRef.current = [];
-    
-    // Reset intent field (if it exists)
-    if (intentFieldRef.current && intentFieldRef.current.length > 0) {
-      const rows = intentFieldRef.current.length;
-      const cols = intentFieldRef.current[0].length;
-      const depth = intentFieldRef.current[0][0].length || 1;
-      
-      intentFieldRef.current = Array(rows)
-        .fill(null)
-        .map(() => Array(cols)
-          .fill(null)
-          .map(() => Array(depth).fill(0))
-        );
-    }
-    
     // Reset counters
     interactionsRef.current = 0;
     frameCountRef.current = 0;
     simulationTimeRef.current = 0;
     
-    // Clear canvas if it exists
+    // Clear particles
+    particlesRef.current = [];
+    
+    // Re-initialize intent field
     if (canvasRef.current) {
-      const ctx = canvasRef.current.getContext('2d');
-      if (ctx) {
-        ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
-      }
+      const width = canvasRef.current.width;
+      const height = canvasRef.current.height;
+      intentFieldRef.current = initializeIntentField(width, height);
     }
     
-    // Update stats
-    const resetStats = processSimulationData(
-      [],
+    // Update stats with reset state
+    const stats = processSimulationData(
+      particlesRef.current,
       intentFieldRef.current || [],
-      0,
-      0,
-      0
+      interactionsRef.current,
+      frameCountRef.current,
+      simulationTimeRef.current
     );
+    onStatsUpdate(stats);
     
-    onStatsUpdate(resetStats);
-    
-    // Return the empty particles array
     return particlesRef.current;
   };
   
   return { resetSimulation };
-};
+}

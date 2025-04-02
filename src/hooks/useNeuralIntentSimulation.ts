@@ -1,4 +1,3 @@
-
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { Particle } from '@/utils/particleUtils';
 import { SimulationStats } from '@/hooks/useSimulationData';
@@ -41,11 +40,11 @@ export function useNeuralIntentSimulation(
     const trainingData = particles.map(p => ({
       features: [
         p.charge === 'positive' ? 1 : p.charge === 'negative' ? -1 : 0,
-        p.knowledge,
-        p.complexity,
+        p.knowledge || 0,
+        p.complexity || 1,
         p.intent,
-        p.energy,
-        p.age / 100 // Normalized age
+        p.energy || 0,
+        (p.age || 0) / 100 // Normalized age with fallback
       ],
       label: p.intent > 0.5 ? 'high_intent' : 
              p.intent < -0.5 ? 'negative_intent' : 
@@ -160,7 +159,6 @@ export function useNeuralIntentSimulation(
       
       for (let i = 0; i < count; i++) {
         // Create predicted particle based on neural model
-        // This is a simplified version - in a real system this would use the actual model
         const predictedParticle: Particle = {
           id: Date.now() + Math.random(),
           x: Math.random() * 800,
@@ -177,14 +175,17 @@ export function useNeuralIntentSimulation(
           knowledge: 0.5 + Math.random() * 0.5, // Higher starting knowledge
           complexity: 2 + Math.random() * 2, // Higher complexity
           intent: Math.random() * 2 - 1,
-          age: 0,
-          interactions: 0,
           interactionCount: 0,
           lastInteraction: 0,
           intentDecayRate: 0.001 + Math.random() * 0.001,
           energy: 1.0 + Math.random() * 0.5,
           energyCapacity: 1.5 + Math.random() * 0.5,
-          created: Date.now()
+          created: Date.now(),
+          isPostInflation: false,
+          scale: 1,
+          adaptiveScore: Math.random(),
+          interactions: 0,
+          age: 0
         };
         
         newPredictedParticles.push(predictedParticle);

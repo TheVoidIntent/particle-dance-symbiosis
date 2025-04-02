@@ -1,5 +1,5 @@
 
-import { Particle } from '@/utils/particleUtils';
+import { Particle as ParticleType } from '@/utils/particleUtils';
 
 export interface SimulationConfig {
   intentFluctuationRate: number;
@@ -12,6 +12,8 @@ export interface SimulationConfig {
   energyConservation?: boolean;
   probabilisticIntent?: boolean;
 }
+
+export type Particle = ParticleType;
 
 export interface SimulationState {
   particles: Particle[];

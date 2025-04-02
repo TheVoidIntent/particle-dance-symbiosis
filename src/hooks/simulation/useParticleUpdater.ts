@@ -2,7 +2,7 @@
 import { useCallback } from 'react';
 import { MutableRefObject } from 'react';
 import { updateIntentField } from '@/utils/fields';
-import { Particle } from './types';
+import { Particle } from '@/utils/particleUtils';
 import { SimulationConfig } from './types';
 import { playSimulationEvent } from '@/utils/audio/simulationAudioUtils';
 

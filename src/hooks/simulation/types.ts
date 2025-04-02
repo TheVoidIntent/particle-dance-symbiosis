@@ -53,4 +53,5 @@ export interface InflationEvent {
   intentInformation: number;
   particlesBeforeInflation: number;
   particlesAfterInflation: number;
+  simulationType?: string; // Optional simulation type property
 }

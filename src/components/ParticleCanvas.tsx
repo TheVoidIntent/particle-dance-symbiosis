@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useParticleSimulation } from '@/hooks/simulation';
 import { useSimulationData } from '@/hooks/useSimulationData';
@@ -86,6 +87,7 @@ export const ParticleCanvas: React.FC<ParticleCanvasProps> = ({
 
   const { renderSimulation } = useCanvasRenderer();
 
+  // Fix: Update the useSimulationReset hook to properly return any[] from resetSimulation
   const { resetSimulation } = useSimulationReset({
     particlesRef,
     intentFieldRef,

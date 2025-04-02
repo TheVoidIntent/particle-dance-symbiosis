@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from 'react';
 import { toast } from "sonner";
 import { useInflationEvents } from './useInflationEvents';
@@ -21,7 +20,6 @@ export function useNotebookLmIntegration() {
   const { exportInflationEventsData, inflationEvents } = useInflationEvents();
   
   // Export simulation data to Notebook LM format
-  // Now accepts both dataset ID and export format
   const exportSimulationData = useCallback(async (atlasDatasetId?: string, exportFormat: string = 'pdf') => {
     try {
       // Show loading toast
@@ -43,9 +41,7 @@ export function useNotebookLmIntegration() {
       if (inflationEvents.length > 0) {
         Object.keys(simulationTypes).forEach(key => {
           // @ts-ignore - We're adding inflation_events property to the simulation types
-          simulationTypes[key].inflation_events = inflationEvents.filter(event => 
-            event.type === key || (key === 'adaptive' && !event.type)
-          );
+          simulationTypes[key].inflation_events = inflationEvents;
           
           // @ts-ignore - Add summary info about inflation events
           simulationTypes[key].summary.inflationEventsCount = 

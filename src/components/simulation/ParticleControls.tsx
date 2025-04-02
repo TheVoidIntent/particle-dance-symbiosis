@@ -12,7 +12,7 @@ type ParticleControlsProps = {
   dataCollectionActive: boolean;
   onExportData: () => void;
   onToggleDataCollection: () => void;
-  onResetSimulation: () => any[];
+  onResetSimulation: () => void; // Changed from any[] to void
 };
 
 export const ParticleControls: React.FC<ParticleControlsProps> = ({

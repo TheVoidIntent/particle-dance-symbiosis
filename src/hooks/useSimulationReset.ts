@@ -33,8 +33,8 @@ export function useSimulationReset({
 }: UseSimulationResetProps) {
   const { toast } = useToast();
   
-  // Explicitly return an array to match the expected type
-  const resetSimulation = useCallback((): any[] => {
+  // Changed to return void instead of any[]
+  const resetSimulation = useCallback((): void => {
     clearPersistedState();
     clearSimulationData();
     particlesRef.current = [];
@@ -81,7 +81,7 @@ export function useSimulationReset({
       variant: "default",
     });
     
-    return []; // Explicitly return an empty array
+    // No return statement needed as it's void
   }, [
     toast, 
     particlesRef, 

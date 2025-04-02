@@ -1,4 +1,3 @@
-
 import { toast } from "sonner";
 import { Particle } from "@/utils/particleUtils";
 import { SimulationStats } from "@/hooks/useSimulationData";
@@ -178,8 +177,8 @@ const continueStartingAudioStream = (stats: SimulationStats): void => {
       playSimulationSound('negative_creation', intensity * 0.4);
     }
     
-    if (stats.interactions && stats.interactions > 0 && Math.random() < 0.3) {
-      const interactionLevel = stats.interactions / 100;
+    if (stats.totalInteractions && stats.totalInteractions > 0 && Math.random() < 0.3) {
+      const interactionLevel = stats.totalInteractions / 100;
       if (interactionLevel > 0.7) {
         playSimulationSound('interaction_high', 0.4);
       } else if (interactionLevel > 0.3) {

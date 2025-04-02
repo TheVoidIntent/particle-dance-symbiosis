@@ -29,7 +29,7 @@ import {
 // Import from audioGenerationUtils
 import { 
   generateSampleAudio,
-  createFallbackAudioIfNeeded as createGenerationFallbackAudio
+  createFallbackAudioIfNeeded
 } from './audio/audioGenerationUtils';
 
 // Re-export for convenience
@@ -47,7 +47,7 @@ export {
   checkAudioFileExists,
   getAudioFileMetadata,
   generateSampleAudio,
-  createGenerationFallbackAudio
+  createFallbackAudioIfNeeded
 };
 
 // Provide a simplified API for common audio operations

@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ExternalLink, FileText, Activity, Award, ZapOff, Database, BookOpen } from "lucide-react";
+import { ExternalLink, FileText, Activity, Award, ZapOff, Database, BookOpen, BookText } from "lucide-react";
 import { useNotebookLmIntegration } from '@/hooks/useNotebookLmIntegration';
 import { getAvailableAtlasDatasets } from '@/utils/atlasDataIntegration';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -63,6 +63,23 @@ const NotebookLmExport: React.FC = () => {
             <li>CERN ATLAS Comparison</li>
             <li className="font-medium">Inflation Events ({inflationEvents.length})</li>
           </ul>
+        </div>
+        
+        <div className="border border-indigo-300/20 rounded-md p-3 bg-indigo-50/20 dark:bg-indigo-900/10">
+          <p className="text-sm mb-2 flex items-center">
+            <BookText className="h-4 w-4 mr-2 text-indigo-500" />
+            <span className="font-medium">Textbook Reference</span>
+          </p>
+          <p className="text-xs mb-2">Include citations from "The Intentional Universe" textbook</p>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="w-full text-xs"
+            onClick={() => window.location.href = '/documentation?tab=textbook'}
+          >
+            <ExternalLink className="h-3 w-3 mr-1" />
+            Access Textbook
+          </Button>
         </div>
         
         <div className="space-y-2">

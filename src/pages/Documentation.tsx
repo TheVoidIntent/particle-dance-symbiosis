@@ -10,6 +10,7 @@ import OverviewTab from "@/components/documentation/OverviewTab";
 import HypothesisTab from "@/components/documentation/HypothesisTab";
 import ImplementationTab from "@/components/documentation/ImplementationTab";
 import MediaTab from "@/components/documentation/MediaTab";
+import TextbookTab from "@/components/documentation/TextbookTab";
 
 const Documentation: React.FC = () => {
   const [activeTab, setActiveTab] = useState("overview");
@@ -49,6 +50,10 @@ const Documentation: React.FC = () => {
 
             <TabsContent value="media" className="animate-fade-in">
               <MediaTab />
+            </TabsContent>
+
+            <TabsContent value="textbook" className="animate-fade-in">
+              <TextbookTab />
             </TabsContent>
           </Tabs>
         </div>

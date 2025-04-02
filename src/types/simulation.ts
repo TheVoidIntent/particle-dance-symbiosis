@@ -1,59 +1,75 @@
 
+// Define the basic particle interface
 export interface Particle {
-  id?: string | number;
+  id: number;
   x: number;
   y: number;
+  z?: number;
   vx: number;
   vy: number;
   vz?: number;
-  radius: number;
+  radius?: number;
   mass?: number;
-  charge?: string;
-  color: string;
-  type: 'positive' | 'negative' | 'neutral' | string;
-  intent?: number;
+  charge: 'positive' | 'negative' | 'neutral';
+  color?: string;
   energy?: number;
-  knowledge?: number;
+  intent?: number;
   complexity?: number;
-  interactionTendency?: number;
-  lastInteraction?: number;
-  interactionCount?: number;
-  z?: number;
-  age?: number; // Added age property
-  interactions?: number; // Added interactions property
-  intentDecayRate?: number;
-  energyCapacity?: number;
-  created?: number;
   isPostInflation?: boolean;
-  scale?: number;
-  adaptiveScore?: number;
+  knowledgeLevel?: number;
+  lifetime?: number;
+  interactionCount?: number;
+  neighbours?: Particle[];
+  type?: string;
 }
 
-export interface SimulationStats {
-  particleCount: number;
-  positiveParticles: number;
-  negativeParticles: number;
-  neutralParticles: number;
-  highEnergyParticles?: number;
-  quantumParticles?: number;
-  compositeParticles?: number;
-  adaptiveParticles?: number;
-  interactions?: number;
-  totalInteractions?: number;
-  frame?: number;
-  time?: number;
-  averageKnowledge?: number;
-  complexityIndex?: number;
-  systemEntropy?: number;
-  shannonEntropy?: number;
-  spatialEntropy?: number;
-  fieldOrderParameter?: number;
-  kolmogorovComplexity?: number;
-  clusterCount?: number;
-  averageClusterSize?: number;
-  informationDensity?: number;
-  clusterLifetime?: number;
-  maxComplexity?: number;
-  intentFieldComplexity?: number;
-  clusterEntropyDelta?: number;
+// Define the simulation state
+export interface SimulationState {
+  particles: Particle[];
+  intentField: number[][][];
+  interactionsCount: number;
+  frameCount: number;
+  simulationTime: number;
+  isRunning: boolean;
+  intervalId: number | null;
+  dimensions?: { width: number; height: number };
+  originalDimensions?: { width: number; height: number };
+}
+
+// Define simulation configuration
+export interface SimulationConfig {
+  initialParticleCount: number;
+  maxParticles: number;
+  fieldResolution: number;
+  intentFluctuationRate: number;
+  interactionRadius: number;
+  boundaryCondition: 'wrap' | 'bounce' | 'none';
+  particleLifetime: number | null;
+  inflationEnabled: boolean;
+  inflationThreshold: number;
+  inflationMultiplier: number;
+}
+
+// Define inflation event interface
+export interface InflationEvent {
+  timestamp: number;
+  particlesBeforeInflation: number;
+  particlesAfterInflation: number;
+  expansionFactor?: number;
+  fieldEnergyBefore?: number;
+  fieldEnergyAfter?: number;
+}
+
+// Define Neural Intent Simulation properties
+export interface NeuralIntentProps {
+  isTraining: boolean;
+  trainingProgress: number;
+  modelAccuracy: number;
+  insightScore: number;
+  predictedParticles: Particle[];
+  intentPredictions: number[][][];
+  neuralArchitecture: string;
+  startTraining: () => void;
+  generatePredictions: () => void;
+  toggleNeuralArchitecture: () => void;
 }

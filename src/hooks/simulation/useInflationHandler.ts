@@ -1,7 +1,7 @@
 
 import { useCallback } from 'react';
-import { Particle } from '@/utils/particleUtils';
-import { InflationEvent, SimulationConfig } from './types';
+import { createParticle } from '@/utils/particleUtils';
+import { Particle, InflationEvent, SimulationConfig } from '@/types/simulation';
 
 interface UseInflationHandlerProps {
   config: SimulationConfig;
@@ -39,18 +39,20 @@ export function useInflationHandler({ config, onInflationEvent }: UseInflationHa
     const additionalCount = Math.floor(particles.length * (config.inflationMultiplier - 1));
     
     for (let i = 0; i < additionalCount; i++) {
-      // Create new particles (simplified - in a real implementation you would create valid particles)
-      additionalParticles.push({
-        id: Date.now() + i,
-        x: Math.random() * window.innerWidth,
-        y: Math.random() * window.innerHeight,
-        vx: (Math.random() - 0.5) * 2,
-        vy: (Math.random() - 0.5) * 2,
-        charge: Math.random() > 0.5 ? 'positive' : (Math.random() > 0.5 ? 'negative' : 'neutral'),
+      // Create new particles using our utility function
+      const x = Math.random() * window.innerWidth;
+      const y = Math.random() * window.innerHeight;
+      
+      const newParticle = createParticle(x, y, {
         energy: Math.random() * 100,
         intent: Math.random(),
-        isPostInflation: true,
+        charge: Math.random() > 0.5 ? 'positive' : (Math.random() > 0.5 ? 'negative' : 'neutral')
       });
+      
+      // Mark as post-inflation
+      newParticle.isPostInflation = true;
+      
+      additionalParticles.push(newParticle);
     }
     
     // Combine original (inflated) and new particles

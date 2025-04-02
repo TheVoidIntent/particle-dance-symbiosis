@@ -1,856 +1,599 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Badge } from '@/components/ui/badge';
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Card, CardContent } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
-  Brain, 
   Send, 
-  Database, 
-  BookOpen, 
-  ArrowRight, 
-  Code, 
-  Zap, 
-  Activity,
-  Volume2,
-  VolumeX,
-  Settings,
-  Upload,
-  Search,
-  FileText,
-  Sparkles 
+  Bot, 
+  User, 
+  RefreshCw, 
+  FileImage, 
+  FileAudio2, 
+  FileVideo, 
+  X as CloseIcon,
+  CheckCircle
 } from 'lucide-react';
-import { SimulationStats } from '@/types/simulation';
-import { toast } from 'sonner';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { MediaProcessingResult } from '@/utils/mediaProcessing';
-import MediaUploader from '@/components/multimedia/MediaUploader';
-import VoiceSynthesis from '@/utils/voiceSynthesis';
-import { performResearch } from '@/utils/researchUtils';
+import { toast } from "sonner";
+import { 
+  processTextInput, 
+  processImageInput, 
+  processAudioInput, 
+  processVideoInput,
+  MediaProcessingResult
+} from '@/utils/mediaProcessing';
 
-interface Message {
-  role: 'user' | 'assistant';
-  content: string;
+interface ChatMessage {
+  id: string;
+  text: string;
+  sender: 'user' | 'assistant';
   timestamp: Date;
-  attachments?: MediaProcessingResult[];
+  mediaContent?: MediaProcessingResult | null;
 }
 
 interface IntentAssistantProps {
-  simulationStats?: SimulationStats;
-  onAdvice?: (advice: string) => void;
+  initialMessage?: string;
+  placeholder?: string;
+  className?: string;
+  voiceStyle?: 'professor' | 'researcher' | 'casual';
 }
 
-const IntentAssistant: React.FC<IntentAssistantProps> = ({ 
-  simulationStats,
-  onAdvice 
+const IntentAssistant: React.FC<IntentAssistantProps> = ({
+  initialMessage = "Hello! I'm IntentSimon, your dedicated IntentSim.org assistant. I'm fully trained on the intent-based universe model, simulation data, and ATLAS/CERN datasets. How can I help advance your understanding of intent-based universe formation today?",
+  placeholder = "Ask about intent fields, particles, research findings, or upload media for analysis...",
+  className = "",
+  voiceStyle = 'professor',
 }) => {
-  const [messages, setMessages] = useState<Message[]>([
+  const [messages, setMessages] = useState<ChatMessage[]>([
     {
-      role: 'assistant',
-      content: 'Greetings! I am your IntentSim personal assistant, fully trained on all simulation data, the Information-Intent Nexus framework, and ATLAS/CERN datasets. How can I help advance the IntentSim paradigm today?',
-      timestamp: new Date()
-    }
+      id: '0',
+      text: initialMessage,
+      sender: 'assistant',
+      timestamp: new Date(),
+    },
   ]);
   const [input, setInput] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [activeTab, setActiveTab] = useState('chat');
-  const [voiceEnabled, setVoiceEnabled] = useState(false);
-  const [elevenLabsApiKey, setElevenLabsApiKey] = useState('');
-  const [isVoiceSpeaking, setIsVoiceSpeaking] = useState(false);
-  const [mediaAttachments, setMediaAttachments] = useState<MediaProcessingResult[]>([]);
-  const [isApiKeyDialogOpen, setIsApiKeyDialogOpen] = useState(false);
-  const [isResearching, setIsResearching] = useState(false);
+  const [mediaFile, setMediaFile] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
   const [researchQuery, setResearchQuery] = useState('');
-  const [activeDataSources, setActiveDataSources] = useState({
-    simulation: true,
-    neuralnets: true,
-    cern: true,
-    notebook: true
-  });
+  const [isResearching, setIsResearching] = useState(false);
+  const [researchResults, setResearchResults] = useState<string[]>([]);
+  const [selectedVoice, setSelectedVoice] = useState(voiceStyle);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  
-  // Auto-scroll to bottom of messages
-  useEffect(() => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, [messages]);
-  
-  // Focus input on load
-  useEffect(() => {
-    if (inputRef.current) {
-      inputRef.current.focus();
-    }
-  }, []);
-  
-  // Clean up voice synthesis when component unmounts
-  useEffect(() => {
-    return () => {
-      VoiceSynthesis.stop();
-    };
-  }, []);
-  
-  const toggleDataSource = (source: keyof typeof activeDataSources) => {
-    setActiveDataSources(prev => ({
-      ...prev,
-      [source]: !prev[source]
-    }));
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const audioInputRef = useRef<HTMLInputElement>(null);
+  const videoInputRef = useRef<HTMLInputElement>(null);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  // Simulated voice synthesis
+  const synthesizeVoice = async (text: string): Promise<void> => {
+    console.log(`Synthesizing voice (${selectedVoice} style): ${text}`);
+    // In a real implementation, this would call an API like ElevenLabs
+    toast.info("Voice synthesis would play here with Oxford professor style");
     
-    if (!input.trim() && mediaAttachments.length === 0) return;
+    // Mock audio playback delay
+    await new Promise(resolve => setTimeout(resolve, 500));
+  };
+
+  // Simulated deep research function
+  const performDeepResearch = async (query: string): Promise<string[]> => {
+    console.log(`Performing deep research on: ${query}`);
+    setIsResearching(true);
     
+    // Simulate research delay
+    await new Promise(resolve => setTimeout(resolve, 3000));
+    
+    // Mock research results based on query keywords
+    const results: string[] = [];
+    
+    if (query.toLowerCase().includes('intent')) {
+      results.push("Found 37 research papers on intent field dynamics");
+      results.push("ATLAS data correlation with intent fields: 76% certainty");
+      results.push("Recent simulation shows emergent complexity in intent fluctuations");
+    }
+    
+    if (query.toLowerCase().includes('particle')) {
+      results.push("Particle emergence patterns match theoretical predictions (p<0.005)");
+      results.push("Charge-intent relationship confirmed in 12 independent studies");
+      results.push("Self-organizing particle clusters exhibit knowledge-seeking behavior");
+    }
+    
+    if (query.toLowerCase().includes('simulation')) {
+      results.push("Simulation parameters optimized for maximum correlation with observed data");
+      results.push("Neural network predictions match simulation outcomes at 89% accuracy");
+      results.push("Computational complexity scales with intent field resolution in O(n²) time");
+    }
+    
+    // Add some generic research findings if results are empty
+    if (results.length === 0) {
+      results.push("Found 8 relevant research papers in the IntentSim database");
+      results.push("Data correlation analysis complete: 82% confidence interval");
+      results.push("Hypothesis testing confirms primary assumptions (p<0.01)");
+    }
+    
+    setIsResearching(false);
+    return results;
+  };
+
+  // This is a simulated response generator
+  const generateAssistantResponse = async (userMessage: string, mediaContent?: MediaProcessingResult): Promise<string> => {
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    
+    // If there's media content, generate a response based on the media type
+    if (mediaContent) {
+      switch (mediaContent.type) {
+        case 'image':
+          return `I've analyzed the image you provided. ${mediaContent.metadata.insights?.join(' ')} This visual data aligns with our intent field fluctuation models, particularly in how patterns emerge from seemingly random energy distributions. Would you like me to explain how this relates to specific aspects of the IntentSim model?`;
+          
+        case 'audio':
+          return `I've processed your audio input. ${mediaContent.metadata.insights?.join(' ')} The audio patterns contain frequencies that correlate with intent field fluctuations in our simulation. The ${mediaContent.metadata.duration?.toFixed(2)} seconds of audio provide interesting data points for further analysis. Would you like me to elaborate on any specific aspect?`;
+          
+        case 'video':
+          return `Thank you for sharing this video. ${mediaContent.metadata.insights?.join(' ')} The temporal patterns in this ${mediaContent.metadata.duration?.toFixed(2)}-second clip show remarkable similarities to the evolution of intent fields in our simulations. The complexity index calculated from this video is particularly informative. Would you like me to explain how this relates to our theoretical framework?`;
+          
+        default:
+          return "I've processed your media input and found some interesting patterns that relate to our intent-based universe model. Would you like me to analyze specific aspects in more detail?";
+      }
+    }
+    
+    // Text-based response logic
+    const userMessageLower = userMessage.toLowerCase();
+    
+    if (userMessageLower.includes('intent') && userMessageLower.includes('field')) {
+      return "The intent field is the foundational conceptual space of our universe model. It represents fluctuations that give rise to particles with varying charges. Positive fluctuations create positive charges, negative fluctuations create negative charges, and neutral fluctuations create neutral particles. These intent field fluctuations are the seed of all complexity in our model. Our simulations show that these fields exhibit self-organizing properties that align remarkably well with ATLAS data from CERN.";
+    } else if (userMessageLower.includes('particle') && (userMessageLower.includes('create') || userMessageLower.includes('formation'))) {
+      return "Particles in our model arise from intent field fluctuations. They carry properties including charge (positive, negative, or neutral) and an inherent 'intent to know' that drives them to explore and interact. Positive particles have a stronger desire to interact, negative particles are less inclined to exchange information, and neutral particles fall somewhere in between. Recent simulations show that these simple rules lead to emergent complexity that mirrors observed quantum phenomena, especially when compared with ATLAS data.";
+    } else if (userMessageLower.includes('atlas') || userMessageLower.includes('cern')) {
+      return "Our integration with ATLAS/CERN public datasets has revealed fascinating correlations. The intent-based model we've developed shows a 78% alignment with observed particle interaction patterns. The most striking correlations appear in high-energy collision scenarios, where intent field fluctuations in our model predict interaction outcomes with surprising accuracy. This suggests that our conceptual framework may have real-world physical underpinnings worth further investigation.";
+    } else if (userMessageLower.includes('complex') || userMessageLower.includes('evolution')) {
+      return "The system evolves in complexity as particles interact, exchange information, and form patterns. We see emergent properties similar to those in our own universe - clusters forming, information networks developing, and interactions becoming increasingly sophisticated over time. All of this emerges from simple intent-based rules. Our neural network analyses of simulation data show that complexity increases logarithmically with time, matching theoretical predictions from information theory applied to quantum systems.";
+    } else if (userMessageLower.includes('simulate') || userMessageLower.includes('run')) {
+      return "You can run the simulation right here on IntentSim.org. Try adjusting parameters like intent fluctuation rate, maximum particles, learning rate, and particle creation rate to see how they affect the evolution of the system. The system follows real physical rules while incorporating the 'intent to know' as a fundamental property. Each simulation run is logged and can be compared with previous results, allowing for robust hypothesis testing and parameter optimization.";
+    } else if (userMessageLower.includes('hello') || userMessageLower.includes('hi') || userMessageLower.includes('hey')) {
+      return "Hello! I'm IntentSimon, your dedicated IntentSim.org assistant. I've been trained on all the simulation data, research findings, and the Information-Intent Nexus framework. I can help with understanding the theoretical model, analyzing simulation results, or connecting concepts to established physics. What aspect of intent-based universe formation would you like to explore today?";
+    } else if (userMessageLower.includes('neural') || userMessageLower.includes('network') || userMessageLower.includes('ai')) {
+      return "Our neural intent simulations use advanced AI techniques to model how intent fields evolve over time. We've implemented deep learning algorithms that can predict particle emergence patterns with 89% accuracy. The neural network has been trained on thousands of simulation runs, allowing it to identify subtle patterns in intent field fluctuations that correlate with emergent complexity. This AI-augmented approach has yielded insights that might have been missed through conventional analysis.";
+    } else if (userMessageLower.includes('voice') || userMessageLower.includes('speak') || userMessageLower.includes('audio')) {
+      return "I'm designed with voice capabilities that mimic a 40-year-old Oxford professor's speech patterns and intonation. This gives our explanations a scholarly tone while remaining accessible. Voice synthesis is powered by advanced text-to-speech technology that can emphasize key concepts and adjust pacing for complex ideas. Would you like me to explain any concept using this voice feature?";
+    } else {
+      return "That's an interesting question about our intent-based universe model. The fundamental idea is that universe formation begins with an intent field that fluctuates, creating particles with varying charges, colors, and an inherent 'intent to know.' These particles then interact based on these properties, creating increasing complexity over time. Our simulations and research have shown promising correlations with observed data, particularly from ATLAS/CERN datasets. Would you like to know more about a specific aspect of this model or see relevant research findings?";
+    }
+  };
+
+  const handleSendMessage = async () => {
+    if (!input.trim() && !mediaFile) return;
+    if (isProcessing) return;
+
+    let userText = input.trim();
+    let media: MediaProcessingResult | null = null;
+
+    setIsProcessing(true);
+
+    // Process media file if present
+    if (mediaFile) {
+      try {
+        const fileType = mediaFile.type.split('/')[0];
+        switch (fileType) {
+          case 'image':
+            media = await processImageInput(mediaFile);
+            if (!userText) userText = "I've uploaded an image for analysis.";
+            break;
+          case 'audio':
+            media = await processAudioInput(mediaFile);
+            if (!userText) userText = "I've uploaded an audio file for analysis.";
+            break;
+          case 'video':
+            media = await processVideoInput(mediaFile);
+            if (!userText) userText = "I've uploaded a video for analysis.";
+            break;
+          default:
+            toast.error("Unsupported media type");
+            setIsProcessing(false);
+            return;
+        }
+        
+        setMediaFile(null);
+        toast.success(`${fileType.charAt(0).toUpperCase() + fileType.slice(1)} processed successfully`);
+      } catch (error) {
+        console.error('Error processing media:', error);
+        toast.error("Failed to process media file");
+        setIsProcessing(false);
+        return;
+      }
+    }
+
     // Add user message
-    const userMessage: Message = {
-      role: 'user',
-      content: input,
+    const userMessage: ChatMessage = {
+      id: Date.now().toString(),
+      text: userText,
+      sender: 'user',
       timestamp: new Date(),
-      attachments: mediaAttachments.length > 0 ? [...mediaAttachments] : undefined
+      mediaContent: media
     };
-    
+
     setMessages(prev => [...prev, userMessage]);
     setInput('');
-    setMediaAttachments([]);
-    setIsProcessing(true);
-    
+
     try {
-      // Simulate processing time
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      // Generate assistant response based on the query and active data sources
-      const assistantResponse = await generateAssistantResponse(input, activeDataSources, mediaAttachments);
+      // Get assistant response
+      const response = await generateAssistantResponse(userText, media);
       
       // Add assistant message
-      const assistantMessage: Message = {
-        role: 'assistant',
-        content: assistantResponse,
-        timestamp: new Date()
+      const assistantMessage: ChatMessage = {
+        id: (Date.now() + 1).toString(),
+        text: response,
+        sender: 'assistant',
+        timestamp: new Date(),
       };
-      
+
       setMessages(prev => [...prev, assistantMessage]);
       
-      // Speak the response if voice is enabled
-      if (voiceEnabled) {
-        setIsVoiceSpeaking(true);
-        try {
-          await VoiceSynthesis.speak(assistantResponse, elevenLabsApiKey !== '');
-        } catch (error) {
-          console.error('Voice synthesis error:', error);
-        }
-        setIsVoiceSpeaking(false);
-      }
-      
-      // If the assistant has actionable advice, send it to parent component
-      if (onAdvice && (assistantResponse.includes('recommend') || assistantResponse.includes('suggest'))) {
-        onAdvice(assistantResponse);
-      }
-      
+      // Synthesize voice for the response
+      synthesizeVoice(response);
     } catch (error) {
-      console.error('Error processing request:', error);
-      toast.error('Failed to process your request. Please try again.');
+      console.error('Error generating response:', error);
+      toast.error("Sorry, I couldn't generate a response. Please try again.");
     } finally {
       setIsProcessing(false);
     }
   };
-  
-  // Generate responses based on intent-based principles and available data sources
-  const generateAssistantResponse = async (query: string, sources: typeof activeDataSources, attachments: MediaProcessingResult[]): Promise<string> => {
-    // Here you would ideally connect to a real LLM API
-    // For now, we'll use predetermined responses based on keywords
-    
-    const lowercaseQuery = query.toLowerCase();
-    
-    // Handle messages with attachments
-    if (attachments.length > 0) {
-      const attachment = attachments[0]; // Focus on the first attachment for simplicity
-      
-      let attachmentResponse = `I've analyzed your ${attachment.type}. `;
-      
-      if (attachment.type === 'image') {
-        attachmentResponse += `The image shows patterns that are consistent with intent field fluctuations. I notice ${attachment.metadata.insights?.join(', ')}. Based on my analysis, this visual data aligns with our simulation predictions, particularly regarding particle clustering behavior.`;
-      } else if (attachment.type === 'audio') {
-        attachmentResponse += `I've processed the audio content and detected references to ${attachment.metadata.insights?.join(', ')}. The acoustic patterns suggest valuable data that could enhance our intent field models.`;
-      } else if (attachment.type === 'video') {
-        attachmentResponse += `The video demonstrates ${attachment.metadata.insights?.join(', ')}. This visual evidence strongly supports the Information-Intent Nexus framework, particularly regarding the emergence of complex structures from simple intent-based rules.`;
-      }
-      
-      attachmentResponse += ` Would you like me to integrate this data with our existing models or perform a more detailed analysis?`;
-      
-      return attachmentResponse;
-    }
-    
-    // Handle research requests
-    if (lowercaseQuery.includes('research') || lowercaseQuery.includes('find') || lowercaseQuery.includes('search')) {
-      return `I recommend conducting targeted research on "${query.replace(/research|find|search/gi, '').trim()}". This would help validate the Information-Intent Nexus framework against established scientific literature. Would you like me to initiate a research query across scientific databases?`;
-    }
-    
-    // Handle help requests
-    if (lowercaseQuery.includes('help') || lowercaseQuery.includes('what can you do')) {
-      return 'I can help with code development, analyze simulation data, generate research insights, suggest optimizations for your IntentSim models, process multimedia data, and help promote the Circles of Intent principle. I can also speak to you with a professional British voice if you enable that feature. What specific area would you like assistance with?';
-    }
-    
-    // Handle code-related requests
-    if (lowercaseQuery.includes('code') || lowercaseQuery.includes('develop') || lowercaseQuery.includes('build')) {
-      return 'I recommend focusing on modularizing the particle interactions in the simulation. Based on your latest results, creating specialized handlers for different charge types could improve both performance and insight generation. Would you like me to draft some pseudocode for this approach?';
-    }
-    
-    // Handle research paper-related requests
-    if (lowercaseQuery.includes('paper') || lowercaseQuery.includes('publish')) {
-      return 'The most promising research direction based on your simulation data appears to be the correlation between intent field fluctuations and emergent complexity. This aligns with recent theoretical models in complexity science while offering a novel perspective on information organization. I suggest formatting your findings on intent-based self-organization for submission to interdisciplinary journals.';
-    }
-    
-    // Handle data-related requests
-    if (lowercaseQuery.includes('data') || lowercaseQuery.includes('atlas') || lowercaseQuery.includes('cern')) {
-      return sources.cern 
-        ? 'Your intent model shows interesting parallels with ATLAS data patterns, particularly in the charge distribution ratios. The positively charged particles in your model (28.3%) match surprisingly well with certain boson distribution patterns (27.9%) from the ATLAS dataset. This could be a promising avenue for validation.' 
-        : 'Please enable the CERN/ATLAS data source for comprehensive analysis of particle correlations.';
-    }
-    
-    // Handle neural network-related requests
-    if (lowercaseQuery.includes('neural') || lowercaseQuery.includes('prediction') || lowercaseQuery.includes('learning')) {
-      return sources.neuralnets
-        ? 'The transformer architecture has outperformed other models in predicting intent field evolution, achieving 89.7% accuracy compared to 76.2% for standard RNNs. I suggest focusing on this architecture for future development, particularly with enhanced attention mechanisms tuned to charge-based interactions.'
-        : 'Enable the neural networks data source for AI-powered predictions and analysis.';
-    }
-    
-    // Handle presentation-related requests
-    if (lowercaseQuery.includes('present') || lowercaseQuery.includes('explain') || lowercaseQuery.includes('talk')) {
-      return 'For presenting IntentSim to a general audience, I suggest emphasizing how the "intent to know" creates emergent complexity - similar to how curiosity drives human learning. Use the visual demonstrations of particle clustering to illustrate how simple intent rules can create complex, adaptive systems. The inflation events provide a particularly compelling visualization of phase transitions.';
-    }
-    
-    // Handle promotion-related requests
-    if (lowercaseQuery.includes('promote') || lowercaseQuery.includes('market') || lowercaseQuery.includes('share')) {
-      return 'To promote IntentSim more effectively, focus on the interdisciplinary applications: neuroscience researchers may find value in the intent-based learning patterns, while physicists might appreciate the emergent complexity from simple interaction rules. I recommend creating short video demonstrations of the simulation highlighting key phase transitions and information patterns.';
-    }
-    
-    // Handle Circles of Intent-related requests
-    if (lowercaseQuery.includes('circles of intent') || lowercaseQuery.includes('mindmap')) {
-      return sources.notebook
-        ? 'Your Circles of Intent mindmap shows five overlapping domains of application: physics, cognition, social systems, information theory, and artificial intelligence. The core principle linking them is that intent-based information processing creates adaptive complexity in all domains. This could be formulated as a universal principle similar to how entropy operates across disciplines.'
-        : 'Please enable the Notebook LM data source to access insights from your mindmap.';
-    }
-    
-    // Handle voice-related requests
-    if (lowercaseQuery.includes('voice') || lowercaseQuery.includes('speak') || lowercaseQuery.includes('audio')) {
-      if (!voiceEnabled) {
-        return "I can speak to you with a 40-year-old Oxford professor's voice. Would you like me to enable voice synthesis? You'll need to activate it in the settings.";
-      } else {
-        return "I'm currently using text-to-speech with a professional British male voice profile. For higher quality voice, you can set up an ElevenLabs API key in the settings.";
-      }
-    }
-    
-    // Default response if no specific keywords matched
-    return 'Based on the latest simulation data, I notice patterns of intent-driven organization emerging in high-complexity regions. This aligns with your Information-Intent Nexus theory. Would you like me to analyze a specific aspect of this phenomenon or assist with advancing the theoretical framework?';
-  };
-  
-  const handleVoiceToggle = () => {
-    const newVoiceEnabled = !voiceEnabled;
-    setVoiceEnabled(newVoiceEnabled);
-    
-    if (newVoiceEnabled) {
-      toast.success('Voice output enabled', {
-        description: 'The assistant will now speak responses'
-      });
-      
-      // If ElevenLabs API key is not set, prompt the user to set it
-      if (!elevenLabsApiKey && !isApiKeyDialogOpen) {
-        setIsApiKeyDialogOpen(true);
-      }
-    } else {
-      // Stop any ongoing speech
-      VoiceSynthesis.stop();
-      setIsVoiceSpeaking(false);
-      toast.info('Voice output disabled');
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage();
     }
   };
-  
-  const handleApiKeySave = () => {
-    if (elevenLabsApiKey.trim()) {
-      toast.success('ElevenLabs API key saved', {
-        description: 'Premium British male voice is now available'
-      });
-      
-      VoiceSynthesis.setElevenLabsApiKey(elevenLabsApiKey);
+
+  const clearChat = () => {
+    setMessages([
+      {
+        id: '0',
+        text: initialMessage,
+        sender: 'assistant',
+        timestamp: new Date(),
+      },
+    ]);
+    if (inputRef.current) {
+      inputRef.current.focus();
     }
-    
-    setIsApiKeyDialogOpen(false);
+    toast.success("Chat history cleared");
   };
-  
-  const handleMediaUpload = (result: MediaProcessingResult) => {
-    setMediaAttachments(prev => [...prev, result]);
-    toast.success(`${result.type} added to message`, {
-      description: 'You can now send your message with the attachment'
-    });
+
+  const triggerFileInput = (type: 'image' | 'audio' | 'video') => {
+    switch (type) {
+      case 'image':
+        fileInputRef.current?.click();
+        break;
+      case 'audio':
+        audioInputRef.current?.click();
+        break;
+      case 'video':
+        videoInputRef.current?.click();
+        break;
+    }
   };
-  
-  const removeMediaAttachment = (index: number) => {
-    setMediaAttachments(prev => prev.filter((_, i) => i !== index));
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setMediaFile(e.target.files[0]);
+      toast.info(`File selected: ${e.target.files[0].name}`);
+    }
   };
-  
-  const handleResearchSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
+
+  const removeSelectedFile = () => {
+    setMediaFile(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+    if (audioInputRef.current) audioInputRef.current.value = '';
+    if (videoInputRef.current) videoInputRef.current.value = '';
+  };
+
+  const handleResearchSubmit = async () => {
     if (!researchQuery.trim() || isResearching) return;
     
-    setIsResearching(true);
+    const results = await performDeepResearch(researchQuery.trim());
+    setResearchResults(results);
     
-    try {
-      const researchResult = await performResearch(researchQuery, {
-        includeAtlas: activeDataSources.cern,
-        includeArxiv: true,
-        includePubMed: false,
-        includeNature: true,
-      });
+    // Add research results to chat
+    if (results.length > 0) {
+      const researchSummary = `Research on "${researchQuery}":\n\n${results.join('\n')}`;
       
-      // Format research results into a readable message
-      const formattedResults = `
-Research results for "${researchQuery}":
-
-${researchResult.summary}
-
-Key Insights:
-${researchResult.keyInsights.map(insight => `• ${insight}`).join('\n')}
-
-Recommendations:
-${researchResult.recommendations.map(rec => `• ${rec}`).join('\n')}
-
-Sources: ${researchResult.sources.length} relevant sources found, including ${researchResult.sources.slice(0, 2).map(source => `"${source.title}"`).join(', ')}, and others.
-      `.trim();
-      
-      // Add assistant message with research results
-      const researchMessage: Message = {
-        role: 'assistant',
-        content: formattedResults,
-        timestamp: new Date()
+      // Add system message with research results
+      const researchMessage: ChatMessage = {
+        id: Date.now().toString(),
+        text: researchSummary,
+        sender: 'assistant',
+        timestamp: new Date(),
       };
       
       setMessages(prev => [...prev, researchMessage]);
-      
-      // Speak the key insights if voice is enabled
-      if (voiceEnabled) {
-        setIsVoiceSpeaking(true);
-        try {
-          const speechText = `Here are the key research findings on ${researchQuery}: ${researchResult.keyInsights.join('. ')}`;
-          await VoiceSynthesis.speak(speechText, elevenLabsApiKey !== '');
-        } catch (error) {
-          console.error('Voice synthesis error:', error);
-        }
-        setIsVoiceSpeaking(false);
-      }
-      
-      // Reset research query
-      setResearchQuery('');
-      
-      // Switch back to chat tab
-      setActiveTab('chat');
-      
-    } catch (error) {
-      console.error('Research error:', error);
-      toast.error('Failed to complete research');
-    } finally {
-      setIsResearching(false);
+    }
+    
+    setResearchQuery('');
+    setActiveTab('chat');
+  };
+
+  const handleResearchKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleResearchSubmit();
     }
   };
-  
+
   return (
-    <Card className="w-full max-w-4xl mx-auto bg-slate-800 border-slate-700 shadow-lg overflow-hidden flex flex-col h-[600px]">
-      <CardHeader className="bg-gradient-to-r from-blue-700 to-indigo-800 text-white pb-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center">
-            <Brain className="h-6 w-6 mr-2 text-blue-300" />
-            <CardTitle>IntentSim Personal Assistant</CardTitle>
-          </div>
-          <div className="flex space-x-1">
-            <Badge 
-              variant={activeDataSources.simulation ? "default" : "outline"}
-              className={`cursor-pointer ${activeDataSources.simulation ? 'bg-green-600 hover:bg-green-700' : 'text-gray-400 border-gray-600'}`}
-              onClick={() => toggleDataSource('simulation')}
-            >
-              Simulation
-            </Badge>
-            <Badge 
-              variant={activeDataSources.neuralnets ? "default" : "outline"}
-              className={`cursor-pointer ${activeDataSources.neuralnets ? 'bg-purple-600 hover:bg-purple-700' : 'text-gray-400 border-gray-600'}`}
-              onClick={() => toggleDataSource('neuralnets')}
-            >
-              Neural Nets
-            </Badge>
-            <Badge 
-              variant={activeDataSources.cern ? "default" : "outline"}
-              className={`cursor-pointer ${activeDataSources.cern ? 'bg-amber-600 hover:bg-amber-700' : 'text-gray-400 border-gray-600'}`}
-              onClick={() => toggleDataSource('cern')}
-            >
-              ATLAS/CERN
-            </Badge>
-            <Badge 
-              variant={activeDataSources.notebook ? "default" : "outline"}
-              className={`cursor-pointer ${activeDataSources.notebook ? 'bg-blue-600 hover:bg-blue-700' : 'text-gray-400 border-gray-600'}`}
-              onClick={() => toggleDataSource('notebook')}
-            >
-              Notebook LM
-            </Badge>
-          </div>
+    <Card className={`flex flex-col h-full overflow-hidden shadow-lg border border-gray-200 dark:border-gray-800 ${className}`}>
+      <div className="flex items-center justify-between bg-gradient-to-r from-indigo-900 to-purple-900 p-3">
+        <div className="flex items-center">
+          <Bot className="h-6 w-6 text-white mr-2" />
+          <h2 className="text-white font-semibold">IntentSimon</h2>
         </div>
-        <CardDescription className="text-blue-200">
-          Trained on IntentSim data, Information-Intent Nexus, and ATLAS/CERN datasets
-        </CardDescription>
-      </CardHeader>
+        <div className="flex items-center gap-2">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={clearChat}
+            className="text-white hover:bg-white/10"
+          >
+            <RefreshCw className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
       
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-grow flex flex-col">
-        <TabsList className="mx-4 mt-1">
-          <TabsTrigger value="chat" className="flex items-center">
-            <Brain className="w-4 h-4 mr-2" />
-            Assistant
+      <Tabs defaultValue="chat" value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
+        <TabsList className="grid w-full grid-cols-2 px-2">
+          <TabsTrigger value="chat" className="data-[state=active]:bg-indigo-600 data-[state=active]:text-white">
+            Chat
           </TabsTrigger>
-          <TabsTrigger value="media" className="flex items-center">
-            <Upload className="w-4 h-4 mr-2" />
-            Media
-          </TabsTrigger>
-          <TabsTrigger value="research" className="flex items-center">
-            <Search className="w-4 h-4 mr-2" />
+          <TabsTrigger value="research" className="data-[state=active]:bg-indigo-600 data-[state=active]:text-white">
             Research
-          </TabsTrigger>
-          <TabsTrigger value="settings" className="flex items-center">
-            <Settings className="w-4 h-4 mr-2" />
-            Settings
           </TabsTrigger>
         </TabsList>
         
-        <CardContent className="flex-grow p-0 relative overflow-hidden">
-          <TabsContent value="chat" className="h-full flex flex-col m-0 data-[state=active]:flex-grow">
-            <ScrollArea className="flex-grow p-4">
-              <div className="space-y-4">
-                {messages.map((message, index) => (
-                  <div 
-                    key={index} 
-                    className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+        <TabsContent value="chat" className="flex-1 flex flex-col">
+          <ScrollArea className="flex-grow p-4">
+            <div className="space-y-4">
+              {messages.map((message) => (
+                <div
+                  key={message.id}
+                  className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+                >
+                  <div
+                    className={`max-w-[80%] rounded-lg p-3 ${
+                      message.sender === 'user'
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-gray-200 dark:bg-gray-800 text-gray-900 dark:text-gray-100'
+                    }`}
                   >
-                    <div 
-                      className={`max-w-[80%] rounded-lg p-3 ${
-                        message.role === 'user' 
-                          ? 'bg-blue-600 text-white' 
-                          : 'bg-gray-700 text-gray-100'
-                      }`}
-                    >
-                      <p className="text-sm whitespace-pre-wrap">{message.content}</p>
-                      
-                      {/* Render attachments if present */}
-                      {message.attachments && message.attachments.length > 0 && (
-                        <div className="mt-2 pt-2 border-t border-white/20">
-                          {message.attachments.map((attachment, i) => (
-                            <div key={i} className="flex items-center text-xs">
-                              {attachment.type === 'image' && <Image className="h-3 w-3 mr-1" />}
-                              {attachment.type === 'audio' && <FileAudio className="h-3 w-3 mr-1" />}
-                              {attachment.type === 'video' && <FileVideo className="h-3 w-3 mr-1" />}
-                              <span>{attachment.type} attachment</span>
-                            </div>
-                          ))}
-                        </div>
+                    <div className="flex items-center mb-1">
+                      {message.sender === 'user' ? (
+                        <User className="h-4 w-4 mr-1" />
+                      ) : (
+                        <Bot className="h-4 w-4 mr-1" />
                       )}
-                      
-                      <p className="text-xs text-opacity-70 mt-1 text-right">
-                        {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                      </p>
+                      <span className="text-xs opacity-75">
+                        {message.sender === 'user' ? 'You' : 'IntentSimon'}
+                      </span>
+                    </div>
+                    
+                    {message.mediaContent && (
+                      <div className="mb-2">
+                        {message.mediaContent.type === 'image' && (
+                          <div className="rounded overflow-hidden mb-2 max-w-full">
+                            <img 
+                              src={message.mediaContent.content} 
+                              alt="Uploaded content" 
+                              className="max-w-full max-h-48 object-contain"
+                            />
+                          </div>
+                        )}
+                        {message.mediaContent.type === 'audio' && (
+                          <div className="mb-2">
+                            <audio 
+                              controls 
+                              src={message.mediaContent.content} 
+                              className="max-w-full"
+                            />
+                          </div>
+                        )}
+                        {message.mediaContent.type === 'video' && (
+                          <div className="rounded overflow-hidden mb-2">
+                            <video 
+                              controls 
+                              src={message.mediaContent.content} 
+                              className="max-w-full max-h-48"
+                            />
+                          </div>
+                        )}
+                        <div className="text-xs opacity-75 mt-1">
+                          {message.mediaContent.metadata.insights && message.mediaContent.metadata.insights.length > 0 && (
+                            <div className="mt-1">
+                              <span className="font-semibold">Analysis:</span>
+                              <ul className="list-disc list-inside">
+                                {message.mediaContent.metadata.insights.map((insight, index) => (
+                                  <li key={index}>{insight}</li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                    
+                    <p className="text-sm whitespace-pre-wrap">{message.text}</p>
+                    
+                    <div className="text-xs mt-1 opacity-50 text-right">
+                      {new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </div>
                   </div>
-                ))}
-                <div ref={messagesEndRef} />
-              </div>
-            </ScrollArea>
-            
-            {isProcessing && (
-              <div className="absolute bottom-0 left-0 w-full bg-gray-900/50 text-center py-2 text-blue-300 text-sm">
-                <div className="flex items-center justify-center space-x-2">
-                  <Activity className="h-4 w-4 animate-pulse" />
-                  <span>Processing intent fields...</span>
                 </div>
+              ))}
+              <div ref={messagesEndRef} />
+            </div>
+          </ScrollArea>
+          
+          {mediaFile && (
+            <div className="mx-3 mb-2 p-2 bg-gray-100 dark:bg-gray-800 rounded-md flex justify-between items-center">
+              <div className="flex items-center">
+                <span className="text-sm truncate max-w-[200px]">{mediaFile.name}</span>
               </div>
-            )}
-            
-            {isVoiceSpeaking && (
-              <div className="absolute bottom-16 left-0 w-full bg-blue-900/50 text-center py-2 text-blue-200 text-sm">
-                <div className="flex items-center justify-center space-x-2">
-                  <Volume2 className="h-4 w-4 animate-pulse" />
-                  <span>Speaking...</span>
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="h-6 px-2 text-blue-200 hover:text-white hover:bg-blue-800/50"
-                    onClick={() => {
-                      VoiceSynthesis.stop();
-                      setIsVoiceSpeaking(false);
-                    }}
-                  >
-                    Stop
-                  </Button>
-                </div>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={removeSelectedFile}
+                className="h-6 w-6"
+              >
+                <CloseIcon size={14} />
+              </Button>
+            </div>
+          )}
+          
+          <div className="p-3 border-t border-gray-200 dark:border-gray-800">
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => triggerFileInput('image')}
+                  title="Upload image"
+                  className="h-9 w-9"
+                >
+                  <FileImage className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => triggerFileInput('audio')}
+                  title="Upload audio"
+                  className="h-9 w-9"
+                >
+                  <FileAudio2 className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => triggerFileInput('video')}
+                  title="Upload video"
+                  className="h-9 w-9"
+                >
+                  <FileVideo className="h-4 w-4" />
+                </Button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  className="hidden"
+                />
+                <input
+                  ref={audioInputRef}
+                  type="file"
+                  accept="audio/*"
+                  onChange={handleFileChange}
+                  className="hidden"
+                />
+                <input
+                  ref={videoInputRef}
+                  type="file"
+                  accept="video/*"
+                  onChange={handleFileChange}
+                  className="hidden"
+                />
               </div>
-            )}
-            
-            {/* Media attachments preview */}
-            {mediaAttachments.length > 0 && (
-              <div className="bg-gray-800 p-2 border-t border-gray-700">
-                <div className="flex flex-wrap gap-2">
-                  {mediaAttachments.map((attachment, index) => (
-                    <Badge 
-                      key={index} 
-                      variant="secondary"
-                      className="flex items-center gap-1 bg-gray-700 hover:bg-gray-600"
-                    >
-                      {attachment.type === 'image' && <Image className="h-3 w-3" />}
-                      {attachment.type === 'audio' && <FileAudio className="h-3 w-3" />}
-                      {attachment.type === 'video' && <FileVideo className="h-3 w-3" />}
-                      <span>{attachment.type}</span>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-4 w-4 p-0 ml-1 text-gray-400 hover:text-gray-100"
-                        onClick={() => removeMediaAttachment(index)}
-                      >
-                        <X className="h-3 w-3" />
-                      </Button>
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-            )}
-            
-            <CardFooter className="bg-gray-900 p-4">
-              <form onSubmit={handleSubmit} className="w-full flex space-x-2">
+              
+              <div className="flex items-center gap-2">
                 <Input
                   ref={inputRef}
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
-                  placeholder="Ask about IntentSim, simulation data, or research directions..."
-                  className="bg-gray-800 border-gray-700 text-white"
+                  onKeyDown={handleKeyDown}
+                  placeholder={placeholder}
                   disabled={isProcessing}
+                  className="flex-grow"
                 />
                 <Button 
-                  type="submit" 
-                  disabled={isProcessing || (!input.trim() && mediaAttachments.length === 0)}
-                  className="bg-blue-600 hover:bg-blue-700"
+                  onClick={handleSendMessage} 
+                  disabled={(!input.trim() && !mediaFile) || isProcessing}
+                  className="bg-indigo-600 hover:bg-indigo-700"
                 >
-                  <Send className="h-5 w-5" />
+                  <Send className="h-4 w-4" />
                 </Button>
-              </form>
-            </CardFooter>
-          </TabsContent>
-          
-          <TabsContent value="media" className="h-full m-0 p-4 data-[state=active]:flex-grow overflow-auto">
-            <div className="space-y-4">
-              <h3 className="text-lg font-medium text-white">Upload Media</h3>
-              <p className="text-sm text-gray-300">
-                Upload images, audio, or video files for the assistant to analyze and extract insights related to IntentSim.
-              </p>
-              
-              <MediaUploader 
-                onMediaProcessed={handleMediaUpload}
-                allowedTypes={['image', 'audio', 'video']}
-                maxSizeMB={50}
-              />
-              
-              {mediaAttachments.length > 0 && (
-                <div className="mt-4">
-                  <h4 className="text-md font-medium text-white mb-2">Attached Media</h4>
-                  <div className="space-y-2">
-                    {mediaAttachments.map((attachment, index) => (
-                      <div key={index} className="bg-gray-700 rounded-md p-2 flex justify-between items-center">
-                        <div className="flex items-center">
-                          {attachment.type === 'image' && <Image className="h-4 w-4 mr-2" />}
-                          {attachment.type === 'audio' && <FileAudio className="h-4 w-4 mr-2" />}
-                          {attachment.type === 'video' && <FileVideo className="h-4 w-4 mr-2" />}
-                          <span className="text-white">{attachment.type} file</span>
-                        </div>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 w-8 p-0 text-gray-400 hover:text-white hover:bg-gray-600/50"
-                          onClick={() => removeMediaAttachment(index)}
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                  
-                  <Button 
-                    className="w-full mt-4 bg-blue-600 hover:bg-blue-700"
-                    onClick={handleSubmit}
-                    disabled={isProcessing}
-                  >
-                    Send with Media
-                  </Button>
-                </div>
-              )}
+              </div>
             </div>
-          </TabsContent>
-          
-          <TabsContent value="research" className="h-full m-0 p-4 data-[state=active]:flex-grow overflow-auto">
+          </div>
+        </TabsContent>
+        
+        <TabsContent value="research" className="flex-1 flex flex-col">
+          <div className="p-4 flex-1">
+            <h3 className="text-lg font-semibold mb-4">Deep Research</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+              Submit a research query to analyze across IntentSim data, ATLAS datasets, 
+              and related scientific literature.
+            </p>
+            
             <div className="space-y-4">
-              <h3 className="text-lg font-medium text-white">Research Database</h3>
-              <p className="text-sm text-gray-300">
-                Search scientific literature, ATLAS/CERN datasets, and research papers relevant to the Information-Intent Nexus framework.
-              </p>
-              
-              <form onSubmit={handleResearchSubmit} className="space-y-4">
-                <div className="flex gap-2">
+              <div className="flex items-end gap-2">
+                <div className="flex-1">
+                  <label className="text-sm font-medium mb-1 block">Research Query</label>
                   <Input
                     value={researchQuery}
                     onChange={(e) => setResearchQuery(e.target.value)}
-                    placeholder="e.g., intent field fluctuations in complex systems"
-                    className="bg-gray-800 border-gray-700 text-white"
+                    onKeyDown={handleResearchKeyDown}
+                    placeholder="e.g., intent field fluctuations in high-energy collisions"
                     disabled={isResearching}
                   />
-                  <Button 
-                    type="submit" 
-                    disabled={isResearching || !researchQuery.trim()}
-                    className={`min-w-24 ${isResearching ? 'bg-gray-700' : 'bg-blue-600 hover:bg-blue-700'}`}
-                  >
-                    {isResearching ? (
-                      <>
-                        <Activity className="h-4 w-4 mr-2 animate-spin" />
-                        Researching...
-                      </>
-                    ) : (
-                      <>
-                        <Search className="h-4 w-4 mr-2" />
-                        Research
-                      </>
-                    )}
-                  </Button>
                 </div>
-                
-                <div className="bg-gray-900 rounded-md p-3">
-                  <h4 className="text-sm font-medium text-white mb-2">Research Sources</h4>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="flex items-center space-x-2">
-                      <Checkbox 
-                        id="atlas" 
-                        checked={activeDataSources.cern}
-                        onCheckedChange={() => toggleDataSource('cern')}
-                      />
-                      <label htmlFor="atlas" className="text-sm text-gray-300 cursor-pointer">
-                        ATLAS/CERN Datasets
-                      </label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox 
-                        id="arxiv" 
-                        checked={true} 
-                        onCheckedChange={() => {}}
-                      />
-                      <label htmlFor="arxiv" className="text-sm text-gray-300 cursor-pointer">
-                        arXiv Papers
-                      </label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox 
-                        id="nature" 
-                        checked={true} 
-                        onCheckedChange={() => {}}
-                      />
-                      <label htmlFor="nature" className="text-sm text-gray-300 cursor-pointer">
-                        Nature Journals
-                      </label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox 
-                        id="simulation" 
-                        checked={activeDataSources.simulation} 
-                        onCheckedChange={() => toggleDataSource('simulation')}
-                      />
-                      <label htmlFor="simulation" className="text-sm text-gray-300 cursor-pointer">
-                        Simulation Results
-                      </label>
-                    </div>
-                  </div>
-                </div>
-              </form>
+                <Button 
+                  onClick={handleResearchSubmit} 
+                  disabled={!researchQuery.trim() || isResearching}
+                  className="bg-indigo-600 hover:bg-indigo-700"
+                >
+                  {isResearching ? 'Researching...' : 'Research'}
+                </Button>
+              </div>
               
-              <div className="bg-gray-700 rounded-md p-3 mt-4">
-                <div className="flex items-center">
-                  <FileText className="h-5 w-5 text-blue-400 mr-2" />
-                  <h4 className="text-md font-medium text-white">Recent Research Topics</h4>
-                </div>
-                <div className="mt-2 space-y-2">
-                  {[
-                    "Intent field fluctuations in complex systems",
-                    "Emergent properties of self-organizing particles",
-                    "Neural networks for predicting intent-based behavior",
-                    "Correlation between ATLAS data and intent simulations",
-                    "Information-Intent Nexus theoretical foundations"
-                  ].map((topic, index) => (
-                    <div 
-                      key={index} 
-                      className="bg-gray-800 hover:bg-gray-600 rounded p-2 cursor-pointer transition-colors"
-                      onClick={() => {
-                        setResearchQuery(topic);
-                      }}
+              {researchResults.length > 0 && (
+                <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-4">
+                  <h4 className="font-medium mb-2">Research Findings</h4>
+                  <ul className="space-y-2">
+                    {researchResults.map((result, index) => (
+                      <li key={index} className="flex items-start gap-2">
+                        <CheckCircle className="h-4 w-4 text-green-500 mt-0.5 shrink-0" />
+                        <span className="text-sm">{result}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <div className="mt-4 flex justify-end">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setActiveTab('chat')}
+                      className="text-xs"
                     >
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm text-gray-200">{topic}</span>
-                        <ArrowRight className="h-4 w-4 text-gray-400" />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="settings" className="h-full m-0 p-4 data-[state=active]:flex-grow overflow-auto">
-            <div className="space-y-6">
-              <h3 className="text-lg font-medium text-white">Assistant Settings</h3>
-              
-              <div className="space-y-4">
-                <div className="bg-gray-700 rounded-md p-4">
-                  <h4 className="text-md font-medium text-white mb-3">Voice Settings</h4>
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-2">
-                        <Volume2 className="h-5 w-5 text-blue-400" />
-                        <div>
-                          <Label htmlFor="voice-toggle" className="text-white">Enable Voice Output</Label>
-                          <p className="text-xs text-gray-400">
-                            Assistant will speak responses with a 40-year-old Oxford professor's voice
-                          </p>
-                        </div>
-                      </div>
-                      <Switch 
-                        id="voice-toggle" 
-                        checked={voiceEnabled}
-                        onCheckedChange={handleVoiceToggle}
-                      />
-                    </div>
-                    
-                    {voiceEnabled && (
-                      <div className="pt-2 border-t border-gray-600">
-                        <Dialog open={isApiKeyDialogOpen} onOpenChange={setIsApiKeyDialogOpen}>
-                          <DialogTrigger asChild>
-                            <Button variant="outline" className="w-full">
-                              <Sparkles className="h-4 w-4 mr-2 text-yellow-400" />
-                              Set ElevenLabs API Key
-                            </Button>
-                          </DialogTrigger>
-                          <DialogContent className="bg-gray-800 text-white">
-                            <DialogHeader>
-                              <DialogTitle>ElevenLabs API Key</DialogTitle>
-                              <DialogDescription className="text-gray-400">
-                                Enter your ElevenLabs API key for premium voice quality. The key will be stored locally in your browser.
-                              </DialogDescription>
-                            </DialogHeader>
-                            <div className="py-4">
-                              <Input
-                                value={elevenLabsApiKey}
-                                onChange={(e) => setElevenLabsApiKey(e.target.value)}
-                                placeholder="Enter your ElevenLabs API key"
-                                className="bg-gray-700 border-gray-600 text-white"
-                              />
-                              <p className="text-xs text-gray-400 mt-2">
-                                Don't have an API key? Visit <a href="https://elevenlabs.io" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">ElevenLabs</a> to get one.
-                              </p>
-                            </div>
-                            <DialogFooter>
-                              <Button variant="outline" onClick={() => setIsApiKeyDialogOpen(false)}>Cancel</Button>
-                              <Button onClick={handleApiKeySave}>Save</Button>
-                            </DialogFooter>
-                          </DialogContent>
-                        </Dialog>
-                      </div>
-                    )}
+                      Back to Chat
+                    </Button>
                   </div>
                 </div>
-                
-                <div className="bg-gray-700 rounded-md p-4">
-                  <h4 className="text-md font-medium text-white mb-3">Data Sources</h4>
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-2">
-                        <Database className="h-5 w-5 text-green-400" />
-                        <Label htmlFor="simulation-toggle" className="text-white">IntentSim Simulation Data</Label>
-                      </div>
-                      <Switch 
-                        id="simulation-toggle" 
-                        checked={activeDataSources.simulation}
-                        onCheckedChange={() => toggleDataSource('simulation')}
-                      />
-                    </div>
-                    
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-2">
-                        <Brain className="h-5 w-5 text-purple-400" />
-                        <Label htmlFor="neural-toggle" className="text-white">Neural Network Analysis</Label>
-                      </div>
-                      <Switch 
-                        id="neural-toggle" 
-                        checked={activeDataSources.neuralnets}
-                        onCheckedChange={() => toggleDataSource('neuralnets')}
-                      />
-                    </div>
-                    
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-2">
-                        <Zap className="h-5 w-5 text-yellow-400" />
-                        <Label htmlFor="cern-toggle" className="text-white">ATLAS/CERN Datasets</Label>
-                      </div>
-                      <Switch 
-                        id="cern-toggle" 
-                        checked={activeDataSources.cern}
-                        onCheckedChange={() => toggleDataSource('cern')}
-                      />
-                    </div>
-                    
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-2">
-                        <BookOpen className="h-5 w-5 text-blue-400" />
-                        <Label htmlFor="notebook-toggle" className="text-white">Notebook LM Mindmap</Label>
-                      </div>
-                      <Switch 
-                        id="notebook-toggle" 
-                        checked={activeDataSources.notebook}
-                        onCheckedChange={() => toggleDataSource('notebook')}
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
+              )}
             </div>
-          </TabsContent>
-        </CardContent>
+          </div>
+        </TabsContent>
       </Tabs>
     </Card>
   );
 };
 
 export default IntentAssistant;
-
-// Add the Checkbox component inline since it's small and only used here
-const Checkbox = ({
-  id,
-  checked,
-  onCheckedChange,
-}: {
-  id: string;
-  checked: boolean;
-  onCheckedChange: () => void;
-}) => {
-  return (
-    <div 
-      className={`h-4 w-4 rounded border ${
-        checked ? 'bg-blue-500 border-blue-600' : 'bg-gray-800 border-gray-600'
-      } flex items-center justify-center cursor-pointer transition-colors`}
-      onClick={onCheckedChange}
-    >
-      {checked && <Check className="h-3 w-3 text-white" />}
-    </div>
-  );
-};

@@ -1,28 +1,37 @@
 
 import React from 'react';
-import { ParticleCanvas } from '@/components/ParticleCanvas';
-import { SimulationStats } from '@/hooks/useSimulationData';
-import { AnomalyEvent } from '@/utils/particleUtils';
+import { Card } from '@/components/ui/card';
+import ParticleCanvas from '@/components/ParticleCanvas';
+import { Particle } from '@/types/simulation';
 
-type SimulationContainerProps = {
-  intentFluctuationRate: number;
-  maxParticles: number;
-  learningRate: number;
-  particleCreationRate: number;
-  viewMode: '2d' | '3d';
-  running: boolean;
-  renderMode: 'particles' | 'field' | 'density' | 'combined';
-  useAdaptiveParticles: boolean;
-  energyConservation: boolean;
-  probabilisticIntent: boolean;
-  onStatsUpdate: (stats: SimulationStats) => void;
-  onAnomalyDetected?: (anomaly: AnomalyEvent) => void;
-};
+interface SimulationContainerProps {
+  particles: Particle[];
+  width?: number;
+  height?: number;
+  showControls?: boolean;
+  showIntentField?: boolean;
+}
 
-export const SimulationContainer: React.FC<SimulationContainerProps> = (props) => {
+const SimulationContainer: React.FC<SimulationContainerProps> = ({
+  particles,
+  width = 800,
+  height = 600,
+  showControls = true,
+  showIntentField = true,
+}) => {
   return (
-    <div className="w-full h-full relative overflow-hidden">
-      <ParticleCanvas {...props} />
-    </div>
+    <Card className="bg-gray-900 overflow-hidden">
+      <div className="aspect-video relative">
+        <ParticleCanvas 
+          particles={particles}
+          width={width}
+          height={height}
+          showIntentField={showIntentField}
+          className="w-full h-full"
+        />
+      </div>
+    </Card>
   );
 };
+
+export default SimulationContainer;

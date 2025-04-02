@@ -7,7 +7,8 @@ export {
   startSimulationAudioStream,
   stopSimulationAudioStream,
   isSimulationAudioPlaying,
-  setSimulationAudioVolume
+  setSimulationAudioVolume,
+  initAudioContext
 } from './simulationAudioUtils';
 
 export {
@@ -29,6 +30,5 @@ export {
   stopLoopingAudio,
   setLoopingAudioVolume,
   resumeAudioContext,
-  createFallbackAudioIfNeeded as createPlaybackFallbackAudio,
-  initAudioContext
+  createFallbackAudioIfNeeded as createPlaybackFallbackAudio
 } from './audioPlaybackUtils';

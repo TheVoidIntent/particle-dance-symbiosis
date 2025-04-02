@@ -1,108 +1,88 @@
 
+import { initAudioContext } from './simulationAudioUtils';
+
 /**
- * Utilities for generating audio on the fly
+ * Generate a sample audio tone
  */
-
-// Create or get shared audio context for all audio generation
-let audioGenContext: AudioContext | null = null;
-
-// Creates a sample audio tone with specified parameters
-export const generateSampleAudio = (
-  duration: number = 0.5,
-  waveType: OscillatorType = 'sine',
-  frequency: number = 440,
-  volume: number = 0.5
-): void => {
+export const generateSampleAudio = (frequency: number = 440, duration: number = 1, type: OscillatorType = 'sine'): AudioBuffer | null => {
+  const audioContext = initAudioContext();
+  
   try {
-    // Create or reuse audio context
-    if (!audioGenContext) {
-      audioGenContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    // Create an empty buffer
+    const sampleRate = audioContext.sampleRate;
+    const buffer = audioContext.createBuffer(1, sampleRate * duration, sampleRate);
+    const channelData = buffer.getChannelData(0);
+    
+    // Fill the buffer with a waveform
+    for (let i = 0; i < buffer.length; i++) {
+      const t = i / sampleRate;
+      
+      switch (type) {
+        case 'sine':
+          channelData[i] = Math.sin(2 * Math.PI * frequency * t);
+          break;
+        case 'square':
+          channelData[i] = Math.sin(2 * Math.PI * frequency * t) > 0 ? 0.7 : -0.7;
+          break;
+        case 'sawtooth':
+          channelData[i] = 2 * ((t * frequency) % 1) - 1;
+          break;
+        case 'triangle':
+          channelData[i] = 2 * Math.abs(2 * ((t * frequency) % 1) - 1) - 1;
+          break;
+        default:
+          channelData[i] = Math.sin(2 * Math.PI * frequency * t);
+      }
+      
+      // Apply fade in/out to avoid clicks
+      const fadeTime = 0.05;
+      if (t < fadeTime) {
+        channelData[i] *= t / fadeTime;
+      } else if (t > duration - fadeTime) {
+        channelData[i] *= (duration - t) / fadeTime;
+      }
     }
     
-    // If context is suspended (due to autoplay policy), try to resume it
-    if (audioGenContext.state === 'suspended') {
-      audioGenContext.resume().catch(error => {
-        console.warn('Could not resume audio context:', error);
-        return; // Exit if we can't resume
-      });
-    }
-    
-    // Create oscillator and gain node
-    const oscillator = audioGenContext.createOscillator();
-    const gainNode = audioGenContext.createGain();
-    
-    // Connect the nodes
-    oscillator.connect(gainNode);
-    gainNode.connect(audioGenContext.destination);
-    
-    // Set the parameters
-    oscillator.type = waveType;
-    oscillator.frequency.value = frequency;
-    
-    // Apply volume with smoothing to avoid clicks
-    gainNode.gain.setValueAtTime(0, audioGenContext.currentTime);
-    gainNode.gain.linearRampToValueAtTime(volume, audioGenContext.currentTime + 0.05);
-    gainNode.gain.linearRampToValueAtTime(0, audioGenContext.currentTime + duration);
-    
-    // Start and stop the oscillator
-    oscillator.start();
-    oscillator.stop(audioGenContext.currentTime + duration);
-    
-    // Clean up when done
-    oscillator.onended = () => {
-      oscillator.disconnect();
-      gainNode.disconnect();
-    };
-    
-    console.log(`Generated audio: ${waveType} wave at ${frequency}Hz for ${duration}s`);
+    return buffer;
   } catch (error) {
-    console.error('Error generating audio:', error);
+    console.error('Error generating audio sample:', error);
+    return null;
   }
 };
 
-// Create fallback audio for error cases
-export const createFallbackAudioIfNeeded = () => {
-  generateSampleAudio(0.2, 'sawtooth', 220, 0.3);
-  
-  // Add a second tone after a brief pause
-  setTimeout(() => {
-    generateSampleAudio(0.2, 'sawtooth', 180, 0.3);
-  }, 250);
-  
-  return true;
-};
-
-// Generate complex tone from particle data (useful for sonification)
+/**
+ * Generate a tone specifically for particles
+ */
 export const generateParticleTone = (
   charge: 'positive' | 'negative' | 'neutral',
-  energy: number = 0.5,
-  complexity: number = 1
-): void => {
-  // Base frequency based on particle charge
-  const baseFreq = charge === 'positive' ? 440 : 
-                   charge === 'negative' ? 220 : 330;
+  energy: number = 1,
+  complexity: number = 0
+): AudioBuffer | null => {
+  let baseFrequency: number;
+  let waveType: OscillatorType;
   
-  // Higher complexity means more harmonics
-  const harmonics = Math.min(5, Math.max(1, Math.floor(complexity * 3)));
-  
-  // Generate the primary tone
-  generateSampleAudio(
-    0.5 + (energy * 0.5), // Duration based on energy
-    charge === 'positive' ? 'sine' : 
-    charge === 'negative' ? 'square' : 'triangle',
-    baseFreq,
-    0.3 * energy
-  );
-  
-  // Add harmonics
-  for (let i = 1; i <= harmonics; i++) {
-    setTimeout(() => {
-      generateSampleAudio(
-        0.3 + (energy * 0.3), 
-        'sine',
-        baseFreq * (1 + (i * 0.5)),
-        0.1 * energy / i
-      );
-    }, i * 100);
+  // Determine base frequency and wave type based on particle properties
+  switch (charge) {
+    case 'positive':
+      baseFrequency = 440; // A4
+      waveType = 'sine';
+      break;
+    case 'negative':
+      baseFrequency = 329.63; // E4
+      waveType = 'triangle';
+      break;
+    case 'neutral':
+      baseFrequency = 392; // G4
+      waveType = 'sine';
+      break;
+    default:
+      baseFrequency = 440;
+      waveType = 'sine';
   }
+  
+  // Adjust frequency based on energy and complexity
+  const adjustedFrequency = baseFrequency * (0.8 + energy * 0.4) * (1 + complexity * 0.1);
+  const duration = 0.5 + complexity * 0.2; // Longer duration for more complex particles
+  
+  return generateSampleAudio(adjustedFrequency, duration, waveType);
 };

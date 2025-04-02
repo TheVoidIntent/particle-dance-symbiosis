@@ -1,276 +1,134 @@
-
-import React, { useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import { Button } from "@/components/ui/button";
-import { Menu, X, Github, Atom, User, LogOut } from "lucide-react";
-import { useAuth } from "../contexts/AuthContext";
+import { Power, Menu, Moon, Sun, Bot } from 'lucide-react';
+import { useTheme } from 'next-themes';
 
 interface NavbarProps {
   isCreatorVersion?: boolean;
 }
 
 const Navbar: React.FC<NavbarProps> = ({ isCreatorVersion = false }) => {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { isAuthenticated, logout } = useAuth();
   const location = useLocation();
-  const navigate = useNavigate();
-  const { isAuthenticated, user, logout } = useAuth();
-  
-  const isActive = (path: string) => {
-    return location.pathname === path;
-  };
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { theme, setTheme } = useTheme();
 
-  const handleLogout = () => {
-    logout();
-    navigate('/');
-  };
+  useEffect(() => {
+    setIsMobileMenuOpen(false); // Close mobile menu on route change
+  }, [location.pathname]);
 
   return (
-    <nav className="bg-gray-900 border-b border-gray-800 sticky top-0 z-50">
+    <nav className="bg-gray-900/80 backdrop-blur-md fixed w-full z-50 border-b border-gray-800">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
-          <div className="flex items-center">
-            <Link to={isCreatorVersion ? "/creator" : "/"} className="flex-shrink-0 flex items-center">
-              <Atom className="h-8 w-8 text-indigo-400" />
-              <span className="ml-2 text-xl font-bold text-white">
-                IntentSim {isCreatorVersion && <span className="text-purple-400">Creator</span>}
-              </span>
-            </Link>
-            <div className="hidden md:ml-8 md:flex md:space-x-4">
-              {isCreatorVersion ? (
-                // Creator navigation links
+          <div className="flex">
+            <div className="flex-shrink-0 flex items-center">
+              <Link to="/" className="flex items-center">
+                <img src="/logo.svg" alt="IntentSim Logo" className="h-8 w-auto" />
+                <span className="ml-2 text-xl font-bold text-white">IntentSim</span>
+              </Link>
+            </div>
+            <div className="hidden sm:ml-6 sm:flex sm:space-x-4 items-center">
+              <Link
+                to="/"
+                className="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium"
+              >
+                Home
+              </Link>
+              <Link
+                to="/simulation"
+                className="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium"
+              >
+                Simulation
+              </Link>
+              <Link
+                to="/chat"
+                className="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium flex items-center"
+              >
+                <Bot className="h-4 w-4 mr-1" /> Gemini Chat
+              </Link>
+              {isCreatorVersion && (
                 <>
-                  <Link
-                    to="/creator"
-                    className={`px-3 py-2 rounded-md text-sm font-medium ${
-                      isActive("/creator")
-                        ? "bg-gray-800 text-white"
-                        : "text-gray-300 hover:bg-gray-700 hover:text-white"
-                    }`}
-                  >
-                    Dashboard
-                  </Link>
-                  <Link
-                    to="/creator/simulation"
-                    className={`px-3 py-2 rounded-md text-sm font-medium ${
-                      isActive("/creator/simulation")
-                        ? "bg-gray-800 text-white"
-                        : "text-gray-300 hover:bg-gray-700 hover:text-white"
-                    }`}
-                  >
-                    Simulation
-                  </Link>
                   <Link
                     to="/creator/notebook"
-                    className={`px-3 py-2 rounded-md text-sm font-medium ${
-                      isActive("/creator/notebook")
-                        ? "bg-gray-800 text-white"
-                        : "text-gray-300 hover:bg-gray-700 hover:text-white"
-                    }`}
+                    className="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium"
                   >
                     Notebook
-                  </Link>
-                </>
-              ) : (
-                // Visitor navigation links
-                <>
-                  <Link
-                    to="/"
-                    className={`px-3 py-2 rounded-md text-sm font-medium ${
-                      isActive("/")
-                        ? "bg-gray-800 text-white"
-                        : "text-gray-300 hover:bg-gray-700 hover:text-white"
-                    }`}
-                  >
-                    Home
-                  </Link>
-                  <Link
-                    to="/visitor-simulator"
-                    className={`px-3 py-2 rounded-md text-sm font-medium ${
-                      isActive("/visitor-simulator")
-                        ? "bg-gray-800 text-white"
-                        : "text-gray-300 hover:bg-gray-700 hover:text-white"
-                    }`}
-                  >
-                    Try Simulation
-                  </Link>
-                  <Link
-                    to="/simulation"
-                    className={`px-3 py-2 rounded-md text-sm font-medium ${
-                      isActive("/simulation")
-                        ? "bg-gray-800 text-white"
-                        : "text-gray-300 hover:bg-gray-700 hover:text-white"
-                    }`}
-                  >
-                    About
                   </Link>
                 </>
               )}
             </div>
           </div>
-          <div className="hidden md:flex items-center space-x-2">
-            {isAuthenticated ? (
-              <>
-                <div className="text-gray-300 mr-2">
-                  {user?.name}
-                </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-gray-300 hover:bg-gray-700 hover:text-white"
-                  onClick={handleLogout}
-                >
-                  <LogOut className="h-5 w-5 mr-1" />
-                  Logout
-                </Button>
-              </>
-            ) : (
-              <>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-gray-300 hover:bg-gray-700 hover:text-white"
-                  onClick={() => navigate('/auth')}
-                >
-                  <User className="h-5 w-5 mr-1" />
-                  Creator Login
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-gray-300 hover:bg-gray-700 hover:text-white"
-                  onClick={() => window.open("https://github.com/TheVoidIntent/IntentSim", "_blank")}
-                >
-                  <Github className="h-5 w-5 mr-1" />
-                  GitHub
-                </Button>
-              </>
-            )}
-          </div>
-          <div className="flex items-center md:hidden">
-            <button
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-white hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"
-            >
-              <span className="sr-only">Open main menu</span>
-              {isMenuOpen ? (
-                <X className="block h-6 w-6" aria-hidden="true" />
+          
+          <div className="flex items-center space-x-4">
+            <Button variant="ghost" size="icon" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>
+              {theme === 'dark' ? (
+                <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
               ) : (
-                <Menu className="block h-6 w-6" aria-hidden="true" />
+                <Moon className="h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
               )}
-            </button>
+              <span className="sr-only">Toggle theme</span>
+            </Button>
+            {isAuthenticated && isCreatorVersion ? (
+              <Button variant="outline" size="sm" onClick={logout} className="text-gray-300 hover:bg-gray-700 border-gray-700">
+                <Power className="h-4 w-4 mr-2" /> Logout
+              </Button>
+            ) : null}
+            <div className="-mr-2 flex sm:hidden">
+              <button
+                type="button"
+                className="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-white hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"
+                aria-controls="mobile-menu"
+                aria-expanded={isMobileMenuOpen}
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              >
+                <span className="sr-only">Open main menu</span>
+                <Menu className={`${isMobileMenuOpen ? 'hidden' : 'block'} h-6 w-6`} aria-hidden="true" />
+                <Menu className={`${isMobileMenuOpen ? 'block' : 'hidden'} h-6 w-6`} aria-hidden="true" />
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Mobile menu */}
-      {isMenuOpen && (
-        <div className="md:hidden">
-          <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-            {isCreatorVersion ? (
-              // Creator mobile navigation
+      
+      {isMobileMenuOpen && (
+        <div className="sm:hidden">
+          <div className="px-2 pt-2 pb-3 space-y-1">
+            <Link
+              to="/"
+              className="text-gray-300 hover:bg-gray-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              Home
+            </Link>
+            <Link
+              to="/simulation"
+              className="text-gray-300 hover:bg-gray-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              Simulation
+            </Link>
+            <Link
+              to="/chat"
+              className="text-gray-300 hover:bg-gray-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium flex items-center"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              <Bot className="h-4 w-4 mr-1" /> Gemini Chat
+            </Link>
+            {isCreatorVersion && (
               <>
                 <Link
-                  to="/creator"
-                  className={`block px-3 py-2 rounded-md text-base font-medium ${
-                    isActive("/creator")
-                      ? "bg-gray-800 text-white"
-                      : "text-gray-300 hover:bg-gray-700 hover:text-white"
-                  }`}
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  Dashboard
-                </Link>
-                <Link
-                  to="/creator/simulation"
-                  className={`block px-3 py-2 rounded-md text-base font-medium ${
-                    isActive("/creator/simulation")
-                      ? "bg-gray-800 text-white"
-                      : "text-gray-300 hover:bg-gray-700 hover:text-white"
-                  }`}
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  Simulation
-                </Link>
-                <Link
                   to="/creator/notebook"
-                  className={`block px-3 py-2 rounded-md text-base font-medium ${
-                    isActive("/creator/notebook")
-                      ? "bg-gray-800 text-white"
-                      : "text-gray-300 hover:bg-gray-700 hover:text-white"
-                  }`}
-                  onClick={() => setIsMenuOpen(false)}
+                  className="text-gray-300 hover:bg-gray-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium"
+                  onClick={() => setIsMobileMenuOpen(false)}
                 >
                   Notebook
                 </Link>
               </>
-            ) : (
-              // Visitor mobile navigation
-              <>
-                <Link
-                  to="/"
-                  className={`block px-3 py-2 rounded-md text-base font-medium ${
-                    isActive("/")
-                      ? "bg-gray-800 text-white"
-                      : "text-gray-300 hover:bg-gray-700 hover:text-white"
-                  }`}
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  Home
-                </Link>
-                <Link
-                  to="/visitor-simulator"
-                  className={`block px-3 py-2 rounded-md text-base font-medium ${
-                    isActive("/visitor-simulator")
-                      ? "bg-gray-800 text-white"
-                      : "text-gray-300 hover:bg-gray-700 hover:text-white"
-                  }`}
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  Try Simulation
-                </Link>
-                <Link
-                  to="/simulation"
-                  className={`block px-3 py-2 rounded-md text-base font-medium ${
-                    isActive("/simulation")
-                      ? "bg-gray-800 text-white"
-                      : "text-gray-300 hover:bg-gray-700 hover:text-white"
-                  }`}
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  About
-                </Link>
-              </>
             )}
-            
-            {isAuthenticated ? (
-              <button
-                className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:bg-gray-700 hover:text-white"
-                onClick={() => {
-                  setIsMenuOpen(false);
-                  handleLogout();
-                }}
-              >
-                Logout
-              </button>
-            ) : (
-              <Link
-                to="/auth"
-                className="block px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:bg-gray-700 hover:text-white"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Creator Login
-              </Link>
-            )}
-            
-            <a
-              href="https://github.com/TheVoidIntent/IntentSim"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="block px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:bg-gray-700 hover:text-white"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              GitHub
-            </a>
           </div>
         </div>
       )}

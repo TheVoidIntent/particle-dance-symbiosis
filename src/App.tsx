@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import HomePage from './pages/HomePage';
 import UniverseSimulation from './pages/UniverseSimulation';
@@ -12,6 +12,7 @@ import AuthPage from './pages/AuthPage';
 import PublicLayout from './components/layouts/PublicLayout';
 import ProtectedLayout from './components/layouts/ProtectedLayout';
 import { AuthProvider } from './contexts/AuthContext';
+import GeminiChatPage from './pages/GeminiChat';
 
 function App() {
   return (
@@ -25,6 +26,7 @@ function App() {
               <Route path="/simulation" element={<UniverseSimulation />} />
               <Route path="/visitor-simulator" element={<VisitorSimulator />} />
               <Route path="/auth" element={<AuthPage />} />
+              <Route path="/chat" element={<GeminiChatPage />} />
             </Route>
             
             {/* Protected Routes (Creator Version) */}

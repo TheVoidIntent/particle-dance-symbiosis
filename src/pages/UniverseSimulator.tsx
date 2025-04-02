@@ -152,12 +152,15 @@ const UniverseSimulator: React.FC = () => {
           <Card className="bg-gray-800/50 border-gray-700">
             <CardContent className="p-0">
               <SimulationCanvas 
-                particles={simulation.particles}
-                intentField={simulation.intentField}
-                showIntentField={visualizationMode === 'field' || visualizationMode === 'both'}
-                width={800}
-                height={500}
-                backgroundColor="rgb(17, 24, 39)"
+                intentFluctuationRate={intentFluctuationRate}
+                maxParticles={maxParticles}
+                particleCreationRate={particleCreationRate}
+                positiveChargeBehavior={positiveChargeBehavior}
+                negativeChargeBehavior={negativeChargeBehavior}
+                neutralChargeBehavior={neutralChargeBehavior}
+                probabilisticIntent={probabilisticIntent}
+                visualizationMode={visualizationMode}
+                running={running}
                 className="w-full h-[500px] rounded-md"
               />
             </CardContent>

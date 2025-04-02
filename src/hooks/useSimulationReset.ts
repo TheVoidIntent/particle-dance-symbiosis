@@ -64,7 +64,7 @@ export function useSimulationReset({
       description: "Particles cleared, counters reset. Intent field preserved."
     });
     
-    // Make sure to explicitly return the reset particles array
+    // Explicitly return the reset particles array
     return particlesRef.current;
   }, [
     particlesRef,

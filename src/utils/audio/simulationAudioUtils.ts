@@ -1,220 +1,197 @@
 
-// Audio context and utilities for simulation sounds
-let audioContext: AudioContext | null = null;
-let masterGainNode: GainNode | null = null;
-let isAudioInitialized = false;
-let audioVolume = 0.5;
+// Audio utilities for the simulation
 
-/**
- * Initialize the audio context for simulation sounds
- */
+let audioContext: AudioContext | null = null;
+
+// Initialize or get the audio context
 export const initAudioContext = (): AudioContext => {
   if (!audioContext) {
-    audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-    masterGainNode = audioContext.createGain();
-    masterGainNode.gain.value = audioVolume;
-    masterGainNode.connect(audioContext.destination);
-    isAudioInitialized = true;
-    console.log('Audio context initialized');
+    try {
+      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+      audioContext = new AudioContextClass();
+      console.log('Audio context initialized');
+    } catch (error) {
+      console.error('Failed to create audio context:', error);
+      throw new Error('Audio context initialization failed');
+    }
   }
+  
   return audioContext;
 };
 
-/**
- * Play a sound for a simulation event
- */
-export const playSimulationEvent = (
-  eventType: string, 
-  options: Record<string, any> = {}
-): void => {
-  if (!isAudioInitialized) {
-    try {
-      initAudioContext();
-    } catch (error) {
-      console.error('Failed to initialize audio:', error);
-      return;
-    }
-  }
-
-  if (!audioContext || audioContext.state === 'closed') {
-    console.warn('Audio context is not available or closed');
-    return;
-  }
-
-  // Resume audio context if it's suspended (browser autoplay policy)
-  if (audioContext.state === 'suspended') {
-    audioContext.resume();
-  }
-
-  try {
-    const oscillator = audioContext.createOscillator();
-    const gainNode = audioContext.createGain();
-    
-    // Configure sound based on event type
-    switch (eventType) {
-      case 'particle_creation':
-        // Different sound for different particle charges
-        if (options.eventType === 'positive') {
-          oscillator.type = 'sine';
-          oscillator.frequency.value = 440; // A4
-        } else if (options.eventType === 'negative') {
-          oscillator.type = 'triangle';
-          oscillator.frequency.value = 329.63; // E4
-        } else {
-          oscillator.type = 'sine';
-          oscillator.frequency.value = 392; // G4
-        }
-        
-        gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
-        oscillator.connect(gainNode);
-        gainNode.connect(masterGainNode as GainNode);
-        
-        oscillator.start();
-        oscillator.stop(audioContext.currentTime + 0.5);
-        break;
-        
-      case 'cluster_formation':
-        // Cluster formation sound
-        oscillator.type = 'sine';
-        oscillator.frequency.value = 523.25; // C5
-        
-        gainNode.gain.setValueAtTime(0.2 * (options.intensity || 1), audioContext.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 1.0);
-        
-        oscillator.connect(gainNode);
-        gainNode.connect(masterGainNode as GainNode);
-        
-        oscillator.start();
-        oscillator.stop(audioContext.currentTime + 1.0);
-        break;
-        
-      case 'robot_evolution':
-        // Robot evolution sound - more complex
-        const count = options.count || 1;
-        
-        for (let i = 0; i < count; i++) {
-          setTimeout(() => {
-            const osc = audioContext?.createOscillator();
-            const gain = audioContext?.createGain();
-            
-            if (!osc || !gain || !audioContext) return;
-            
-            osc.type = 'sawtooth';
-            osc.frequency.value = 880 - i * 50; // Start high and go down
-            
-            gain.gain.setValueAtTime(0.1, audioContext.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 1.5);
-            
-            osc.connect(gain);
-            gain.connect(masterGainNode as GainNode);
-            
-            osc.start();
-            osc.stop(audioContext.currentTime + 1.5);
-          }, i * 200);
-        }
-        break;
-        
-      default:
-        // Generic event sound
-        oscillator.type = 'sine';
-        oscillator.frequency.value = 220;
-        
-        gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
-        
-        oscillator.connect(gainNode);
-        gainNode.connect(masterGainNode as GainNode);
-        
-        oscillator.start();
-        oscillator.stop(audioContext.currentTime + 0.2);
-    }
-  } catch (error) {
-    console.error('Error playing simulation event sound:', error);
-  }
-};
-
-/**
- * Generate a continuous soundscape based on particle states
- */
-export const generateParticleSoundscape = (
-  particles: any[], 
-  intensity = 0.5
-): void => {
-  // Implementation would go here
-  console.log(`Generating soundscape for ${particles.length} particles at intensity ${intensity}`);
-};
-
-/**
- * Start continuous audio stream for simulation
- */
-export const startSimulationAudioStream = (): void => {
-  // Implementation would go here
-  console.log('Starting simulation audio stream');
-};
-
-/**
- * Stop continuous audio stream
- */
-export const stopSimulationAudioStream = (): void => {
-  // Implementation would go here
-  console.log('Stopping simulation audio stream');
-};
-
-/**
- * Check if simulation audio is currently playing
- */
-export const isSimulationAudioPlaying = (): boolean => {
-  return isAudioInitialized && !!audioContext && audioContext.state === 'running';
-};
-
-/**
- * Set the simulation audio volume
- */
-export const setSimulationAudioVolume = (volume: number): void => {
-  audioVolume = Math.max(0, Math.min(1, volume));
-  
-  if (masterGainNode) {
-    masterGainNode.gain.setValueAtTime(audioVolume, audioContext?.currentTime || 0);
-  }
-};
-
-/**
- * Play a simulation audio with specific parameters
- */
+// Play simulation audio
 export const playSimulationAudio = (
-  frequency: number, 
-  duration: number, 
-  type: OscillatorType = 'sine', 
-  volume = 0.5
+  frequencyStart: number = 440, 
+  frequencyEnd: number = 880, 
+  duration: number = 0.5, 
+  volume: number = 0.2
 ): void => {
-  if (!isAudioInitialized) {
-    try {
-      initAudioContext();
-    } catch (error) {
-      console.error('Failed to initialize audio:', error);
-      return;
-    }
+  const context = initAudioContext();
+  
+  // Create an oscillator
+  const oscillator = context.createOscillator();
+  oscillator.type = 'sine';
+  oscillator.frequency.setValueAtTime(frequencyStart, context.currentTime);
+  oscillator.frequency.linearRampToValueAtTime(frequencyEnd, context.currentTime + duration);
+  
+  // Create a gain node for volume control
+  const gainNode = context.createGain();
+  gainNode.gain.setValueAtTime(volume, context.currentTime);
+  gainNode.gain.exponentialRampToValueAtTime(0.001, context.currentTime + duration);
+  
+  // Connect nodes
+  oscillator.connect(gainNode);
+  gainNode.connect(context.destination);
+  
+  // Start and stop the oscillator
+  oscillator.start();
+  oscillator.stop(context.currentTime + duration);
+};
+
+// Play a simulation event sound
+export const playSimulationEvent = (
+  eventType: 'particle_creation' | 'cluster_formation' | 'robot_evolution' | 'inflation_event',
+  options: { intensity?: number; count?: number } = {}
+): void => {
+  const intensity = options.intensity || 1;
+  const count = options.count || 1;
+  
+  switch (eventType) {
+    case 'particle_creation':
+      playSimulationAudio(220, 440, 0.3, 0.1 * intensity);
+      break;
+    case 'cluster_formation':
+      playSimulationAudio(330, 660, 0.5, 0.2 * intensity);
+      break;
+    case 'robot_evolution':
+      // Play more complex sound for evolution
+      for (let i = 0; i < count; i++) {
+        setTimeout(() => {
+          playSimulationAudio(440 * (1 + i * 0.2), 880, 0.7, 0.3);
+        }, i * 200);
+      }
+      break;
+    case 'inflation_event':
+      // Play dramatic sound for inflation
+      playSimulationAudio(110, 880, 1.5, 0.4);
+      break;
   }
+};
 
-  if (!audioContext) return;
-
-  try {
-    const oscillator = audioContext.createOscillator();
-    const gainNode = audioContext.createGain();
-    
+// Generate a soundscape based on particle properties
+export const generateParticleSoundscape = (
+  particles: any[],
+  duration: number = 5
+): void => {
+  const context = initAudioContext();
+  
+  // Count particle types
+  const positiveCount = particles.filter(p => p.charge === 'positive').length;
+  const negativeCount = particles.filter(p => p.charge === 'negative').length;
+  const neutralCount = particles.filter(p => p.charge === 'neutral').length;
+  
+  const totalParticles = particles.length;
+  if (totalParticles === 0) return;
+  
+  // Normalize counts
+  const positiveFraction = positiveCount / totalParticles;
+  const negativeFraction = negativeCount / totalParticles;
+  const neutralFraction = neutralCount / totalParticles;
+  
+  // Create oscillators for each particle type
+  const createOscillator = (
+    frequency: number, 
+    type: OscillatorType,
+    volume: number,
+    delay: number = 0
+  ) => {
+    const oscillator = context.createOscillator();
     oscillator.type = type;
     oscillator.frequency.value = frequency;
     
-    gainNode.gain.setValueAtTime(volume, audioContext.currentTime);
-    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
+    const gainNode = context.createGain();
+    gainNode.gain.setValueAtTime(0, context.currentTime + delay);
+    gainNode.gain.linearRampToValueAtTime(volume, context.currentTime + delay + 0.1);
+    gainNode.gain.setValueAtTime(volume, context.currentTime + delay + duration - 0.1);
+    gainNode.gain.linearRampToValueAtTime(0, context.currentTime + delay + duration);
     
     oscillator.connect(gainNode);
-    gainNode.connect(masterGainNode as GainNode);
+    gainNode.connect(context.destination);
     
-    oscillator.start();
-    oscillator.stop(audioContext.currentTime + duration);
-  } catch (error) {
-    console.error('Error playing simulation audio:', error);
+    oscillator.start(context.currentTime + delay);
+    oscillator.stop(context.currentTime + delay + duration);
+  };
+  
+  // Create soundscape based on particle distribution
+  if (positiveFraction > 0) {
+    createOscillator(440, 'sine', 0.1 * positiveFraction);
   }
+  
+  if (negativeFraction > 0) {
+    createOscillator(293.66, 'triangle', 0.1 * negativeFraction, 0.2);
+  }
+  
+  if (neutralFraction > 0) {
+    createOscillator(349.23, 'sine', 0.1 * neutralFraction, 0.4);
+  }
+};
+
+// Handle streaming audio for continuous simulation
+let streamingSource: AudioBufferSourceNode | null = null;
+let isAudioStreaming = false;
+
+export const startSimulationAudioStream = (): void => {
+  if (isAudioStreaming) return;
+  
+  const context = initAudioContext();
+  isAudioStreaming = true;
+  
+  // Create a buffer with ambient sound
+  const duration = 10; // 10 second loop
+  const buffer = context.createBuffer(1, context.sampleRate * duration, context.sampleRate);
+  const channelData = buffer.getChannelData(0);
+  
+  // Fill with ambient drone sound
+  for (let i = 0; i < buffer.length; i++) {
+    const t = i / context.sampleRate;
+    
+    // Combine multiple frequencies for a complex drone
+    const v1 = Math.sin(2 * Math.PI * 55 * t);
+    const v2 = Math.sin(2 * Math.PI * 110 * t) * 0.5;
+    const v3 = Math.sin(2 * Math.PI * 220 * t) * 0.25;
+    
+    // Add some noise
+    const noise = (Math.random() * 2 - 1) * 0.02;
+    
+    channelData[i] = (v1 + v2 + v3 + noise) * 0.2;
+  }
+  
+  // Create source and play in loop
+  streamingSource = context.createBufferSource();
+  streamingSource.buffer = buffer;
+  streamingSource.loop = true;
+  
+  const gainNode = context.createGain();
+  gainNode.gain.value = 0.1;
+  
+  streamingSource.connect(gainNode);
+  gainNode.connect(context.destination);
+  
+  streamingSource.start();
+};
+
+export const stopSimulationAudioStream = (): void => {
+  if (!isAudioStreaming || !streamingSource) return;
+  
+  streamingSource.stop();
+  streamingSource = null;
+  isAudioStreaming = false;
+};
+
+export const setSimulationAudioVolume = (volume: number): void => {
+  // Implementation would adjust the gain node for the simulation audio
+};
+
+export const isSimulationAudioPlaying = (): boolean => {
+  return isAudioStreaming;
 };

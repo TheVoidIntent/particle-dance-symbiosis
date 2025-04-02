@@ -1,95 +1,148 @@
 
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Play, Pause, RotateCcw, Zap } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Play, Pause, RefreshCw } from 'lucide-react';
+import { toast } from "sonner";
 import { 
   startMotherSimulation, 
   stopMotherSimulation, 
   isMotherSimulationRunning, 
   getSimulationStats 
-} from "@/utils/simulation/motherSimulation";
+} from '@/utils/simulation/motherSimulation';
 
 const MotherSimulationControl: React.FC = () => {
-  const [isRunning, setIsRunning] = useState(false);
-  const [stats, setStats] = useState<any>({});
+  const [isRunning, setIsRunning] = useState<boolean>(false);
+  const [stats, setStats] = useState({
+    particleCount: 0,
+    interactionsCount: 0
+  });
   
   useEffect(() => {
-    // Initialize state
-    setIsRunning(isMotherSimulationRunning());
-    
-    // Update stats periodically
-    const interval = setInterval(() => {
+    // Initialize simulation status
+    const checkSimulationStatus = () => {
+      const running = isMotherSimulationRunning();
+      setIsRunning(running);
+      
       const currentStats = getSimulationStats();
-      setIsRunning(currentStats.isRunning);
-      setStats(currentStats);
-    }, 1000);
+      setStats({
+        particleCount: currentStats.particleCount || 0,
+        interactionsCount: currentStats.interactionsCount || 0
+      });
+    };
+    
+    // Check initial status
+    checkSimulationStatus();
+    
+    // Start simulation automatically if not running
+    if (!isMotherSimulationRunning()) {
+      console.log("Auto-starting mother simulation from control component...");
+      startMotherSimulation();
+      toast.success("Universe simulation started");
+      setIsRunning(true);
+    }
+    
+    // Set up interval to check status
+    const interval = setInterval(checkSimulationStatus, 1000);
     
     return () => clearInterval(interval);
   }, []);
   
-  const handleToggle = () => {
+  const handleStartStop = () => {
     if (isRunning) {
       stopMotherSimulation();
+      toast.info("Universe simulation paused");
       setIsRunning(false);
     } else {
-      const simulation = startMotherSimulation();
+      startMotherSimulation();
+      toast.success("Universe simulation resumed");
       setIsRunning(true);
-      
-      // Add cleanup function
-      window.addEventListener('beforeunload', () => {
-        if (simulation) simulation.stop();
-      });
     }
   };
-
+  
+  const handleReset = () => {
+    // Stop first
+    stopMotherSimulation();
+    
+    // Clear local storage to force a fresh initialization
+    localStorage.removeItem('motherSimulationState');
+    localStorage.removeItem('motherSimulationLastSaved');
+    
+    // Restart
+    setTimeout(() => {
+      startMotherSimulation();
+      toast.success("Universe simulation reset and restarted");
+      setIsRunning(true);
+    }, 500);
+  };
+  
+  const handleBoost = () => {
+    // Trigger rapid particle creation
+    for (let i = 0; i < 10; i++) {
+      setTimeout(() => {
+        // This function would be implemented in the motherSimulation module
+        // to add particles on demand
+        if (typeof window !== 'undefined') {
+          const event = new CustomEvent('boost-simulation', { detail: { count: 5 } });
+          window.dispatchEvent(event);
+        }
+      }, i * 100);
+    }
+    
+    toast.success("Energy boost applied to simulation");
+  };
+  
   return (
-    <Card className="bg-gray-900 border-gray-800">
-      <CardContent className="p-4">
-        <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-          <div className="flex items-center gap-3">
-            <Badge variant={isRunning ? "default" : "outline"} className={isRunning ? "bg-green-600" : ""}>
-              {isRunning ? "Running" : "Stopped"}
-            </Badge>
-            <div className="text-sm">
-              <span className="font-medium">Mother Simulation: </span>
-              <span className="text-gray-400">
-                {stats.particleCount || 0} particles, {stats.interactionsCount || 0} interactions
-              </span>
-            </div>
-          </div>
-          
-          <div className="flex gap-2">
-            <Button 
-              variant={isRunning ? "destructive" : "default"}
-              size="sm"
-              onClick={handleToggle}
-              className="flex items-center gap-1"
-            >
-              {isRunning ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-              {isRunning ? "Stop" : "Start"} Simulation
-            </Button>
-            
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => {
-                stopMotherSimulation();
-                setTimeout(() => {
-                  startMotherSimulation();
-                  setIsRunning(true);
-                }, 100);
-              }}
-              className="flex items-center gap-1"
-            >
-              <RefreshCw className="h-4 w-4" />
-              Reset
-            </Button>
-          </div>
+    <div className="flex flex-col sm:flex-row items-center gap-4 bg-gray-100 dark:bg-gray-800 p-4 rounded-lg shadow mb-6">
+      <div className="flex-1">
+        <h3 className="text-lg font-semibold mb-1">Continuous Simulation Control</h3>
+        <div className="flex items-center gap-2">
+          <div className={`h-3 w-3 rounded-full ${isRunning ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}></div>
+          <span className="text-sm text-gray-600 dark:text-gray-300">
+            {isRunning ? 'Running' : 'Paused'}
+          </span>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+      
+      <div className="flex gap-2 items-center">
+        <Badge variant="outline" className="bg-gray-200 dark:bg-gray-700">
+          {stats.particleCount} particles
+        </Badge>
+        <Badge variant="outline" className="bg-gray-200 dark:bg-gray-700">
+          {stats.interactionsCount.toLocaleString()} interactions
+        </Badge>
+      </div>
+      
+      <div className="flex gap-2">
+        <Button 
+          variant={isRunning ? "destructive" : "default"} 
+          size="sm" 
+          onClick={handleStartStop}
+        >
+          {isRunning ? <Pause className="h-4 w-4 mr-1" /> : <Play className="h-4 w-4 mr-1" />}
+          {isRunning ? 'Pause' : 'Start'}
+        </Button>
+        
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={handleReset}
+        >
+          <RotateCcw className="h-4 w-4 mr-1" />
+          Reset
+        </Button>
+        
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={handleBoost}
+          className="bg-yellow-100 hover:bg-yellow-200 text-yellow-800 border-yellow-300 dark:bg-yellow-900 dark:hover:bg-yellow-800 dark:text-yellow-200 dark:border-yellow-700"
+        >
+          <Zap className="h-4 w-4 mr-1" />
+          Boost
+        </Button>
+      </div>
+    </div>
   );
 };
 

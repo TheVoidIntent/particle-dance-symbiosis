@@ -1,240 +1,185 @@
 
-import { Particle } from './particleUtils';
+import { defaultConfig } from './simulation/config';
 
-/**
- * Analyzes an intent field and returns its key properties
- */
-export function analyzeIntentField(field: number[][][]): {
-  averageValue: number;
-  positiveRegions: number;
-  negativeRegions: number;
-  neutralRegions: number;
-  gradientStrength: number;
-  fieldEnergy: number;
-  complexity: number; // Add this property to fix the error
-} {
-  if (!field || field.length === 0 || field[0].length === 0 || field[0][0].length === 0) {
-    return {
-      averageValue: 0,
-      positiveRegions: 0,
-      negativeRegions: 0,
-      neutralRegions: 0,
-      gradientStrength: 0,
-      fieldEnergy: 0,
-      complexity: 0
-    };
-  }
+// Create a 3D intent field
+export function createIntentField(width: number, height: number, depth: number): number[][][] {
+  const field: number[][][] = [];
   
-  let sum = 0;
-  let positiveCount = 0;
-  let negativeCount = 0;
-  let neutralCount = 0;
-  let gradientSum = 0;
-  let energySum = 0;
-  let complexityScore = 0;
-  
-  // Sample one layer for efficiency
-  const fieldLayer = field[0];
-  const rows = fieldLayer.length;
-  const cols = fieldLayer[0].length;
-  
-  // Calculate average value and region counts
-  for (let y = 0; y < rows; y++) {
-    for (let x = 0; x < cols; x++) {
-      const value = fieldLayer[y][x];
-      sum += value;
-      
-      if (value > 0.1) {
-        positiveCount++;
-      } else if (value < -0.1) {
-        negativeCount++;
-      } else {
-        neutralCount++;
+  for (let z = 0; z < depth; z++) {
+    const plane: number[][] = [];
+    for (let y = 0; y < height; y++) {
+      const row: number[] = [];
+      for (let x = 0; x < width; x++) {
+        // Initial fluctuation between -1 and 1
+        row.push(Math.random() * 2 - 1);
       }
-      
-      energySum += value * value;
-      
-      // Calculate local gradient (measure of change)
-      if (y > 0 && x > 0 && y < rows - 1 && x < cols - 1) {
-        const neighbors = [
-          fieldLayer[y-1][x],
-          fieldLayer[y+1][x],
-          fieldLayer[y][x-1],
-          fieldLayer[y][x+1]
-        ];
-        
-        const localGradient = neighbors.reduce((acc, neighbor) => 
-          acc + Math.abs(value - neighbor), 0) / 4;
-        
-        gradientSum += localGradient;
-        
-        // Local patterns contribute to complexity
-        if (localGradient > 0.1) {
-          complexityScore += localGradient * 2;
-        }
-      }
+      plane.push(row);
     }
+    field.push(plane);
   }
-  
-  const cellCount = rows * cols;
-  const averageValue = sum / cellCount;
-  const gradientStrength = gradientSum / ((rows - 2) * (cols - 2));
-  const fieldEnergy = energySum / cellCount;
-  
-  // Calculate complexity based on distribution of values
-  const valueVariance = fieldEnergy - (averageValue * averageValue);
-  complexityScore += valueVariance * 10;
-  
-  // Presence of both positive and negative regions increases complexity
-  const balanceFactor = (positiveCount * negativeCount) / (cellCount * cellCount);
-  complexityScore += balanceFactor * 20;
-  
-  // Normalize complexity to 0-1 range
-  const normalizedComplexity = Math.min(1, Math.max(0, complexityScore / 5));
-  
-  return {
-    averageValue,
-    positiveRegions: positiveCount,
-    negativeRegions: negativeCount,
-    neutralRegions: neutralCount,
-    gradientStrength,
-    fieldEnergy,
-    complexity: normalizedComplexity
-  };
-}
-
-/**
- * Creates a simple field from the current particles
- */
-export function createFieldFromParticles(
-  particles: Particle[],
-  dimensions: { width: number; height: number; depth: number },
-  resolution: number
-): number[][][] {
-  const width = Math.ceil(dimensions.width / resolution);
-  const height = Math.ceil(dimensions.height / resolution);
-  const depth = dimensions.depth;
-  
-  // Initialize empty field
-  const field: number[][][] = Array(depth).fill(0).map(() => 
-    Array(height).fill(0).map(() => 
-      Array(width).fill(0)
-    )
-  );
-  
-  // Add particle influence to field
-  particles.forEach(particle => {
-    const x = Math.floor(particle.x / resolution);
-    const y = Math.floor(particle.y / resolution);
-    const z = Math.floor((particle.z || 0) / resolution) % depth;
-    
-    if (x >= 0 && x < width && y >= 0 && y < height && z >= 0 && z < depth) {
-      // Add particle influence based on charge and intent
-      const influence = particle.charge === 'positive' ? 0.1 :
-                        particle.charge === 'negative' ? -0.1 : 0.05;
-      
-      field[z][y][x] += influence;
-      
-      // Add some influence to neighboring cells
-      for (let dz = -1; dz <= 1; dz++) {
-        for (let dy = -1; dy <= 1; dy++) {
-          for (let dx = -1; dx <= 1; dx++) {
-            const nx = x + dx;
-            const ny = y + dy;
-            const nz = (z + dz + depth) % depth;
-            
-            if (nx >= 0 && nx < width && ny >= 0 && ny < height && 
-                !(dx === 0 && dy === 0 && dz === 0)) {
-              field[nz][ny][nx] += influence * 0.3;
-            }
-          }
-        }
-      }
-    }
-  });
   
   return field;
 }
 
-/**
- * Updates the intent field based on fluctuation rate and current state
- */
+// Update the intent field with random fluctuations
 export function updateIntentField(
   field: number[][][],
-  fluctuationRate: number,
+  fluctuationRate: number = 0.01,
   probabilistic: boolean = false
 ): number[][][] {
-  if (!field || field.length === 0) return field;
+  // Create a copy to avoid modifying the original
+  const updatedField = JSON.parse(JSON.stringify(field));
   
-  const depth = field.length;
-  const height = field[0].length;
-  const width = field[0][0].length;
-  
-  // Create a copy of the field to update
-  const newField = JSON.parse(JSON.stringify(field));
-  
-  // Update each cell in the field
-  for (let z = 0; z < depth; z++) {
-    for (let y = 0; y < height; y++) {
-      for (let x = 0; x < width; x++) {
-        // Baseline fluctuation
+  for (let z = 0; z < field.length; z++) {
+    for (let y = 0; y < field[z].length; y++) {
+      for (let x = 0; x < field[z][y].length; x++) {
+        // Apply random fluctuation
         let fluctuation = (Math.random() * 2 - 1) * fluctuationRate;
         
-        // In probabilistic mode, some cells experience stronger fluctuations
-        if (probabilistic && Math.random() < 0.1) {
-          fluctuation *= 3;
+        // If probabilistic, sometimes have larger fluctuations
+        if (probabilistic && Math.random() < 0.05) {
+          fluctuation *= 5; // Occasional larger fluctuations
         }
         
-        // Apply fluctuation
-        newField[z][y][x] += fluctuation;
+        updatedField[z][y][x] += fluctuation;
         
-        // Diffusion: each cell is influenced by its neighbors
-        if (z > 0 && y > 0 && x > 0 && z < depth - 1 && y < height - 1 && x < width - 1) {
-          const neighbors = [
-            field[z-1][y][x],
-            field[z+1][y][x],
-            field[z][y-1][x],
-            field[z][y+1][x],
-            field[z][y][x-1],
-            field[z][y][x+1]
-          ];
-          
-          const avgNeighbor = neighbors.reduce((sum, val) => sum + val, 0) / neighbors.length;
-          
-          // Move slightly toward the average of neighbors
-          newField[z][y][x] = newField[z][y][x] * 0.9 + avgNeighbor * 0.1;
-        }
-        
-        // Apply decay to prevent unbounded growth
-        newField[z][y][x] *= 0.99;
-        
-        // Clamp values to prevent extreme fluctuations
-        newField[z][y][x] = Math.max(-1, Math.min(1, newField[z][y][x]));
+        // Clamp to range [-1, 1]
+        updatedField[z][y][x] = Math.max(-1, Math.min(1, updatedField[z][y][x]));
       }
     }
   }
   
-  return newField;
+  return updatedField;
 }
 
-/**
- * Initialize a blank intent field with the given dimensions
- */
-export function initializeIntentField(
-  width: number,
-  height: number,
-  depth: number,
-  resolution: number
+// Create a field representation from particles
+export function createFieldFromParticles(
+  particles: any[],
+  dimensions: { width: number, height: number, depth: number },
+  cellSize: number
 ): number[][][] {
-  const cols = Math.ceil(width / resolution);
-  const rows = Math.ceil(height / resolution);
+  const fieldWidth = Math.ceil(dimensions.width / cellSize);
+  const fieldHeight = Math.ceil(dimensions.height / cellSize);
+  const fieldDepth = dimensions.depth;
   
-  // Create field with small random values
-  const field = Array(depth).fill(0).map(() => 
-    Array(rows).fill(0).map(() => 
-      Array(cols).fill(0).map(() => (Math.random() * 0.2) - 0.1)
-    )
-  );
+  // Initialize empty field
+  const field: number[][][] = [];
+  for (let z = 0; z < fieldDepth; z++) {
+    const plane: number[][] = [];
+    for (let y = 0; y < fieldHeight; y++) {
+      plane.push(Array(fieldWidth).fill(0));
+    }
+    field.push(plane);
+  }
+  
+  // Add particle influence to field
+  for (const particle of particles) {
+    if (!particle || isNaN(particle.x) || isNaN(particle.y)) continue;
+    
+    const x = Math.floor(particle.x / cellSize);
+    const y = Math.floor(particle.y / cellSize);
+    const z = Math.floor((particle.z || 0) / (dimensions.depth / fieldDepth));
+    
+    // Skip if out of bounds
+    if (x < 0 || x >= fieldWidth || y < 0 || y >= fieldHeight || z < 0 || z >= fieldDepth) {
+      continue;
+    }
+    
+    // Influence depends on particle charge
+    let influence = 0;
+    switch (particle.charge) {
+      case 'positive':
+        influence = 0.1;
+        break;
+      case 'negative':
+        influence = -0.1;
+        break;
+      case 'neutral':
+        influence = 0;
+        break;
+      default:
+        influence = 0;
+    }
+    
+    // Adjust by intent if present
+    if (particle.intent !== undefined) {
+      influence *= (1 + Math.abs(particle.intent));
+    }
+    
+    // Apply to field
+    field[z][y][x] += influence;
+    
+    // Clamp to range [-1, 1]
+    field[z][y][x] = Math.max(-1, Math.min(1, field[z][y][x]));
+  }
   
   return field;
+}
+
+// Analyze the intent field for emerging patterns
+export function analyzeIntentField(field: number[][][]): {
+  complexity: number;
+  averageIntent: number;
+  gradientStrength: number;
+  entropyLevel: number;
+} {
+  let totalIntent = 0;
+  let totalCells = 0;
+  let gradientSum = 0;
+  let frequencies: Record<string, number> = {};
+  
+  // Analyze the middle z layer for simplicity
+  const zLayer = Math.floor(field.length / 2);
+  
+  for (let y = 1; y < field[zLayer].length - 1; y++) {
+    for (let x = 1; x < field[zLayer][y].length - 1; x++) {
+      const value = field[zLayer][y][x];
+      totalIntent += value;
+      totalCells++;
+      
+      // Calculate local gradient (difference from neighbors)
+      const neighbors = [
+        field[zLayer][y-1][x],
+        field[zLayer][y+1][x],
+        field[zLayer][y][x-1],
+        field[zLayer][y][x+1]
+      ];
+      
+      const localGradient = neighbors.reduce((sum, neighbor) => 
+        sum + Math.abs(value - neighbor), 0) / 4;
+      
+      gradientSum += localGradient;
+      
+      // Bin the value for entropy calculation
+      const bin = Math.floor(value * 10) / 10;
+      frequencies[bin] = (frequencies[bin] || 0) + 1;
+    }
+  }
+  
+  // Calculate average intent
+  const averageIntent = totalIntent / totalCells;
+  
+  // Calculate gradient strength (measure of pattern complexity)
+  const gradientStrength = gradientSum / totalCells;
+  
+  // Calculate entropy (measure of disorder)
+  let entropy = 0;
+  for (const bin in frequencies) {
+    const probability = frequencies[bin] / totalCells;
+    entropy -= probability * Math.log2(probability);
+  }
+  
+  // Normalize entropy to [0, 1]
+  const maxPossibleEntropy = Math.log2(Object.keys(frequencies).length);
+  const normalizedEntropy = maxPossibleEntropy > 0 ? entropy / maxPossibleEntropy : 0;
+  
+  // Calculate complexity as a function of gradient and entropy
+  const complexity = gradientStrength * (1 - normalizedEntropy/2);
+  
+  return {
+    complexity,
+    averageIntent,
+    gradientStrength,
+    entropyLevel: normalizedEntropy
+  };
 }

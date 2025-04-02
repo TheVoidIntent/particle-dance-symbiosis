@@ -1,36 +1,43 @@
 
-// Configuration for the simulation
+// Configuration for the mother simulation
+
+// Default configuration options
 export const defaultConfig = {
-  maxParticles: 100,
-  initialParticleCount: 50,
+  // Simulation parameters
+  maxParticles: 200,
+  maxInteractionRadius: 50,
   viewMode: '2d' as const,
-  fluctuationRate: 0.01,
+  particleCreationRate: 0.3, // Probability of creating particles each tick
+  particleLifetime: null, // null = infinite, or number of frames
+  
+  // Physics parameters
+  baseSpeed: 1,
+  dragFactor: 0.98,
+  
+  // Intent field parameters
+  intentFluctuationRate: 0.01,
+  probabilisticIntent: true,
+  
+  // Behavior parameters
   learningRate: 0.1,
-  particleCreationRate: 1,
-  useAdaptiveParticles: false,
+  useAdaptiveParticles: true,
   energyConservation: false,
-  probabilisticIntent: false,
+  
+  // Rendering parameters
+  renderMode: 'particles' as const, // 'particles', 'field', or 'both'
+  showParticleDetails: true
 };
 
-// Simulation dimensions
+// Dimensions for the simulation
 export const simulationDimensions = {
-  width: 800,
-  height: 600,
+  width: typeof window !== 'undefined' ? window.innerWidth : 800,
+  height: typeof window !== 'undefined' ? window.innerHeight : 600
 };
 
-// Intent field configuration
+// Field configuration
 export const fieldConfig = {
-  width: 40,
-  height: 30,
-  depth: 10,
-  resolution: 20,
-};
-
-// Simulation options for rendering
-export const simulationOptions = {
-  gridSpacing: 40,
-  fieldOpacity: 0.2,
-  showGrid: true,
-  showFields: true,
-  showChargeColors: true,
+  width: 30, // Number of cells in x direction
+  height: 20, // Number of cells in y direction
+  depth: 5,  // Number of cells in z direction
+  resolution: 20 // Size of each cell in pixels
 };

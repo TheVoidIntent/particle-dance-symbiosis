@@ -4,12 +4,13 @@ import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
 import { clearSimulationData, clearPersistedState } from '@/utils/dataExportUtils';
 import { useToast } from "@/hooks/use-toast";
+import { Particle } from '@/utils/particleUtils';
 
 interface SimulationControlButtonsProps {
   dataCollectionActive: boolean;
   onExportData: () => void;
   onToggleDataCollection: () => void;
-  onResetSimulation: () => any[]; // Updated to match expected return type
+  onResetSimulation: () => Particle[]; // Explicit return type of Particle[]
 }
 
 export const SimulationControlButtons: React.FC<SimulationControlButtonsProps> = ({

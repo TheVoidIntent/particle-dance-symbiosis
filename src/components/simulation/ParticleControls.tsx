@@ -12,7 +12,7 @@ type ParticleControlsProps = {
   dataCollectionActive: boolean;
   onExportData: () => void;
   onToggleDataCollection: () => void;
-  onResetSimulation: () => any[]; // This expects a function that returns any[]
+  onResetSimulation: () => Particle[]; // Explicit return type of Particle[]
 };
 
 export const ParticleControls: React.FC<ParticleControlsProps> = ({

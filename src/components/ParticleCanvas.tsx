@@ -3,7 +3,7 @@ import { useParticleSimulation } from '@/hooks/simulation';
 import { useSimulationData } from '@/hooks/useSimulationData';
 import { useCanvasRenderer } from '@/hooks/useCanvasRenderer';
 import { useAnimationLoop } from '@/hooks/useAnimationLoop';
-import { AnomalyEvent } from '@/utils/particleUtils';
+import { AnomalyEvent, Particle } from '@/utils/particleUtils';
 import { ParticleDisplay } from '@/components/simulation/ParticleDisplay';
 import { useInflationEvents } from '@/hooks/useInflationEvents';
 import { useParticleManagement } from '@/hooks/useParticleManagement';
@@ -129,7 +129,7 @@ export const ParticleCanvas: React.FC<ParticleCanvasProps> = ({
     simulationTimeRef.current || 0
   );
 
-  const handleResetSimulation = (): any[] => {
+  const handleResetSimulation = (): Particle[] => {
     return resetSimulation();
   };
 

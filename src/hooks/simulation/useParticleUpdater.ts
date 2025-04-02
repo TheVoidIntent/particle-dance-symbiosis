@@ -2,6 +2,11 @@
 import { MutableRefObject, useCallback } from 'react';
 import { Particle } from '@/types/simulation';
 
+interface UpdateResult {
+  updatedParticles: Particle[];
+  interactionCount: number;
+}
+
 /**
  * Hook for updating particles in the simulation
  */
@@ -143,12 +148,16 @@ export function useParticleUpdater(
   /**
    * Update all particles in the simulation
    */
-  const updateAllParticles = useCallback(() => {
+  const updateAllParticles = useCallback((): UpdateResult => {
     if (particlesRef.current.length === 0) {
-      return [];
+      return { 
+        updatedParticles: [], 
+        interactionCount: 0 
+      };
     }
     
     const updatedParticles: Particle[] = [];
+    let interactionCount = 0;
     
     // First update positions
     for (let i = 0; i < particlesRef.current.length; i++) {
@@ -166,11 +175,18 @@ export function useParticleUpdater(
         
         updatedParticles[i] = newP1;
         updatedParticles[j] = newP2;
+        
+        if (interacted) {
+          interactionCount++;
+        }
       }
     }
     
     particlesRef.current = updatedParticles;
-    return updatedParticles;
+    return { 
+      updatedParticles, 
+      interactionCount 
+    };
   }, [updateParticlePosition, calculateParticleInteraction]);
   
   return {

@@ -52,7 +52,8 @@ export function useParticleSimulation({
       10, 
       fullConfig.fieldResolution
     ),
-    dimensions
+    dimensions,
+    canvasRef
   });
 
   const { 
@@ -98,7 +99,7 @@ export function useParticleSimulation({
             canvas.width = displayWidth;
             canvas.height = displayHeight;
             
-            setDimensions({ width: displayWidth, height: displayHeight });
+            setDimensions({ width: displayWidth, height: displayWidth });
           }
         }
       };

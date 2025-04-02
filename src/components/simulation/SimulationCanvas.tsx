@@ -1,3 +1,4 @@
+
 import React, { useRef, useEffect } from 'react';
 import { Particle } from '@/types/simulation';
 
@@ -11,6 +12,7 @@ interface SimulationCanvasProps {
   probabilisticIntent: boolean;
   visualizationMode: 'particles' | 'field' | 'both';
   running: boolean;
+  className?: string; // Added className as optional prop
 }
 
 const SimulationCanvas: React.FC<SimulationCanvasProps> = ({
@@ -22,7 +24,8 @@ const SimulationCanvas: React.FC<SimulationCanvasProps> = ({
   neutralChargeBehavior,
   probabilisticIntent,
   visualizationMode,
-  running
+  running,
+  className = '' // Default to empty string
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const particlesRef = useRef<Particle[]>([]);
@@ -320,7 +323,7 @@ const SimulationCanvas: React.FC<SimulationCanvasProps> = ({
     <div className="relative w-full h-[600px] overflow-hidden">
       <canvas 
         ref={canvasRef} 
-        className="absolute top-0 left-0 w-full h-full bg-black"
+        className={`absolute top-0 left-0 w-full h-full bg-black ${className}`}
       />
       {!running && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/50">

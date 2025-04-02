@@ -17,6 +17,7 @@ export interface Particle {
   interactionCount?: number;
   interactions?: number;
   lastInteraction?: number;
+  mass?: number;
   type?: 'standard' | 'high-energy' | 'quantum' | 'composite' | 'adaptive';
 }
 

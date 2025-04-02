@@ -1,381 +1,290 @@
+import { Particle, SimulationStats } from '@/types/simulation';
+import { toast } from 'sonner';
 
-// Utility functions for exporting simulation data
-
-import { parseJsonWithInfinity, stringifyWithInfinity } from './jsonUtils';
-
-// Data storage for simulation
-let simulationData: any[] = [];
-
-// Persisted state for the simulation
-export const persistedState: {
-  hasPersistedState: boolean;
-  particles: any[];
-  intentField: number[][][];
-  interactions: number;
-  frameCount: number;
-  simulationTime: number;
-} = {
-  hasPersistedState: false,
-  particles: [],
-  intentField: [],
-  interactions: 0,
-  frameCount: 0,
-  simulationTime: 0
-};
-
-// Initialize persisted state from localStorage if available
-if (typeof window !== 'undefined') {
-  try {
-    const savedState = localStorage.getItem('simulationState');
-    if (savedState) {
-      const parsed = parseJsonWithInfinity(savedState);
-      persistedState.hasPersistedState = true;
-      persistedState.particles = parsed.particles || [];
-      persistedState.intentField = parsed.intentField || [];
-      persistedState.interactions = parsed.interactions || 0;
-      persistedState.frameCount = parsed.frameCount || 0;
-      persistedState.simulationTime = parsed.simulationTime || 0;
-    }
-  } catch (error) {
-    console.error('Error loading persisted state:', error);
-  }
-}
-
-// Clear persisted state
-export const clearPersistedState = () => {
-  persistedState.hasPersistedState = false;
-  persistedState.particles = [];
-  persistedState.intentField = [];
-  persistedState.interactions = 0;
-  persistedState.frameCount = 0;
-  persistedState.simulationTime = 0;
-  
-  if (typeof window !== 'undefined') {
-    localStorage.removeItem('simulationState');
-  }
-};
-
-// Load stored data points from localStorage
-export const loadStoredDataPoints = () => {
-  if (typeof window === 'undefined') return [];
-  
-  try {
-    const storedData = localStorage.getItem('currentSimulationData');
-    if (storedData) {
-      return parseJsonWithInfinity(storedData);
-    }
-  } catch (error) {
-    console.error('Error loading stored data points:', error);
-  }
-  
-  return [];
-};
-
-// Get the current simulation data
-export const getSimulationData = () => {
-  try {
-    // Load from local storage if simulationData is empty
-    if (simulationData.length === 0 && typeof window !== 'undefined') {
-      try {
-        const storedData = localStorage.getItem('currentSimulationData');
-        if (storedData) {
-          simulationData = parseJsonWithInfinity(storedData);
-        }
-      } catch (error) {
-        console.error('Error retrieving simulation data:', error);
-      }
-    }
-    return simulationData;
-  } catch (error) {
-    console.error('Error retrieving simulation data:', error);
-    return [];
-  }
-};
-
-// Clear simulation data
-export const clearSimulationData = () => {
-  simulationData = [];
-  if (typeof window !== 'undefined') {
-    localStorage.removeItem('currentSimulationData');
-  }
-};
-
-// Determine if data should be collected at the current frame
-export const shouldCollectData = (frameCount: number) => {
-  // Collect data less frequently as the simulation progresses
-  if (frameCount < 100) return frameCount % 5 === 0;  // Every 5 frames for first 100 frames
-  if (frameCount < 500) return frameCount % 10 === 0; // Every 10 frames for first 500 frames
-  if (frameCount < 2000) return frameCount % 30 === 0; // Every 30 frames until 2000
-  return frameCount % 60 === 0; // Every 60 frames after that
-};
+// In-memory storage for collected data
+let collectedData: any[] = [];
+let dataCollectionActive = true;
 
 // Record a data point
-export const recordDataPoint = (
+export function recordDataPoint(
   timestamp: number,
-  particles: any[],
+  particles: Particle[],
   intentField: number[][][],
-  totalInteractions: number,
+  interactionsCount: number,
   clusterAnalysis: any,
   systemEntropy: number,
   complexityIndex: number,
-  additionalMetrics?: {
-    shannonEntropy?: number;
-    spatialEntropy?: number;
-    fieldOrderParameter?: number;
-    temporalEntropy?: number;
-    informationDensity?: number;
-    kolmogorovComplexity?: number;
-  }
-) => {
-  // Basic particle counts
+  extraMetrics: any = {}
+): void {
+  if (!dataCollectionActive) return;
+  
+  // Calculate particle type counts
   const positiveCount = particles.filter(p => p.charge === 'positive').length;
   const negativeCount = particles.filter(p => p.charge === 'negative').length;
   const neutralCount = particles.filter(p => p.charge === 'neutral').length;
-  const highEnergyCount = particles.filter(p => p.type === 'high-energy').length;
-  const quantumCount = particles.filter(p => p.type === 'quantum').length;
-  const compositeCount = particles.filter(p => p.type === 'composite').length;
-  const adaptiveCount = particles.filter(p => p.type === 'adaptive').length;
   
-  // Calculate average knowledge and complexity
-  const totalKnowledge = particles.reduce((sum, p) => sum + p.knowledge, 0);
-  const avgKnowledge = particles.length > 0 ? totalKnowledge / particles.length : 0;
+  // Calculate average knowledge
+  const totalKnowledge = particles.reduce((sum, p) => sum + (p.knowledge || 0), 0);
+  const averageKnowledge = particles.length > 0 ? totalKnowledge / particles.length : 0;
   
-  const totalComplexity = particles.reduce((sum, p) => sum + p.complexity, 0);
-  const avgComplexity = particles.length > 0 ? totalComplexity / particles.length : 0;
-  
-  const maxComplexity = particles.length > 0 
-    ? particles.reduce((max, p) => Math.max(max, p.complexity), 0) 
-    : 0;
-  
-  // Create the data point
+  // Create data point
   const dataPoint = {
     timestamp,
-    particle_counts: {
+    particles: {
+      total: particles.length,
       positive: positiveCount,
       negative: negativeCount,
       neutral: neutralCount,
-      high_energy: highEnergyCount,
-      quantum: quantumCount,
-      composite: compositeCount,
-      adaptive: adaptiveCount
+      averageKnowledge,
     },
-    total_particles: particles.length,
-    total_interactions: totalInteractions,
-    avg_knowledge: avgKnowledge,
-    avg_complexity: avgComplexity,
-    max_complexity: maxComplexity,
-    complexity_index: complexityIndex,
-    system_entropy: systemEntropy,
-    cluster_analysis: {
-      cluster_count: clusterAnalysis.clusterCount,
-      average_cluster_size: clusterAnalysis.averageClusterSize,
-      largest_cluster_size: clusterAnalysis.largestClusterSize || 0,
-      cluster_stability: clusterAnalysis.clusterStability || 0
+    field: {
+      size: intentField.length > 0 ? [intentField.length, intentField[0].length, intentField[0][0].length] : [0, 0, 0],
+      entropy: systemEntropy,
+      complexity: extraMetrics.fieldOrderParameter || 0,
     },
-    // Add advanced metrics if provided
-    ...(additionalMetrics && {
-      advanced_metrics: additionalMetrics
-    })
+    interactions: interactionsCount,
+    clusters: {
+      count: clusterAnalysis?.clusterCount || 0,
+      averageSize: clusterAnalysis?.averageSize || 0,
+      largestSize: clusterAnalysis?.largestSize || 0,
+    },
+    complexity: complexityIndex,
+    metrics: extraMetrics,
+    timeIso: new Date(timestamp).toISOString()
   };
   
-  // Add to the simulation data array
-  simulationData.push(dataPoint);
+  // Store data
+  collectedData.push(dataPoint);
   
-  // Persist to localStorage (limit to the last 1000 data points to prevent storage issues)
-  if (simulationData.length > 1000) {
-    simulationData = simulationData.slice(-1000);
+  // Trim data if it gets too large (keep last 1000 points)
+  if (collectedData.length > 1000) {
+    collectedData = collectedData.slice(collectedData.length - 1000);
   }
   
-  if (typeof window !== 'undefined') {
-    try {
-      localStorage.setItem('currentSimulationData', stringifyWithInfinity(simulationData));
-    } catch (error) {
-      console.error('Error saving simulation data to localStorage:', error);
-      // If we hit storage limits, reduce data size
-      if (simulationData.length > 100) {
-        simulationData = simulationData.slice(-100);
-        try {
-          localStorage.setItem('currentSimulationData', stringifyWithInfinity(simulationData));
-        } catch (innerError) {
-          console.error('Failed to save reduced simulation data:', innerError);
-        }
+  // Log every 100th data point for debugging
+  if (collectedData.length % 100 === 0) {
+    console.log(`Data collection: ${collectedData.length} points recorded`);
+  }
+}
+
+// Export collected data as JSON
+export function exportDataAsJson(): string {
+  const jsonData = JSON.stringify(collectedData, null, 2);
+  
+  // Create download link
+  const blob = new Blob([jsonData], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `intentsim_data_${new Date().toISOString().slice(0,19).replace(/:/g,'-')}.json`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  
+  toast.success(`Exported ${collectedData.length} data points as JSON`);
+  return url;
+}
+
+// Export collected data as CSV
+export function exportDataAsCsv(): string {
+  if (collectedData.length === 0) {
+    toast.error("No data to export");
+    return "";
+  }
+  
+  // Get all possible keys to handle varying data structures
+  const allKeys = new Set<string>();
+  const flattenObject = (obj: any, prefix = '') => {
+    for (const key in obj) {
+      if (typeof obj[key] === 'object' && obj[key] !== null) {
+        flattenObject(obj[key], `${prefix}${key}_`);
+      } else {
+        allKeys.add(`${prefix}${key}`);
       }
     }
-  }
+  };
   
-  return dataPoint;
-};
-
-// Export data as CSV
-export const exportAsCSV = (data: any[], filename: string) => {
-  if (!data.length) return;
+  collectedData.forEach(dataPoint => flattenObject(dataPoint));
+  const headers = Array.from(allKeys);
   
-  // Get headers from the first object
-  const headers = Object.keys(data[0]);
+  // Convert data to CSV
+  const getFlatValue = (obj: any, path: string): string => {
+    const parts = path.split('_');
+    let current = obj;
+    
+    for (let i = 0; i < parts.length; i++) {
+      if (current === undefined || current === null) return '';
+      current = current[parts[i]];
+    }
+    
+    return current !== undefined && current !== null ? current.toString() : '';
+  };
   
-  // Convert each object to a CSV row
-  const csvRows = [
-    headers.join(','), // Header row
-    ...data.map(row => 
-      headers.map(header => {
-        // Handle special values like Infinity
-        if (row[header] === Infinity || row[header] === -Infinity) {
-          return '"Infinity"';
-        }
-        // Handle nested objects
-        if (typeof row[header] === 'object' && row[header] !== null) {
-          return `"${JSON.stringify(row[header]).replace(/"/g, '""')}"`;
-        }
-        // Handle other values
-        return `"${row[header]}"`
-      }).join(',')
-    )
-  ];
+  const csvRows = [headers.join(',')];
+  collectedData.forEach(dataPoint => {
+    const values = headers.map(header => {
+      const value = getFlatValue(dataPoint, header);
+      // Quote strings containing commas
+      return typeof value === 'string' && value.includes(',') ? `"${value}"` : value;
+    });
+    csvRows.push(values.join(','));
+  });
   
-  // Create CSV content
   const csvContent = csvRows.join('\n');
   
-  // Create a blob and download
-  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  // Create download link
+  const blob = new Blob([csvContent], { type: 'text/csv' });
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
-  link.setAttribute('href', url);
-  link.setAttribute('download', `${filename}.csv`);
-  link.style.visibility = 'hidden';
+  link.href = url;
+  link.download = `intentsim_data_${new Date().toISOString().slice(0,19).replace(/:/g,'-')}.csv`;
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
-};
+  
+  toast.success(`Exported ${collectedData.length} data points as CSV`);
+  return url;
+}
 
-// Export data as JSON
-export const exportAsJSON = (data: any, filename: string) => {
-  // Convert Infinity values to strings before JSON stringification
-  const processData = (obj: any): any => {
-    if (obj === null || obj === undefined) return obj;
-    
-    if (typeof obj === 'number') {
-      if (!isFinite(obj)) return obj.toString(); // Convert Infinity to string
-      return obj;
-    }
-    
-    if (Array.isArray(obj)) {
-      return obj.map(item => processData(item));
-    }
-    
-    if (typeof obj === 'object') {
-      const processed: Record<string, any> = {};
-      for (const key in obj) {
-        processed[key] = processData(obj[key]);
-      }
-      return processed;
-    }
-    
-    return obj;
-  };
-  
-  const processedData = processData(data);
-  const jsonString = JSON.stringify(processedData, null, 2);
-  
-  // Create a blob and download
-  const blob = new Blob([jsonString], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.setAttribute('href', url);
-  link.setAttribute('download', `${filename}.json`);
-  link.style.visibility = 'hidden';
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-};
-
-// Export current simulation data to CSV
-export const exportDataToCSV = () => {
-  const data = getSimulationData();
-  if (!data.length) {
-    console.warn('No simulation data to export');
-    return null;
-  }
-  
-  const timestamp = new Date().toISOString().replace(/[:.]/g, '').slice(0, 15);
-  const filename = `intentSim_export_${timestamp}`;
-  
-  exportAsCSV(data, filename);
-  return filename;
-};
-
-// Export current simulation data to JSON
-export const exportDataToJSON = (triggerDownload = true) => {
-  const data = getSimulationData();
-  if (!data.length) {
-    console.warn('No simulation data to export');
-    return null;
-  }
-  
-  const timestamp = new Date().toISOString().replace(/[:.]/g, '').slice(0, 15);
-  const filename = `intentSim_export_${timestamp}`;
-  
-  // Create a metadata wrapper
-  const exportData = {
-    config: {
-      timestamp: new Date().toISOString(),
-      source: 'intentSim.org',
-      version: '1.0.0'
-    },
-    data: data
-  };
-  
-  if (triggerDownload) {
-    exportAsJSON(exportData, filename);
-  }
-  
-  return exportData;
-};
-
-// Export data for notebook LM
-export const exportForNotebookLM = (data: any[], annotations: any[] = []) => {
-  if (!data.length) {
-    console.warn('No simulation data to export for notebook');
-    return null;
-  }
-  
-  const timestamp = new Date().toISOString().replace(/[:.]/g, '').slice(0, 15);
-  const filename = `intentSim_notebook_${timestamp}`;
-  
-  // Create a notebook-friendly format
-  const notebookData = {
-    metadata: {
-      timestamp: new Date().toISOString(),
-      source: 'intentSim.org',
-      version: '1.0.0',
-      format: 'notebook_lm_compatible'
-    },
-    simulation_data: data,
-    annotations: annotations,
-    summary: {
-      total_datapoints: data.length,
-      total_annotations: annotations.length,
-      data_timespan: data.length > 0 ? 
-        { start: data[0].timestamp, end: data[data.length - 1].timestamp } : 
-        null
-    }
-  };
-  
-  exportAsJSON(notebookData, filename);
-  return filename;
-};
-
-// Import annotations from notebook LM
-export const importNotebookAnnotations = (jsonData: string): any[] | null => {
+// Generate a PDF report with the current data
+export async function exportDataAsPdf(): Promise<string> {
   try {
-    const parsed = parseJsonWithInfinity(jsonData);
+    // Import libraries dynamically to reduce initial load size
+    const { jsPDF } = await import('jspdf');
+    const { autoTable } = await import('jspdf-autotable');
     
-    if (parsed && parsed.annotations && Array.isArray(parsed.annotations)) {
-      return parsed.annotations;
+    // Create PDF document
+    const doc = new jsPDF();
+    
+    // Add title
+    doc.setFontSize(18);
+    doc.text('IntentSim Simulation Data Report', 14, 22);
+    
+    // Add timestamp
+    doc.setFontSize(12);
+    doc.text(`Generated: ${new Date().toLocaleString()}`, 14, 30);
+    
+    // Add summary metrics
+    doc.setFontSize(14);
+    doc.text('Summary Statistics', 14, 40);
+    
+    const lastDataPoint = collectedData[collectedData.length - 1] || {};
+    const summaryData = [
+      ['Total Data Points', collectedData.length.toString()],
+      ['Particle Count', lastDataPoint.particles?.total?.toString() || '0'],
+      ['Positive Particles', lastDataPoint.particles?.positive?.toString() || '0'],
+      ['Negative Particles', lastDataPoint.particles?.negative?.toString() || '0'],
+      ['Neutral Particles', lastDataPoint.particles?.neutral?.toString() || '0'],
+      ['Total Interactions', lastDataPoint.interactions?.toString() || '0'],
+      ['Complexity Index', lastDataPoint.complexity?.toFixed(2) || '0'],
+      ['System Entropy', lastDataPoint.field?.entropy?.toFixed(2) || '0'],
+    ];
+    
+    autoTable(doc, {
+      startY: 45,
+      head: [['Metric', 'Value']],
+      body: summaryData,
+      theme: 'striped',
+      styles: { fontSize: 10 },
+      headStyles: { fillColor: [41, 128, 185] },
+    });
+    
+    // Add data sample
+    doc.setFontSize(14);
+    doc.text('Data Sample (Last 10 Records)', 14, doc.lastAutoTable.finalY + 15);
+    
+    const sampleData = collectedData.slice(-10).map(dp => [
+      new Date(dp.timestamp).toLocaleString(),
+      dp.particles?.total?.toString() || '0',
+      dp.interactions?.toString() || '0',
+      dp.complexity?.toFixed(2) || '0',
+      dp.field?.entropy?.toFixed(2) || '0',
+    ]);
+    
+    autoTable(doc, {
+      startY: doc.lastAutoTable.finalY + 20,
+      head: [['Timestamp', 'Particles', 'Interactions', 'Complexity', 'Entropy']],
+      body: sampleData,
+      theme: 'grid',
+      styles: { fontSize: 8 },
+      headStyles: { fillColor: [41, 128, 185] },
+    });
+    
+    // Generate charts if data is available
+    if (collectedData.length > 1) {
+      try {
+        // For a real implementation, we would add chart generation here
+        // using libraries like Chart.js to create and embed charts
+        doc.setFontSize(14);
+        doc.text('Data Visualization would appear here', 14, doc.lastAutoTable.finalY + 15);
+      } catch (error) {
+        console.error('Error generating charts:', error);
+      }
     }
     
-    return null;
+    // Add footer
+    const pageCount = doc.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      doc.setFontSize(8);
+      doc.text(
+        `IntentSim.org - Page ${i} of ${pageCount}`,
+        doc.internal.pageSize.getWidth() / 2,
+        doc.internal.pageSize.getHeight() - 10,
+        { align: 'center' }
+      );
+    }
+    
+    // Save the PDF
+    const filename = `intentsim_report_${new Date().toISOString().slice(0,19).replace(/:/g,'-')}.pdf`;
+    doc.save(filename);
+    
+    toast.success('PDF report generated successfully');
+    return filename;
   } catch (error) {
-    console.error('Error importing notebook annotations:', error);
-    return null;
+    console.error('Error generating PDF:', error);
+    toast.error('Failed to generate PDF report');
+    return '';
   }
-};
+}
+
+// Toggle data collection
+export function toggleDataCollection(active?: boolean): boolean {
+  if (active !== undefined) {
+    dataCollectionActive = active;
+  } else {
+    dataCollectionActive = !dataCollectionActive;
+  }
+  
+  toast.info(dataCollectionActive ? 'Data collection enabled' : 'Data collection paused');
+  return dataCollectionActive;
+}
+
+// Get data collection status
+export function isDataCollectionActive(): boolean {
+  return dataCollectionActive;
+}
+
+// Clear collected data
+export function clearSimulationData(): void {
+  collectedData = [];
+  toast.info('Simulation data cleared');
+}
+
+// Clear persisted state from localStorage
+export function clearPersistedState(): void {
+  localStorage.removeItem('intentsim-state');
+  localStorage.removeItem('motherSimulationState');
+  localStorage.removeItem('simulationConfig');
+  toast.info('Persisted simulation state cleared');
+}
+
+// Get collected data count
+export function getDataCount(): number {
+  return collectedData.length;
+}
+
+// Get last data point
+export function getLastDataPoint(): any {
+  return collectedData.length > 0 ? collectedData[collectedData.length - 1] : null;
+}

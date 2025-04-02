@@ -12,7 +12,7 @@ interface SimulationCanvasProps {
   probabilisticIntent: boolean;
   visualizationMode: 'particles' | 'field' | 'both';
   running: boolean;
-  className?: string; // Added className as optional prop
+  className?: string;
 }
 
 const SimulationCanvas: React.FC<SimulationCanvasProps> = ({
@@ -25,7 +25,7 @@ const SimulationCanvas: React.FC<SimulationCanvasProps> = ({
   probabilisticIntent,
   visualizationMode,
   running,
-  className = '' // Default to empty string
+  className = ''
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const particlesRef = useRef<Particle[]>([]);
@@ -107,7 +107,7 @@ const SimulationCanvas: React.FC<SimulationCanvasProps> = ({
                                     neutralChargeBehavior;
         
         const newParticle: Particle = {
-          id: Date.now() + Math.random(),
+          id: Date.now() + Math.random().toString(),
           x,
           y,
           vx: (Math.random() - 0.5) * 2,

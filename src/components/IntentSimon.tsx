@@ -1,6 +1,6 @@
 
 import React from 'react';
-import IntentAssistant from './assistant/IntentAssistant';
+import IntentAssistant from './IntentAssistant';
 
 interface IntentSimonProps {
   className?: string;

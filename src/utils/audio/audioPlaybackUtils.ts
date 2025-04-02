@@ -1,201 +1,137 @@
 
-// Audio playback utilities
+let audioContext: AudioContext | null = null;
+let gainNode: GainNode | null = null;
+let loopingAudio: { source: AudioBufferSourceNode | null; url: string } = { source: null, url: '' };
 
-// Create a single audio context for all audio playback
-let sharedAudioContext: AudioContext | null = null;
-
-// Create fallback audio when needed
-export const createFallbackAudioIfNeeded = () => {
+// Initialize audio context
+export function initAudioContext(): AudioContext {
+  if (audioContext) return audioContext;
+  
   try {
-    // Try to create an audio context if we don't have one
-    if (!sharedAudioContext) {
-      sharedAudioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-    }
-    
-    // If context is suspended (due to autoplay policy), try to resume it
-    if (sharedAudioContext.state === 'suspended') {
-      sharedAudioContext.resume().catch(e => {
-        console.warn('Could not resume audio context:', e);
-      });
-    }
-    
-    // Generate a simple beep sound
-    const oscillator = sharedAudioContext.createOscillator();
-    const gainNode = sharedAudioContext.createGain();
-    
-    oscillator.connect(gainNode);
-    gainNode.connect(sharedAudioContext.destination);
-    
-    oscillator.type = 'sine';
-    oscillator.frequency.value = 440; // A4 note
-    gainNode.gain.value = 0.1;
-    
-    oscillator.start();
-    setTimeout(() => {
-      oscillator.stop();
-    }, 200);
-    
-    return true;
+    audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    gainNode = audioContext.createGain();
+    gainNode.connect(audioContext.destination);
+    console.log('Audio context initialized');
+    return audioContext;
   } catch (error) {
-    console.error("Failed to create fallback audio:", error);
-    return false;
+    console.error('Failed to create audio context:', error);
+    throw error;
   }
-};
+}
 
-// Play audio with error handling
-export const playAudioWithErrorHandling = (url: string): Promise<void> => {
-  return new Promise((resolve, reject) => {
-    // Try to play using Audio element
-    const audio = new Audio(url);
+// Load audio file
+export async function loadAudioFile(url: string): Promise<AudioBuffer> {
+  if (!audioContext) initAudioContext();
+  
+  try {
+    const response = await fetch(url);
+    const arrayBuffer = await response.arrayBuffer();
+    const audioBuffer = await audioContext!.decodeAudioData(arrayBuffer);
+    return audioBuffer;
+  } catch (error) {
+    console.error('Error loading audio file:', error);
+    throw error;
+  }
+}
+
+// Play audio once
+export async function playAudio(url: string, volume: number = 1.0): Promise<void> {
+  if (!audioContext) initAudioContext();
+  
+  try {
+    const audioBuffer = await loadAudioFile(url);
+    const source = audioContext!.createBufferSource();
+    source.buffer = audioBuffer;
     
-    audio.onended = () => {
-      resolve();
-    };
+    const localGainNode = audioContext!.createGain();
+    localGainNode.gain.value = volume;
     
-    audio.onerror = (error) => {
-      console.error(`Error playing audio from ${url}:`, error);
-      createFallbackAudioIfNeeded();
-      reject(error);
-    };
+    source.connect(localGainNode);
+    localGainNode.connect(audioContext!.destination);
     
-    // Try to play and handle autoplay restrictions
-    const playPromise = audio.play();
-    
-    if (playPromise !== undefined) {
-      playPromise.catch(error => {
-        console.error(`Error playing audio from ${url}:`, error);
-        
-        // If it's an autoplay restriction, add event listeners to enable audio on next user interaction
-        if (error.name === 'NotAllowedError') {
-          console.log('Audio playback was prevented by autoplay policy. Click anywhere to enable audio.');
-          
-          const enableAudio = () => {
-            audio.play().catch(e => {
-              console.error('Still failed to play audio after user interaction:', e);
-              createFallbackAudioIfNeeded();
-            });
-            
-            // Clean up event listeners
-            document.removeEventListener('click', enableAudio);
-            document.removeEventListener('touchstart', enableAudio);
-            document.removeEventListener('keydown', enableAudio);
-          };
-          
-          // Add event listeners for user interaction
-          document.addEventListener('click', enableAudio, { once: true });
-          document.addEventListener('touchstart', enableAudio, { once: true });
-          document.addEventListener('keydown', enableAudio, { once: true });
-        }
-        
-        createFallbackAudioIfNeeded();
-        reject(error);
-      });
+    source.start(0);
+    return Promise.resolve();
+  } catch (error) {
+    console.error('Error playing audio:', error);
+    return Promise.reject(error);
+  }
+}
+
+// Play looping audio
+export async function playLoopingAudio(url: string, volume: number = 1.0): Promise<void> {
+  if (!audioContext) initAudioContext();
+  
+  // Stop any currently playing looping audio
+  if (loopingAudio.source) {
+    try {
+      loopingAudio.source.stop();
+      loopingAudio.source = null;
+    } catch (e) {
+      // Ignore errors from already stopped sources
     }
-  });
-};
-
-// Variables for looping audio
-let loopAudioElement: HTMLAudioElement | null = null;
-let loopAudioContext: AudioContext | null = null;
-let loopAudioSource: MediaElementAudioSourceNode | null = null;
-let loopAudioGain: GainNode | null = null;
-
-// Play audio in a continuous loop with better handling of autoplay restrictions
-export const playLoopingAudio = (url: string, volume: number = 0.5): void => {
-  // Stop any existing audio loop
-  if (loopAudioElement) {
-    stopLoopingAudio();
   }
   
   try {
-    // Create audio context if it doesn't exist
-    if (!loopAudioContext) {
-      loopAudioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const audioBuffer = await loadAudioFile(url);
+    const source = audioContext!.createBufferSource();
+    source.buffer = audioBuffer;
+    source.loop = true;
+    
+    if (!gainNode) {
+      gainNode = audioContext!.createGain();
+      gainNode.connect(audioContext!.destination);
     }
     
-    // Create new audio element
-    const audio = new Audio(url);
-    audio.loop = true;
-    audio.autoplay = true;
+    gainNode.gain.value = volume;
+    source.connect(gainNode);
     
-    // Connect through audio context for volume control
-    loopAudioSource = loopAudioContext.createMediaElementSource(audio);
-    loopAudioGain = loopAudioContext.createGain();
-    loopAudioGain.gain.value = volume;
+    source.start(0);
+    loopingAudio = { source, url };
     
-    loopAudioSource.connect(loopAudioGain);
-    loopAudioGain.connect(loopAudioContext.destination);
-    
-    // Store the element for later control
-    loopAudioElement = audio;
-    
-    // Play and handle autoplay restrictions
-    const playPromise = audio.play();
-    
-    if (playPromise !== undefined) {
-      playPromise.catch(error => {
-        console.error(`Error looping audio from ${url}:`, error);
-        
-        // If it's an autoplay restriction, add event listeners to enable audio on next user interaction
-        if (error.name === 'NotAllowedError') {
-          console.log('Audio playback was prevented by autoplay policy. Click anywhere to enable audio.');
-          
-          const enableLoopingAudio = () => {
-            if (loopAudioElement) {
-              loopAudioElement.play().catch(e => {
-                console.error('Still failed to play audio after user interaction:', e);
-              });
-            }
-            
-            // Clean up event listeners
-            document.removeEventListener('click', enableLoopingAudio);
-            document.removeEventListener('touchstart', enableLoopingAudio);
-            document.removeEventListener('keydown', enableLoopingAudio);
-          };
-          
-          // Add event listeners for user interaction
-          document.addEventListener('click', enableLoopingAudio, { once: true });
-          document.addEventListener('touchstart', enableLoopingAudio, { once: true });
-          document.addEventListener('keydown', enableLoopingAudio, { once: true });
-        }
-      });
-    }
-    
-    console.log(`Started looping audio: ${url}`);
+    return Promise.resolve();
   } catch (error) {
-    console.error(`Failed to create looping audio: ${error}`);
-    createFallbackAudioIfNeeded();
+    console.error('Error playing looping audio:', error);
+    return Promise.reject(error);
   }
-};
+}
 
 // Stop looping audio
-export const stopLoopingAudio = (): void => {
-  if (loopAudioElement) {
-    loopAudioElement.pause();
-    loopAudioElement.src = '';
-    loopAudioElement = null;
+export function stopLoopingAudio(): void {
+  if (loopingAudio.source) {
+    try {
+      loopingAudio.source.stop();
+      loopingAudio.source = null;
+    } catch (e) {
+      // Ignore errors from already stopped sources
+    }
   }
-  
-  if (loopAudioSource) {
-    loopAudioSource.disconnect();
-    loopAudioSource = null;
-  }
-  
-  if (loopAudioGain) {
-    loopAudioGain.disconnect();
-    loopAudioGain = null;
-  }
-  
-  console.log("Stopped looping audio");
-};
+}
 
-// Set volume for looping audio
-export const setLoopingAudioVolume = (volume: number): void => {
-  if (loopAudioGain) {
-    loopAudioGain.gain.value = Math.max(0, Math.min(1, volume));
-    console.log(`Set looping audio volume to: ${volume}`);
-  } else if (loopAudioElement) {
-    loopAudioElement.volume = Math.max(0, Math.min(1, volume));
-    console.log(`Set looping audio volume to: ${volume} (using element property)`);
+// Set looping audio volume
+export function setLoopingAudioVolume(volume: number): void {
+  if (gainNode) {
+    gainNode.gain.value = volume;
   }
-};
+}
+
+// Resume audio context (needed after user interaction in some browsers)
+export function resumeAudioContext(): Promise<void> {
+  if (audioContext && audioContext.state === 'suspended') {
+    return audioContext.resume();
+  }
+  return Promise.resolve();
+}
+
+// Get a list of available audio files
+export function getAvailableAudioFiles(directory: string): Promise<string[]> {
+  // This is a mock implementation - in a real app, you'd need a server endpoint to list files
+  // For now, return some hardcoded examples
+  return Promise.resolve([
+    'ambient_loop.mp3',
+    'particle_creation.mp3',
+    'particle_interaction.mp3',
+    'field_fluctuation.mp3',
+    'anomaly_detected.mp3',
+    'simulation_start.mp3'
+  ]);
+}

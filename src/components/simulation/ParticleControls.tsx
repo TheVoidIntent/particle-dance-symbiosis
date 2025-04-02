@@ -1,9 +1,13 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { SimulationControlButtons } from '@/components/SimulationControlButtons';
 import SimulationAudioControls from '@/components/simulation/SimulationAudioControls';
+import AtlasDataSelector from '@/components/simulation/AtlasDataSelector';
+import AtlasDataDisplay from '@/components/simulation/AtlasDataDisplay';
 import { Particle } from '@/utils/particleUtils';
 import { SimulationStats } from '@/hooks/useSimulationData';
+import { fetchAtlasData, AtlasDataset } from '@/utils/atlasDataIntegration';
+import { toast } from 'sonner';
 
 type ParticleControlsProps = {
   particles: Particle[];
@@ -24,6 +28,30 @@ export const ParticleControls: React.FC<ParticleControlsProps> = ({
   onToggleDataCollection,
   onResetSimulation
 }) => {
+  const [atlasDataset, setAtlasDataset] = useState<AtlasDataset | null>(null);
+  const [isLoadingAtlasData, setIsLoadingAtlasData] = useState(false);
+  
+  const handleAtlasDatasetSelected = async (datasetId: string) => {
+    try {
+      setIsLoadingAtlasData(true);
+      const dataset = await fetchAtlasData(datasetId);
+      setAtlasDataset(dataset);
+      
+      // Display success message
+      toast.success(`ATLAS dataset loaded: ${dataset?.name || "Unknown dataset"}`, {
+        description: `Successfully loaded ${dataset?.particles.length || 0} particles from CERN's ATLAS experiment.`
+      });
+      
+      return dataset;
+    } catch (error) {
+      console.error("Error loading ATLAS dataset:", error);
+      toast.error("Failed to load ATLAS dataset");
+      return null;
+    } finally {
+      setIsLoadingAtlasData(false);
+    }
+  };
+  
   return (
     <>
       <div className="absolute top-4 right-4 bg-black/60 backdrop-blur-sm p-3 rounded-lg w-80 z-10">
@@ -32,6 +60,18 @@ export const ParticleControls: React.FC<ParticleControlsProps> = ({
           stats={stats}
           isRunning={isRunning}
         />
+      </div>
+      
+      <div className="absolute top-4 left-4 bg-black/60 backdrop-blur-sm p-3 rounded-lg w-80 z-10">
+        <AtlasDataSelector 
+          onDatasetSelected={handleAtlasDatasetSelected}
+          isLoading={isLoadingAtlasData}
+        />
+        {atlasDataset && (
+          <div className="mt-3">
+            <AtlasDataDisplay dataset={atlasDataset} />
+          </div>
+        )}
       </div>
       
       <SimulationControlButtons 

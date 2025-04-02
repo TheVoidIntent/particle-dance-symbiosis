@@ -5,14 +5,14 @@ import { SimulationStats } from './useSimulationData';
 
 interface UseSimulationResetProps {
   particlesRef: MutableRefObject<Particle[]>;
-  intentFieldRef: MutableRefObject<number[][]>;
+  intentFieldRef: MutableRefObject<number[][][]>;
   interactionsRef: MutableRefObject<number>;
   frameCountRef: MutableRefObject<number>;
   simulationTimeRef: MutableRefObject<number>;
   canvasRef: MutableRefObject<HTMLCanvasElement | null>;
   processSimulationData: (
     particles: Particle[],
-    intentField: number[][],
+    intentField: number[][][],
     interactions: number,
     frameCount: number,
     simulationTime: number
@@ -39,10 +39,14 @@ export const useSimulationReset = ({
     if (intentFieldRef.current && intentFieldRef.current.length > 0) {
       const rows = intentFieldRef.current.length;
       const cols = intentFieldRef.current[0].length;
+      const depth = intentFieldRef.current[0][0].length || 1;
       
       intentFieldRef.current = Array(rows)
         .fill(null)
-        .map(() => Array(cols).fill(0));
+        .map(() => Array(cols)
+          .fill(null)
+          .map(() => Array(depth).fill(0))
+        );
     }
     
     // Reset counters

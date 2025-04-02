@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useParticleSimulation } from '@/hooks/simulation';
 import { useSimulationData } from '@/hooks/useSimulationData';
@@ -86,6 +87,7 @@ export const ParticleCanvas: React.FC<ParticleCanvasProps> = ({
 
   const { renderSimulation } = useCanvasRenderer();
 
+  // Here's the issue - we need to make sure the return type matches
   const { resetSimulation } = useSimulationReset({
     particlesRef,
     intentFieldRef,

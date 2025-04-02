@@ -21,6 +21,13 @@ export interface Particle {
   interactionCount?: number;
   neighbours?: Particle[];
   type?: string;
+  
+  // Additional properties needed based on errors
+  knowledge?: number;
+  lastInteraction?: number;
+  age?: number;
+  interactions?: number;
+  interactionTendency?: number;
 }
 
 // Define the simulation state
@@ -34,6 +41,36 @@ export interface SimulationState {
   intervalId: number | null;
   dimensions?: { width: number; height: number };
   originalDimensions?: { width: number; height: number };
+}
+
+// Add SimulationStats interface that was missing
+export interface SimulationStats {
+  particleCount: number;
+  positiveParticles: number;
+  negativeParticles: number;
+  neutralParticles: number;
+  highEnergyParticles?: number;
+  quantumParticles?: number;
+  compositeParticles?: number;
+  adaptiveParticles?: number;
+  totalInteractions: number;
+  complexityIndex?: number;
+  averageKnowledge?: number;
+  maxComplexity?: number;
+  clusterCount?: number;
+  averageClusterSize?: number;
+  systemEntropy?: number;
+  intentFieldComplexity?: number;
+  shannonEntropy?: number;
+  spatialEntropy?: number;
+  fieldOrderParameter?: number;
+  clusterLifetime?: number;
+  clusterEntropyDelta?: number;
+  informationDensity?: number;
+  kolmogorovComplexity?: number;
+  interactions?: number;
+  frame?: number;
+  time?: number;
 }
 
 // Define simulation configuration

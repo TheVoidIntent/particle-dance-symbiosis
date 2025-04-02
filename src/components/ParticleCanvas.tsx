@@ -8,20 +8,48 @@ interface ParticleCanvasProps {
   width?: number;
   height?: number;
   onStatsUpdate?: (stats: SimulationStats) => void;
+  particles?: Particle[];
+  showIntentField?: boolean;
+  className?: string;
+  intentFluctuationRate?: number;
+  maxParticles?: number;
+  learningRate?: number;
+  particleCreationRate?: number;
+  viewMode?: '2d' | '3d';
+  renderMode?: 'particles' | 'field' | 'both';
+  useAdaptiveParticles?: boolean;
+  energyConservation?: boolean;
+  probabilisticIntent?: boolean;
+  running?: boolean;
+  onAnomalyDetected?: (anomaly: any) => void;
 }
 
 const ParticleCanvas: React.FC<ParticleCanvasProps> = ({
   width = 800,
   height = 600,
-  onStatsUpdate = () => {}
+  onStatsUpdate = () => {},
+  particles = [],
+  showIntentField = false,
+  className = '',
+  intentFluctuationRate = 0.01,
+  maxParticles = 100,
+  learningRate = 0.1,
+  particleCreationRate = 1,
+  viewMode = '2d',
+  renderMode = 'particles',
+  useAdaptiveParticles = false,
+  energyConservation = false,
+  probabilisticIntent = false,
+  running = true,
+  onAnomalyDetected = () => {}
 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const particlesRef = useRef<Particle[]>([]);
+  const particlesRef = useRef<Particle[]>(particles || []);
   const intentFieldRef = useRef<number[][][]>([]);
   const interactionsRef = useRef<number>(0);
   const frameCountRef = useRef<number>(0);
   const simulationTimeRef = useRef<number>(0);
-  const [isRunning, setIsRunning] = useState<boolean>(false);
+  const [isRunning, setIsRunning] = useState<boolean>(running);
   const [animationFrameId, setAnimationFrameId] = useState<number | null>(null);
   
   // Process simulation data for stats
@@ -70,6 +98,11 @@ const ParticleCanvas: React.FC<ParticleCanvasProps> = ({
       onStatsUpdate(stats);
     }
   }, [width, height, onStatsUpdate]);
+
+  // Update particles ref when external particles change
+  useEffect(() => {
+    particlesRef.current = particles;
+  }, [particles]);
   
   // Simulation reset hook
   const { resetSimulation } = useSimulationReset({
@@ -109,7 +142,7 @@ const ParticleCanvas: React.FC<ParticleCanvasProps> = ({
     <div className="relative">
       <canvas
         ref={canvasRef}
-        className="border border-gray-300 bg-black rounded-lg shadow-lg"
+        className={`border border-gray-300 bg-black rounded-lg shadow-lg ${className}`}
         width={width}
         height={height}
         style={{ width: '100%', height: 'auto' }}
@@ -133,3 +166,4 @@ const ParticleCanvas: React.FC<ParticleCanvasProps> = ({
 };
 
 export default ParticleCanvas;
+export { ParticleCanvas };

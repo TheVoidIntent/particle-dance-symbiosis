@@ -1,6 +1,7 @@
+
 import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet';
-import { ParticleCanvas } from '@/components/ParticleCanvas';
+import ParticleCanvas from '@/components/ParticleCanvas';
 import SimulationStats from '@/components/simulation/SimulationStats';
 import NotebookLmExport from '@/components/NotebookLmExport';
 import { SimulationStats as StatsType } from '@/types/simulation';

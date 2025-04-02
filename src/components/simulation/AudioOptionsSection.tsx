@@ -10,7 +10,8 @@ import { getAvailableAudioFiles } from '@/utils/audio/audioFileUtils';
 import { 
   initAudioContext, 
   playSimulationAudio,
-  setSimulationAudioVolume
+  setSimulationAudioVolume,
+  playSimulationEvent
 } from '@/utils/audio/simulationAudioUtils';
 
 const AudioOptionsSection: React.FC = () => {
@@ -19,13 +20,17 @@ const AudioOptionsSection: React.FC = () => {
   const [availableAudioFiles, setAvailableAudioFiles] = useState<string[]>([]);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentAudioFile, setCurrentAudioFile] = useState<string | null>(null);
+  const [audioInitialized, setAudioInitialized] = useState(false);
+  
+  const initAudio = () => {
+    const initialized = initAudioContext();
+    setAudioInitialized(initialized);
+    return initialized;
+  };
   
   useEffect(() => {
-    // Initialize audio and check for available files
+    // Load audio files list
     const loadAudioFiles = async () => {
-      const initialized = initAudioContext();
-      if (!initialized) return;
-      
       try {
         const files = await getAvailableAudioFiles('/audio/intentsim_page');
         setAvailableAudioFiles(files);
@@ -40,19 +45,44 @@ const AudioOptionsSection: React.FC = () => {
   
   useEffect(() => {
     // Update volume whenever it changes
-    setSimulationAudioVolume(volume);
-  }, [volume]);
+    if (audioEnabled) {
+      setSimulationAudioVolume(volume);
+    }
+  }, [volume, audioEnabled]);
   
   const toggleAudio = () => {
-    setAudioEnabled(!audioEnabled);
-    toast.success(audioEnabled ? "Audio disabled" : "Audio enabled");
+    const newState = !audioEnabled;
+    setAudioEnabled(newState);
     
-    if (!audioEnabled) {
-      initAudioContext();
+    if (newState) {
+      const initialized = initAudio();
+      if (initialized) {
+        setSimulationAudioVolume(volume);
+        toast.success("Audio enabled");
+        
+        // Play a short beep to confirm audio is working
+        setTimeout(() => {
+          playSimulationEvent('field_fluctuation', { intentStrength: 0.3 });
+        }, 500);
+      } else {
+        toast.error("Could not initialize audio system");
+      }
+    } else {
+      toast.info("Audio disabled");
     }
   };
   
   const playAudioFile = (fileName: string) => {
+    if (!audioEnabled) {
+      toggleAudio();
+      setTimeout(() => attemptPlayAudio(fileName), 500);
+      return;
+    }
+    
+    attemptPlayAudio(fileName);
+  };
+  
+  const attemptPlayAudio = (fileName: string) => {
     setCurrentAudioFile(fileName);
     setIsPlaying(true);
     
@@ -125,7 +155,50 @@ const AudioOptionsSection: React.FC = () => {
             
             {availableAudioFiles.length > 0 ? (
               <div className="space-y-2">
-                <div className="text-sm text-gray-400">Available Audio Samples:</div>
+                <div className="text-sm text-gray-400 mb-2">Test Audio:</div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => playSimulationEvent('particle_creation', { charge: 'positive' })}
+                    className="justify-start text-xs"
+                  >
+                    <Play className="h-3 w-3 mr-1 flex-shrink-0" />
+                    <span className="truncate">Positive Particle</span>
+                  </Button>
+                  
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => playSimulationEvent('particle_creation', { charge: 'negative' })}
+                    className="justify-start text-xs"
+                  >
+                    <Play className="h-3 w-3 mr-1 flex-shrink-0" />
+                    <span className="truncate">Negative Particle</span>
+                  </Button>
+                  
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => playSimulationEvent('particle_interaction', { intensity: 0.7 })}
+                    className="justify-start text-xs"
+                  >
+                    <Play className="h-3 w-3 mr-1 flex-shrink-0" />
+                    <span className="truncate">Interaction</span>
+                  </Button>
+                  
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => playSimulationEvent('field_fluctuation', { intentStrength: 0.5 })}
+                    className="justify-start text-xs"
+                  >
+                    <Play className="h-3 w-3 mr-1 flex-shrink-0" />
+                    <span className="truncate">Field Fluctuation</span>
+                  </Button>
+                </div>
+                
+                <div className="text-sm text-gray-400 mt-4 mb-2">Available Audio Files:</div>
                 <div className="grid grid-cols-2 gap-2">
                   {availableAudioFiles.map(file => (
                     <Button
@@ -148,7 +221,7 @@ const AudioOptionsSection: React.FC = () => {
               </div>
             ) : (
               <div className="text-sm text-gray-400 text-center py-2">
-                No audio samples found.
+                No audio samples found. Try the test sounds above.
               </div>
             )}
           </>

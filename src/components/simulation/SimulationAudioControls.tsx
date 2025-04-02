@@ -20,9 +20,11 @@ import {
   playSimulationAudio,
   playSimulationEvent,
   generateParticleSoundscape,
-  initAudioContext
+  initAudioContext,
+  setSimulationAudioVolume
 } from '@/utils/audio/simulationAudioUtils';
-import { Particle, SimulationStats } from '@/types/simulation';
+import { Particle } from '@/utils/particleUtils';
+import { SimulationStats } from '@/hooks/useSimulationData';
 import { toast } from "sonner";
 import {
   Tooltip,
@@ -49,10 +51,15 @@ const SimulationAudioControls: React.FC<SimulationAudioControlsProps> = ({
   
   const handleInitAudio = () => {
     if (!audioInitialized) {
+      // Initialize audio context with user interaction
       const initialized = initAudioContext();
       setAudioInitialized(initialized);
       if (initialized) {
         toast.success("Audio system initialized");
+        // Apply volume setting
+        setSimulationAudioVolume(volume);
+      } else {
+        toast.error("Failed to initialize audio system");
       }
     }
   };
@@ -73,6 +80,11 @@ const SimulationAudioControls: React.FC<SimulationAudioControlsProps> = ({
       setIsPlaying(false);
     }
   }, [isRunning, isPlaying]);
+  
+  // Update volume when slider changes
+  useEffect(() => {
+    setSimulationAudioVolume(volume);
+  }, [volume]);
   
   const toggleAudioStream = () => {
     handleInitAudio();
@@ -136,16 +148,16 @@ const SimulationAudioControls: React.FC<SimulationAudioControlsProps> = ({
       particle_creation: { charge: 'positive' },
       particle_interaction: { intensity: 0.7, charge1: 'positive', charge2: 'negative' },
       anomaly_detected: { severity: 0.8 },
-      field_fluctuation: { intentStrength: 0.6 }
+      field_fluctuation: { intentStrength: 0.6 },
+      inflation_event: { timestamp: Date.now(), particlesBeforeInflation: 10, particlesAfterInflation: 50 }
     };
     
     playSimulationEvent(eventType, testData[eventType] || {});
   };
   
   const toggleAudio = () => {
-    handleInitAudio();
-    
     if (!isAudioEnabled) {
+      handleInitAudio();
       setIsAudioEnabled(true);
       toast.success("Simulation audio enabled");
     } else {

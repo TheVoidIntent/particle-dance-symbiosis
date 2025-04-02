@@ -1,86 +1,108 @@
 
-import { toast } from "sonner";
-
 /**
- * Utilities for generating audio content
+ * Utilities for generating audio on the fly
  */
 
-// Create a simple audio fallback when needed
-export const createFallbackAudioIfNeeded = () => {
+// Create or get shared audio context for all audio generation
+let audioGenContext: AudioContext | null = null;
+
+// Creates a sample audio tone with specified parameters
+export const generateSampleAudio = (
+  duration: number = 0.5,
+  waveType: OscillatorType = 'sine',
+  frequency: number = 440,
+  volume: number = 0.5
+): void => {
   try {
-    if (!window.AudioContext && !(window as any).webkitAudioContext) {
-      console.error("Web Audio API not supported in this browser");
-      toast.error("Audio not supported in your browser");
-      return;
+    // Create or reuse audio context
+    if (!audioGenContext) {
+      audioGenContext = new (window.AudioContext || (window as any).webkitAudioContext)();
     }
     
-    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    // If context is suspended (due to autoplay policy), try to resume it
+    if (audioGenContext.state === 'suspended') {
+      audioGenContext.resume().catch(error => {
+        console.warn('Could not resume audio context:', error);
+        return; // Exit if we can't resume
+      });
+    }
     
-    // Create oscillator for tone generation
-    const oscillator = audioContext.createOscillator();
-    oscillator.type = 'sine'; // sine wave — other values are 'square', 'sawtooth', 'triangle'
-    oscillator.frequency.value = 440; // value in hertz
-    
-    // Create gain node to control volume
-    const gainNode = audioContext.createGain();
-    gainNode.gain.value = 0.1; // 10% volume
+    // Create oscillator and gain node
+    const oscillator = audioGenContext.createOscillator();
+    const gainNode = audioGenContext.createGain();
     
     // Connect the nodes
     oscillator.connect(gainNode);
-    gainNode.connect(audioContext.destination);
+    gainNode.connect(audioGenContext.destination);
     
-    // Set up envelope (fade in/out)
-    gainNode.gain.setValueAtTime(0, audioContext.currentTime);
-    gainNode.gain.linearRampToValueAtTime(0.1, audioContext.currentTime + 0.1);
-    gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 1);
+    // Set the parameters
+    oscillator.type = waveType;
+    oscillator.frequency.value = frequency;
     
-    // Start and stop
+    // Apply volume with smoothing to avoid clicks
+    gainNode.gain.setValueAtTime(0, audioGenContext.currentTime);
+    gainNode.gain.linearRampToValueAtTime(volume, audioGenContext.currentTime + 0.05);
+    gainNode.gain.linearRampToValueAtTime(0, audioGenContext.currentTime + duration);
+    
+    // Start and stop the oscillator
     oscillator.start();
-    oscillator.stop(audioContext.currentTime + 1.1);
+    oscillator.stop(audioGenContext.currentTime + duration);
     
-    console.log("Generated fallback audio tone");
+    // Clean up when done
+    oscillator.onended = () => {
+      oscillator.disconnect();
+      gainNode.disconnect();
+    };
     
+    console.log(`Generated audio: ${waveType} wave at ${frequency}Hz for ${duration}s`);
   } catch (error) {
-    console.error("Error generating fallback audio:", error);
+    console.error('Error generating audio:', error);
   }
 };
 
-// Generate a sample audio for testing
-export const generateSampleAudio = (duration = 1, type = 'sine', frequency = 440, volume = 0.2) => {
-  try {
-    if (!window.AudioContext && !(window as any).webkitAudioContext) {
-      console.error("Web Audio API not supported in this browser");
-      toast.error("Audio not supported in your browser");
-      return;
-    }
-    
-    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-    
-    // Create oscillator
-    const oscillator = audioContext.createOscillator();
-    oscillator.type = type as OscillatorType;
-    oscillator.frequency.value = frequency;
-    
-    // Create gain node
-    const gainNode = audioContext.createGain();
-    gainNode.gain.value = volume;
-    
-    // Connect the nodes
-    oscillator.connect(gainNode);
-    gainNode.connect(audioContext.destination);
-    
-    // Envelope
-    gainNode.gain.setValueAtTime(0, audioContext.currentTime);
-    gainNode.gain.linearRampToValueAtTime(volume, audioContext.currentTime + 0.1);
-    gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + duration);
-    
-    // Start and stop
-    oscillator.start();
-    oscillator.stop(audioContext.currentTime + duration + 0.1);
-    
-    console.log("Generated sample audio tone");
-    
-  } catch (error) {
-    console.error("Error generating sample audio:", error);
+// Create fallback audio for error cases
+export const createFallbackAudioIfNeeded = () => {
+  generateSampleAudio(0.2, 'sawtooth', 220, 0.3);
+  
+  // Add a second tone after a brief pause
+  setTimeout(() => {
+    generateSampleAudio(0.2, 'sawtooth', 180, 0.3);
+  }, 250);
+  
+  return true;
+};
+
+// Generate complex tone from particle data (useful for sonification)
+export const generateParticleTone = (
+  charge: 'positive' | 'negative' | 'neutral',
+  energy: number = 0.5,
+  complexity: number = 1
+): void => {
+  // Base frequency based on particle charge
+  const baseFreq = charge === 'positive' ? 440 : 
+                   charge === 'negative' ? 220 : 330;
+  
+  // Higher complexity means more harmonics
+  const harmonics = Math.min(5, Math.max(1, Math.floor(complexity * 3)));
+  
+  // Generate the primary tone
+  generateSampleAudio(
+    0.5 + (energy * 0.5), // Duration based on energy
+    charge === 'positive' ? 'sine' : 
+    charge === 'negative' ? 'square' : 'triangle',
+    baseFreq,
+    0.3 * energy
+  );
+  
+  // Add harmonics
+  for (let i = 1; i <= harmonics; i++) {
+    setTimeout(() => {
+      generateSampleAudio(
+        0.3 + (energy * 0.3), 
+        'sine',
+        baseFreq * (1 + (i * 0.5)),
+        0.1 * energy / i
+      );
+    }, i * 100);
   }
 };

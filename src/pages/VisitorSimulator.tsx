@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import AudioOptionsSection from '@/components/simulation/AudioOptionsSection';
 import { playLoopingAudio, stopLoopingAudio, setLoopingAudioVolume } from '@/utils/audio/audioPlaybackUtils';
 import { getAvailableAudioFiles } from '@/utils/audio/audioFileUtils';
+import { initAudioContext } from '@/utils/audio/simulationAudioUtils';
 
 interface Particle {
   x: number;
@@ -74,6 +75,8 @@ const VisitorSimulator: React.FC = () => {
         console.log("Loaded audio files:", files);
         
         if (!audioPlayerRef.current) {
+          initAudioContext();
+          
           audioPlayerRef.current = new Audio();
           audioPlayerRef.current.volume = 0.2;
           audioPlayerRef.current.onended = () => {
@@ -127,8 +130,10 @@ const VisitorSimulator: React.FC = () => {
     setBackgroundAudioActive(newState);
     
     if (newState) {
+      initAudioContext();
+      
       playLoopingAudio('https://notebooklm.google.com/notebook/b2d28cf3-eebe-436c-9cfe-0015c99f99ac/audio', audioVolume / 100);
-      toast.success("Background audio enabled");
+      toast.success("Background audio enabled - Click anywhere if you don't hear sound");
     } else {
       stopLoopingAudio();
       toast.info("Background audio disabled");

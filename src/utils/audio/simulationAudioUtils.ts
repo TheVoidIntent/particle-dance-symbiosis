@@ -1,15 +1,19 @@
+
 import { toast } from "sonner";
-import { Particle, SimulationStats } from "@/types/simulation";
+import { Particle } from "@/utils/particleUtils";
+import { SimulationStats } from "@/hooks/useSimulationData";
 import { generateSampleAudio } from './audioGenerationUtils';
 import { playAudioWithErrorHandling } from './audioPlaybackUtils';
 import { checkAudioFileExists } from './audioFileUtils';
 
+// Audio context and related variables
 let audioContext: AudioContext | null = null;
 let audioStreamActive = false;
 let masterGainNode: GainNode | null = null;
 let soundSources: { [key: string]: AudioBuffer } = {};
 let lastPlayed: { [key: string]: number } = {};
 let sonificationInterval: number | null = null;
+let audioInitializationAttempted = false;
 
 // Audio file paths for different particle events
 const AUDIO_PATHS = {
@@ -25,10 +29,20 @@ const AUDIO_PATHS = {
   background_ambience: '/audio/intentsim_page/ambience_loop.mp3'
 };
 
-// Initialize the audio context
+// Initialize the audio context - this needs to be called from a user interaction event
 export const initAudioContext = (): boolean => {
+  if (audioContext) {
+    console.log("Audio context already initialized");
+    return true;
+  }
+  
+  if (audioInitializationAttempted) {
+    console.log("Audio initialization already attempted, waiting for user interaction");
+    return false;
+  }
+  
   try {
-    if (audioContext) return true;
+    audioInitializationAttempted = true;
     
     if (!window.AudioContext && !(window as any).webkitAudioContext) {
       console.error("Web Audio API not supported in this browser");
@@ -36,7 +50,31 @@ export const initAudioContext = (): boolean => {
       return false;
     }
     
+    // Create audio context - must be done in response to user gesture
     audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    
+    // Check if context is in suspended state (autoplay policy)
+    if (audioContext.state === 'suspended') {
+      console.log("Audio context is suspended, waiting for user interaction");
+      
+      // Resume on the next user interaction
+      const resumeAudio = () => {
+        if (audioContext) {
+          audioContext.resume().then(() => {
+            console.log("Audio context resumed");
+            document.removeEventListener('click', resumeAudio);
+            document.removeEventListener('touchstart', resumeAudio);
+            document.removeEventListener('keydown', resumeAudio);
+          });
+        }
+      };
+      
+      document.addEventListener('click', resumeAudio, { once: true });
+      document.addEventListener('touchstart', resumeAudio, { once: true });
+      document.addEventListener('keydown', resumeAudio, { once: true });
+    }
+    
+    // Set up master gain node
     masterGainNode = audioContext.createGain();
     masterGainNode.gain.value = 0.5; // 50% volume
     masterGainNode.connect(audioContext.destination);
@@ -54,6 +92,8 @@ export const initAudioContext = (): boolean => {
 
 // Preload audio files for faster playback
 const preloadAudioFiles = async () => {
+  if (!audioContext) return;
+  
   try {
     // Check if our custom audio files exist
     for (const [key, path] of Object.entries(AUDIO_PATHS)) {
@@ -92,9 +132,27 @@ export const isSimulationAudioPlaying = (): boolean => {
 export const startSimulationAudioStream = (stats: SimulationStats): void => {
   if (!audioContext) {
     const initialized = initAudioContext();
-    if (!initialized) return;
+    if (!initialized) {
+      toast.error("Please click anywhere on the page to enable audio");
+      return;
+    }
   }
   
+  if (audioContext?.state === 'suspended') {
+    audioContext.resume().then(() => {
+      console.log("Audio context resumed");
+      continueStartingAudioStream(stats);
+    }).catch(error => {
+      console.error("Failed to resume audio context:", error);
+      toast.error("Audio playback blocked. Click anywhere to enable.");
+    });
+  } else {
+    continueStartingAudioStream(stats);
+  }
+};
+
+// Helper function to continue audio stream start after context check
+const continueStartingAudioStream = (stats: SimulationStats): void => {
   if (audioStreamActive) {
     stopSimulationAudioStream();
   }
@@ -142,7 +200,7 @@ export const startSimulationAudioStream = (stats: SimulationStats): void => {
 
 // Play ambient background sound
 const playAmbientSound = () => {
-  if (!audioContext || !masterGainNode) return;
+  if (!audioContext || !masterGainNode || !audioStreamActive) return;
   
   // Try to play custom ambient sound if available
   if (soundSources['background_ambience']) {
@@ -229,7 +287,17 @@ export const stopSimulationAudioStream = (): void => {
 export const playSimulationAudio = (category: string, filename: string): void => {
   if (!audioContext) {
     const initialized = initAudioContext();
-    if (!initialized) return;
+    if (!initialized) {
+      toast.error("Please click anywhere on the page to enable audio");
+      return;
+    }
+  }
+  
+  if (audioContext?.state === 'suspended') {
+    audioContext.resume().catch(error => {
+      console.error("Failed to resume audio context:", error);
+      toast.error("Audio playback blocked. Click anywhere to enable.");
+    });
   }
   
   try {
@@ -256,7 +324,16 @@ export const playSimulationAudio = (category: string, filename: string): void =>
 export const playSimulationEvent = (eventType: string, eventData: any = {}): void => {
   if (!audioContext) {
     const initialized = initAudioContext();
-    if (!initialized) return;
+    if (!initialized) {
+      toast.error("Please click anywhere on the page to enable audio");
+      return;
+    }
+  }
+  
+  if (audioContext?.state === 'suspended') {
+    audioContext.resume().catch(error => {
+      console.error("Failed to resume audio context:", error);
+    });
   }
   
   // Rate limit sounds to avoid too many sounds playing at once
@@ -317,7 +394,18 @@ export const playSimulationEvent = (eventType: string, eventData: any = {}): voi
 export const generateParticleSoundscape = (particles: Particle[]): void => {
   if (!audioContext) {
     const initialized = initAudioContext();
-    if (!initialized) return;
+    if (!initialized) {
+      toast.error("Please click anywhere on the page to enable audio");
+      return;
+    }
+  }
+  
+  if (audioContext?.state === 'suspended') {
+    audioContext.resume().catch(error => {
+      console.error("Failed to resume audio context:", error);
+      toast.error("Audio playback blocked. Click anywhere to enable.");
+      return;
+    });
   }
   
   if (!particles || particles.length === 0) {

@@ -14,6 +14,8 @@ import { getSimulationStats } from '@/utils/simulation/state';
 import { useInflationEvents } from '@/hooks/useInflationEvents';
 import AudioDiagnostics from '@/components/diagnostic/AudioDiagnostics';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import ContinuousSimulationBanner from '@/components/simulation/ContinuousSimulationBanner';
+import MotherSimulationControl from '@/components/MotherSimulationControl';
 
 const initialStats: StatsType = {
   particleCount: 0,
@@ -128,6 +130,10 @@ const UniverseSimulation: React.FC = () => {
           <p className="text-gray-500 dark:text-gray-400 max-w-2xl mx-auto">
             Continuously running simulation exploring the emergence of particles from intent field fluctuations.
           </p>
+        </div>
+
+        <div className="mb-6">
+          <MotherSimulationControl />
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
@@ -257,6 +263,7 @@ const UniverseSimulation: React.FC = () => {
         </TabsContent>
       </div>
       <Footer />
+      <ContinuousSimulationBanner />
     </div>
   );
 };

@@ -1,14 +1,29 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Link } from 'react-router-dom';
 import { BarChart, Calendar, FileText, Settings, Upload, Download, Clipboard, Database, Atom } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { SimulationStatus } from '@/components/simulation/SimulationStatus';
 
 const CreatorDashboard: React.FC = () => {
   const { user } = useAuth();
+  const [lastUpdated, setLastUpdated] = useState<string>('');
+  
+  useEffect(() => {
+    // Set current time as last updated time
+    setLastUpdated(new Date().toLocaleTimeString());
+    
+    // Update the last updated time every minute
+    const interval = setInterval(() => {
+      setLastUpdated(new Date().toLocaleTimeString());
+    }, 60000);
+    
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 text-white p-4 md:p-8">
@@ -29,6 +44,11 @@ const CreatorDashboard: React.FC = () => {
               Upload New Data
             </Button>
           </div>
+        </div>
+        
+        {/* Simulation Status */}
+        <div className="mb-8">
+          <SimulationStatus />
         </div>
         
         {/* Stats overview */}
@@ -94,22 +114,30 @@ const CreatorDashboard: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <Card className="bg-gray-800/50 border-gray-700 col-span-2">
             <CardHeader>
-              <CardTitle className="text-lg">Recent Simulations</CardTitle>
+              <CardTitle className="text-lg flex justify-between items-center">
+                <span>Active Simulations</span>
+                <span className="text-xs text-gray-400">Last updated: {lastUpdated}</span>
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 {[
-                  { name: "Adaptive Probabilistic", date: "2 hours ago", type: "adaptive_probabilistic" },
-                  { name: "Energy Conservation", date: "Yesterday", type: "energy_conservation" },
-                  { name: "Full Features", date: "3 days ago", type: "full_features" },
-                  { name: "Baseline", date: "1 week ago", type: "baseline" },
+                  { name: "Adaptive Probabilistic", status: "Running", type: "adaptive_probabilistic", activity: "HIGH" },
+                  { name: "Energy Conservation", status: "Running", type: "energy_conservation", activity: "MEDIUM" },
+                  { name: "Full Features", status: "Running", type: "full_features", activity: "HIGH" },
+                  { name: "Baseline", status: "Running", type: "baseline", activity: "LOW" },
                 ].map((sim, i) => (
                   <div key={i} className="flex items-center justify-between p-2 hover:bg-gray-700/30 rounded-md">
                     <div className="flex items-center">
-                      <div className="w-2 h-2 rounded-full bg-indigo-500 mr-3"></div>
+                      <div className="w-2 h-2 rounded-full bg-green-500 mr-3"></div>
                       <div>
                         <p className="font-medium">{sim.name}</p>
-                        <p className="text-xs text-gray-400">{sim.date}</p>
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline" className="bg-green-500/20 text-green-400 text-xs px-1">
+                            {sim.status}
+                          </Badge>
+                          <span className="text-xs text-gray-400">Activity: {sim.activity}</span>
+                        </div>
                       </div>
                     </div>
                     <Button variant="ghost" size="sm">View</Button>

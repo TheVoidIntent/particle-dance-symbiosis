@@ -1,11 +1,14 @@
 
 import { Particle } from '@/types/simulation';
-import { playAudio, playAudioWithErrorHandling } from './audioPlaybackUtils';
+import { playAudio, initAudioContext as baseInitAudioContext } from './audioPlaybackUtils';
 
 // Track if simulation audio is currently playing
 let simulationAudioPlaying = false;
 let simulationAudioVolume = 0.5;
 let simulationAudioStreamId: number | null = null;
+
+// Re-export the initAudioContext function from audioPlaybackUtils
+export const initAudioContext = baseInitAudioContext;
 
 /**
  * Play a sound based on simulation events
@@ -30,13 +33,12 @@ export const playSimulationAudio = (eventType: string): Promise<void> => {
  */
 export const playSimulationEvent = (
   eventType: string, 
-  particles: Particle[] = [], 
-  intensity: number = 0.5
+  eventData: any = {}
 ): Promise<void> => {
-  // Apply volume adjustment based on intensity
-  const volume = Math.min(1, Math.max(0.1, intensity));
+  // Apply volume adjustment based on intensity if available
+  const intensity = eventData.intensity || 0.5;
   
-  // In a real implementation, this would modulate the audio based on particle properties
+  // In a real implementation, this would modulate the audio based on event properties
   // For now we'll just use the basic playSimulationAudio function
   return playSimulationAudio(eventType);
 };
@@ -45,8 +47,7 @@ export const playSimulationEvent = (
  * Generate an audio soundscape based on the current simulation state
  */
 export const generateParticleSoundscape = (
-  particles: Particle[], 
-  intentFieldValue: number
+  particles: Particle[]
 ): void => {
   // This would generate ambient sounds based on the current state
   // Implementation would depend on a more sophisticated audio synthesis system
@@ -57,8 +58,7 @@ export const generateParticleSoundscape = (
  * Start continuous audio based on simulation state
  */
 export const startSimulationAudioStream = (
-  getParticles: () => Particle[],
-  getIntentField: () => number[][][]
+  stats: any
 ): void => {
   if (simulationAudioStreamId !== null) {
     stopSimulationAudioStream();
@@ -66,22 +66,22 @@ export const startSimulationAudioStream = (
   
   simulationAudioPlaying = true;
   
+  // Get particles from stats if available
+  const particles = stats.particles || [];
+  
   // Start a periodic callback to update the audio
   simulationAudioStreamId = window.setInterval(() => {
     if (!simulationAudioPlaying) return;
-    
-    const particles = getParticles();
-    const intentField = getIntentField();
     
     // For now, just create occasional sounds based on particle count
     if (particles.length > 0 && Math.random() < 0.1) {
       const randomIndex = Math.floor(Math.random() * particles.length);
       const particle = particles[randomIndex];
       
-      const eventType = particle.charge === 'positive' ? 'particle_creation' :
-                        particle.charge === 'negative' ? 'particle_destruction' : 'interaction';
+      const eventType = particle?.charge === 'positive' ? 'particle_creation' :
+                        particle?.charge === 'negative' ? 'particle_destruction' : 'interaction';
       
-      playSimulationEvent(eventType, [particle], 0.2);
+      playSimulationEvent(eventType);
     }
   }, 2000);
 };

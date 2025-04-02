@@ -11,8 +11,7 @@ import {
   setLoopingAudioVolume,
   resumeAudioContext,
   createFallbackAudioIfNeeded as createPlaybackFallbackAudio,
-  // Import but don't re-export directly to avoid duplicate
-  initAudioContext as importedInitAudioContext
+  initAudioContext
 } from './audio/audioPlaybackUtils';
 
 // Explicitly re-export with unique namespace to avoid ambiguity
@@ -24,8 +23,7 @@ export {
   setLoopingAudioVolume,
   resumeAudioContext,
   createPlaybackFallbackAudio,
-  // Export with original name since it's specifically referenced this way
-  importedInitAudioContext as initAudioContext
+  initAudioContext
 };
 
 // Import and re-export from simulationAudioUtils

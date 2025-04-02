@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Toggle } from "@/components/ui/toggle";
@@ -20,9 +19,9 @@ import {
   playSimulationAudio,
   playSimulationEvent,
   generateParticleSoundscape,
-  initAudioContext,
   setSimulationAudioVolume
 } from '@/utils/audio/simulationAudioUtils';
+import { initAudioContext } from '@/utils/audio/audioPlaybackUtils';
 import { SimulationStats } from '@/hooks/useSimulationData';
 import { toast } from "sonner";
 import {
@@ -56,7 +55,7 @@ const SimulationAudioControls: React.FC<SimulationAudioControlsProps> = ({
         setAudioInitialized(true);
         toast.success("Audio system initialized");
         // Apply volume setting
-        setSimulationAudioVolume(volume);
+        setSimulationAudioVolume(volume / 100);
       } catch (error) {
         console.error("Failed to initialize audio:", error);
         toast.error("Failed to initialize audio system");
@@ -83,7 +82,7 @@ const SimulationAudioControls: React.FC<SimulationAudioControlsProps> = ({
   
   // Update volume when slider changes
   useEffect(() => {
-    setSimulationAudioVolume(volume);
+    setSimulationAudioVolume(volume / 100);
   }, [volume]);
   
   const toggleAudioStream = () => {
@@ -125,7 +124,7 @@ const SimulationAudioControls: React.FC<SimulationAudioControlsProps> = ({
     setIsPlaying(true);
   };
   
-  const playTestAudio = (category: string, filename: string) => {
+  const playTestAudio = (eventType: string) => {
     handleInitAudio();
     
     if (!audioInitialized) {
@@ -133,7 +132,7 @@ const SimulationAudioControls: React.FC<SimulationAudioControlsProps> = ({
       return;
     }
     
-    playSimulationAudio(category, filename);
+    playSimulationAudio(eventType);
   };
   
   const playTestEvent = (eventType: 'particle_creation' | 'particle_interaction' | 'field_fluctuation' | 'anomaly_detected' | 'inflation_event') => {
@@ -144,15 +143,7 @@ const SimulationAudioControls: React.FC<SimulationAudioControlsProps> = ({
       return;
     }
     
-    const testData: any = {
-      particle_creation: { charge: 'positive' },
-      particle_interaction: { intensity: 0.7, charge1: 'positive', charge2: 'negative' },
-      anomaly_detected: { severity: 0.8 },
-      field_fluctuation: { intentStrength: 0.6 },
-      inflation_event: { timestamp: Date.now(), particlesBeforeInflation: 10, particlesAfterInflation: 50 }
-    };
-    
-    playSimulationEvent(eventType, testData[eventType] || {});
+    playSimulationEvent(eventType);
   };
   
   const toggleAudio = () => {

@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import AudioOptionsSection from '@/components/simulation/AudioOptionsSection';
 import { playLoopingAudio, stopLoopingAudio, setLoopingAudioVolume } from '@/utils/audio/audioPlaybackUtils';
 import { getAvailableAudioFiles } from '@/utils/audio/audioFileUtils';
-import { initAudioContext } from '@/utils/audio/simulationAudioUtils';
+import { initAudioContext } from '@/utils/audio/audioPlaybackUtils';
 
 interface Particle {
   x: number;

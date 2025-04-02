@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,11 +7,12 @@ import { Volume2, Music, Play, Pause } from "lucide-react";
 import { toast } from "sonner";
 import { getAvailableAudioFiles } from '@/utils/audio/audioFileUtils';
 import { 
-  initAudioContext, 
   playSimulationAudio,
-  setSimulationAudioVolume,
-  playSimulationEvent
+  playSimulationEvent,
+  setSimulationAudioVolume
 } from '@/utils/audio/simulationAudioUtils';
+
+import { initAudioContext } from '@/utils/audio/audioPlaybackUtils';
 
 const AudioOptionsSection: React.FC = () => {
   const [audioEnabled, setAudioEnabled] = useState(false);
@@ -51,7 +51,7 @@ const AudioOptionsSection: React.FC = () => {
   useEffect(() => {
     // Update volume whenever it changes
     if (audioEnabled) {
-      setSimulationAudioVolume(volume);
+      setSimulationAudioVolume(volume / 100);
     }
   }, [volume, audioEnabled]);
   
@@ -62,12 +62,12 @@ const AudioOptionsSection: React.FC = () => {
     if (newState) {
       const initialized = initAudio();
       if (initialized) {
-        setSimulationAudioVolume(volume);
+        setSimulationAudioVolume(volume / 100);
         toast.success("Audio enabled");
         
         // Play a short beep to confirm audio is working
         setTimeout(() => {
-          playSimulationEvent('field_fluctuation', { intentStrength: 0.3 });
+          playSimulationEvent('field_fluctuation');
         }, 500);
       } else {
         toast.error("Could not initialize audio system");
@@ -102,7 +102,7 @@ const AudioOptionsSection: React.FC = () => {
     // Extract file basename without extension
     const baseName = fileName.split('.')[0];
     
-    playSimulationAudio(category, baseName);
+    playSimulationAudio(category);
     
     // Automatically reset playing state after a reasonable time (5 seconds)
     setTimeout(() => {
@@ -165,7 +165,7 @@ const AudioOptionsSection: React.FC = () => {
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => playSimulationEvent('particle_creation', { charge: 'positive' })}
+                    onClick={() => playSimulationEvent('particle_creation')}
                     className="justify-start text-xs"
                   >
                     <Play className="h-3 w-3 mr-1 flex-shrink-0" />
@@ -175,7 +175,7 @@ const AudioOptionsSection: React.FC = () => {
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => playSimulationEvent('particle_creation', { charge: 'negative' })}
+                    onClick={() => playSimulationEvent('particle_creation')}
                     className="justify-start text-xs"
                   >
                     <Play className="h-3 w-3 mr-1 flex-shrink-0" />
@@ -185,7 +185,7 @@ const AudioOptionsSection: React.FC = () => {
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => playSimulationEvent('particle_interaction', { intensity: 0.7 })}
+                    onClick={() => playSimulationEvent('interaction')}
                     className="justify-start text-xs"
                   >
                     <Play className="h-3 w-3 mr-1 flex-shrink-0" />
@@ -195,7 +195,7 @@ const AudioOptionsSection: React.FC = () => {
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => playSimulationEvent('field_fluctuation', { intentStrength: 0.5 })}
+                    onClick={() => playSimulationEvent('field_fluctuation')}
                     className="justify-start text-xs"
                   >
                     <Play className="h-3 w-3 mr-1 flex-shrink-0" />

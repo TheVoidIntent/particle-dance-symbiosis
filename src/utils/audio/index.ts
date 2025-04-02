@@ -12,14 +12,16 @@ export {
 
 export {
   checkAudioFileExists,
-  getAudioFileMetadata
+  getAudioFileMetadata,
+  getAvailableAudioFiles
 } from './audioFileUtils';
 
 export {
-  generateSampleAudio
+  generateSampleAudio,
+  generateParticleTone
 } from './audioGenerationUtils';
 
-// Export from audioPlaybackUtils with unique names
+// Export from audioPlaybackUtils
 export {
   playAudio,
   playAudioWithErrorHandling,
@@ -27,8 +29,6 @@ export {
   stopLoopingAudio,
   setLoopingAudioVolume,
   resumeAudioContext,
-  createFallbackAudioIfNeeded as createPlaybackFallbackAudio
+  createFallbackAudioIfNeeded as createPlaybackFallbackAudio,
+  initAudioContext
 } from './audioPlaybackUtils';
-
-// Export initialization function with namespace
-export { initAudioContext } from './audioPlaybackUtils';

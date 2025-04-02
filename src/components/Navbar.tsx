@@ -1,7 +1,8 @@
+
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from './ui/button';
-import { Home, Info, Flask, BookOpen, BookText, Bot, LayoutDashboard } from 'lucide-react';
+import { Home, Info, Beaker, BookOpen, BookText, Bot, LayoutDashboard } from 'lucide-react';
 
 const Navbar: React.FC = () => {
   const location = useLocation();
@@ -13,7 +14,7 @@ const Navbar: React.FC = () => {
   const navItems = [
     { path: '/', label: 'Home', icon: <Home className="h-4 w-4 mr-2" /> },
     { path: '/about', label: 'About', icon: <Info className="h-4 w-4 mr-2" /> },
-    { path: '/simulation', label: 'Simulation', icon: <Flask className="h-4 w-4 mr-2" /> },
+    { path: '/simulation', label: 'Simulation', icon: <Beaker className="h-4 w-4 mr-2" /> },
     { path: '/universe', label: 'Universe', icon: <LayoutDashboard className="h-4 w-4 mr-2" /> },
     { path: '/research', label: 'Research', icon: <BookOpen className="h-4 w-4 mr-2" /> },
     { path: '/notebook', label: 'Notebook', icon: <BookText className="h-4 w-4 mr-2" /> },

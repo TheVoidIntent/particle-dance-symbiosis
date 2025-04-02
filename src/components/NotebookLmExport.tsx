@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ExternalLink, FileText, Activity, Award, ZapOff, Database, BookOpen, BookText } from "lucide-react";
+import { ExternalLink, FileText, Activity, Award, ZapOff, Database, BookOpen, BookText, Atom } from "lucide-react";
 import { useNotebookLmIntegration } from '@/hooks/useNotebookLmIntegration';
 import { getAvailableAtlasDatasets } from '@/utils/atlasDataIntegration';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -23,7 +23,7 @@ const NotebookLmExport: React.FC = () => {
 
   const handleExport = () => {
     exportSimulationData(selectedDataset, exportFormat);
-    toast.success(`Exporting as ${exportFormat.toUpperCase()}`);
+    toast.success(`Exporting as ${exportFormat.toUpperCase()} with ATLAS/CERN comparison data`);
   };
 
   return (
@@ -60,7 +60,10 @@ const NotebookLmExport: React.FC = () => {
             <li>Energy Conservation Simulation</li>
             <li>Baseline Simulation</li>
             <li>Full Features Integration</li>
-            <li>CERN ATLAS Comparison</li>
+            <li className="flex items-center text-blue-600 dark:text-blue-400 font-medium">
+              <Atom className="h-3 w-3 mr-1 inline" />
+              CERN ATLAS Comparison (PDF)
+            </li>
             <li className="font-medium">Inflation Events ({inflationEvents.length})</li>
           </ul>
         </div>
@@ -83,7 +86,10 @@ const NotebookLmExport: React.FC = () => {
         </div>
         
         <div className="space-y-2">
-          <label className="text-sm text-gray-500 dark:text-gray-400">ATLAS Dataset Reference:</label>
+          <label className="text-sm text-gray-500 dark:text-gray-400 flex items-center">
+            <Atom className="h-4 w-4 mr-1 text-blue-500" />
+            ATLAS Dataset Reference:
+          </label>
           <Select 
             value={selectedDataset} 
             onValueChange={setSelectedDataset}
@@ -111,7 +117,7 @@ const NotebookLmExport: React.FC = () => {
               <SelectValue placeholder="Select export format" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="pdf">PDF Document</SelectItem>
+              <SelectItem value="pdf">PDF Document (with ATLAS Comparison)</SelectItem>
               <SelectItem value="bibtex">BibTeX Citation</SelectItem>
               <SelectItem value="json">JSON Metadata</SelectItem>
               <SelectItem value="doi">DOI Metadata</SelectItem>

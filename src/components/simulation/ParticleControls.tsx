@@ -12,7 +12,7 @@ type ParticleControlsProps = {
   dataCollectionActive: boolean;
   onExportData: () => void;
   onToggleDataCollection: () => void;
-  onResetSimulation: () => void; // Updated to expect void return type
+  onResetSimulation: () => void;
 };
 
 export const ParticleControls: React.FC<ParticleControlsProps> = ({

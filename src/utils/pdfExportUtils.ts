@@ -54,6 +54,18 @@ export const exportSimulationDataAsPDF = async (simulationData: any): Promise<st
   const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
   const filename = `intentSim_simulation_${timestamp}`;
   
+  // Check if we have ATLAS/CERN comparison data
+  const hasAtlasData = simulationData && 
+    (simulationData.cern_comparison?.atlasData || 
+     (typeof simulationData === 'object' && Object.values(simulationData).some(
+       (sim: any) => sim?.atlasData || sim?.metadata?.source === 'ATLAS'
+     )));
+  
+  // Add a note about ATLAS/CERN comparison in the filename if applicable
+  if (hasAtlasData) {
+    filename += '_with_ATLAS_comparison';
+  }
+  
   try {
     return await convertAnyDataToPDF(simulationData, filename);
   } catch (error) {
@@ -69,7 +81,8 @@ export const exportSimulationDataAsPDF = async (simulationData: any): Promise<st
 export const exportCurrentSimulationStateAsPDF = async (
   stats: SimulationStats,
   particles: any[],
-  fieldData: any
+  fieldData: any,
+  atlasComparison?: any
 ): Promise<string | null> => {
   const exportData = {
     timestamp: new Date().toISOString(),
@@ -83,10 +96,16 @@ export const exportCurrentSimulationStateAsPDF = async (
         fieldData?.length || 0
       ],
       averageIntensity: calculateAverageFieldIntensity(fieldData)
-    }
+    },
+    // Include ATLAS comparison data if available
+    ...(atlasComparison && { atlasComparison })
   };
   
-  return await convertAnyDataToPDF(exportData, 'intentSim_current_state');
+  const filename = atlasComparison ? 
+    'intentSim_current_state_with_ATLAS_comparison' : 
+    'intentSim_current_state';
+    
+  return await convertAnyDataToPDF(exportData, filename);
 };
 
 // Helper function to calculate average field intensity

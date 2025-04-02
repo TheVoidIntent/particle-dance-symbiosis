@@ -1,3 +1,4 @@
+
 import { useState, useCallback } from 'react';
 import { toast } from "sonner";
 import { useInflationEvents } from './useInflationEvents';
@@ -50,55 +51,73 @@ export function useNotebookLmIntegration() {
         });
       }
       
-      // Fetch ATLAS data if a dataset ID is provided
-      if (atlasDatasetId) {
-        try {
-          const atlasData = await fetchAtlasData(atlasDatasetId);
-          if (atlasData) {
-            // Map ATLAS data to simulation format
-            const mappedData = mapAtlasDataToSimulationFormat(atlasData);
-            
-            // Enhance the CERN comparison with real ATLAS data
-            // @ts-ignore - We're adding atlasData property to cern_comparison
-            simulationTypes.cern_comparison.atlasData = mappedData;
-            simulationTypes.cern_comparison.summary = {
-              ...(simulationTypes.cern_comparison.summary || {}),
-              atlasDatasetId: atlasData.id,
-              atlasDatasetName: atlasData.name,
-              atlasParticleCount: atlasData.particles.length,
-              atlasCollisionEnergy: atlasData.collisionEnergy,
-              correlationScore: calculateCorrelationScore(
-                simulationTypes.cern_comparison,
-                mappedData
-              )
-            };
-            
-            toast.success(
-              "ATLAS Data Loaded",
-              {
-                description: `Successfully integrated data from ATLAS dataset: ${atlasData.name}`
-              }
-            );
-          }
-        } catch (error) {
-          console.error("Error fetching ATLAS data:", error);
-          toast.error("Failed to load ATLAS data, using simulated comparison data");
+      // Always fetch ATLAS data for PDF export to ensure CERN comparison data is included
+      let atlasData = null;
+      let mappedAtlasData = null;
+      
+      // Fetch ATLAS data if a dataset ID is provided or use default ID for PDF export
+      const datasetIdToUse = atlasDatasetId || "6004"; // Use provided ID or default to 13 TeV collision data
+      
+      try {
+        atlasData = await fetchAtlasData(datasetIdToUse);
+        if (atlasData) {
+          // Map ATLAS data to simulation format
+          mappedAtlasData = mapAtlasDataToSimulationFormat(atlasData);
+          
+          // Enhance the CERN comparison with real ATLAS data
+          // @ts-ignore - We're adding atlasData property to cern_comparison
+          simulationTypes.cern_comparison.atlasData = mappedAtlasData;
+          simulationTypes.cern_comparison.summary = {
+            ...(simulationTypes.cern_comparison.summary || {}),
+            atlasDatasetId: atlasData.id,
+            atlasDatasetName: atlasData.name,
+            atlasParticleCount: atlasData.particles.length,
+            atlasCollisionEnergy: atlasData.collisionEnergy,
+            correlationScore: calculateCorrelationScore(
+              simulationTypes.cern_comparison,
+              mappedAtlasData
+            )
+          };
+          
+          toast.success(
+            "ATLAS Data Loaded",
+            {
+              description: `Successfully integrated data from ATLAS dataset: ${atlasData.name}`
+            }
+          );
         }
+      } catch (error) {
+        console.error("Error fetching ATLAS data:", error);
+        toast.error("Failed to load ATLAS data, using simulated comparison data");
       }
+      
+      // Add comparison summary at the top level for PDF export
+      const exportData = {
+        ...simulationTypes,
+        atlas_cern_comparison_summary: {
+          included: !!mappedAtlasData,
+          datasetId: atlasData?.id || datasetIdToUse,
+          datasetName: atlasData?.name || "13 TeV Collision Data (Fallback)",
+          correlationScore: mappedAtlasData ? 
+            calculateCorrelationScore(simulationTypes.cern_comparison, mappedAtlasData) : 
+            null,
+          timestamp: new Date().toISOString()
+        }
+      };
       
       // Dismiss loading toast
       toast.dismiss();
       
       // Handle different export formats
       if (exportFormat === 'pdf') {
-        // Export the data as PDF
-        const pdfFilename = await exportSimulationDataAsPDF(simulationTypes);
+        // Export the data as PDF with ATLAS comparison prominently featured
+        const pdfFilename = await exportSimulationDataAsPDF(exportData);
         
         if (pdfFilename) {
           toast.success(
             "Data prepared for Notebook LM",
             {
-              description: `Your data has been exported as ${exportFormat.toUpperCase()} with all simulation types, inflation events, and ATLAS comparison.`
+              description: `Your data has been exported as ${exportFormat.toUpperCase()} with all simulation types, inflation events, and ATLAS/CERN comparison.`
             }
           );
         }
@@ -106,12 +125,12 @@ export function useNotebookLmIntegration() {
         // For BibTeX, create a citation format (simplified)
         const timestamp = new Date().toISOString().substring(0, 10);
         const citation = `@dataset{intentSim${timestamp.replace(/-/g, '')},
-  title={IntentSim Universe Simulation Data},
+  title={IntentSim Universe Simulation Data with ATLAS/CERN Comparison},
   author={IntentSim Research Team},
   year={${new Date().getFullYear()}},
   publisher={IntentSim.org},
   url={https://intentsim.org},
-  note={Data generated from universe simulation with intent field fluctuations}
+  note={Data generated from universe simulation with intent field fluctuations, compared with ATLAS experiment data}
 }`;
         
         // Create a download link for the BibTeX file
@@ -129,14 +148,14 @@ export function useNotebookLmIntegration() {
       } else if (exportFormat === 'doi' || exportFormat === 'json') {
         // For DOI metadata or JSON format
         const metadata = {
-          title: "IntentSim Universe Simulation Data",
+          title: "IntentSim Universe Simulation Data with ATLAS/CERN Comparison",
           creators: [{ name: "IntentSim Research Team" }],
           publicationYear: new Date().getFullYear(),
           publisher: "IntentSim.org",
           resourceType: "Dataset",
-          subjects: ["Simulation", "Universe", "Intent Field Fluctuations"],
+          subjects: ["Simulation", "Universe", "Intent Field Fluctuations", "ATLAS", "CERN"],
           format: exportFormat === 'doi' ? "DOI Metadata" : "JSON Dataset",
-          data: jsonData
+          data: exportData
         };
         
         // Create a download link for the metadata file

@@ -130,7 +130,7 @@ export const ParticleCanvas: React.FC<ParticleCanvasProps> = ({
   );
 
   // Creating a wrapper function that explicitly returns void
-  const handleResetSimulation = React.useCallback(() => {
+  const handleResetSimulation = React.useCallback((): void => {
     resetSimulation();
   }, [resetSimulation]);
 

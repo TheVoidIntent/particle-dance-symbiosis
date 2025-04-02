@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useParticleSimulation } from '@/hooks/simulation';
 import { useSimulationData } from '@/hooks/useSimulationData';
@@ -41,14 +40,12 @@ export const ParticleCanvas: React.FC<ParticleCanvasProps> = ({
   onStatsUpdate,
   onAnomalyDetected
 }) => {
-  // Custom hooks for event handling
   const { showInflationBanner, latestInflation, handleInflationDetected } = useInflationEvents();
   const { handleAnomalyWithAudio, handleInflationWithAudio } = useAudioEvents(
     onAnomalyDetected, 
     handleInflationDetected
   );
   
-  // Particle management
   const {
     canvasRef,
     particleCount,
@@ -79,7 +76,6 @@ export const ParticleCanvas: React.FC<ParticleCanvasProps> = ({
     onStatsUpdate
   });
 
-  // Data collection and export
   const {
     dataCollectionActiveRef,
     dataExportOptions,
@@ -88,10 +84,8 @@ export const ParticleCanvas: React.FC<ParticleCanvasProps> = ({
     toggleDataCollection
   } = useSimulationData(onStatsUpdate);
 
-  // Canvas rendering
   const { renderSimulation } = useCanvasRenderer();
 
-  // Simulation reset
   const { resetSimulation } = useSimulationReset({
     particlesRef,
     intentFieldRef,
@@ -103,7 +97,6 @@ export const ParticleCanvas: React.FC<ParticleCanvasProps> = ({
     onStatsUpdate
   });
 
-  // Animation loop
   useAnimationLoop({
     running,
     isInitialized,
@@ -127,7 +120,6 @@ export const ParticleCanvas: React.FC<ParticleCanvasProps> = ({
     handleExportData
   });
 
-  // Process current stats for display
   const currentStats = processSimulationData(
     particlesRef.current || [],
     intentFieldRef.current || [],

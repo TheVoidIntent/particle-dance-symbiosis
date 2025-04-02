@@ -1,109 +1,82 @@
 
 import React, { useState, useEffect } from 'react';
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Download, BarChart, Database } from "lucide-react";
-import StatCard from "@/components/simulation/StatCard";
-import { SimulationStats } from "@/types/simulation";
-import { toast } from "sonner";
-import { exportDataAsCsv, exportDataAsJson, getStoredDataPoints } from "@/utils/dataExportUtils";
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Download, BarChart2, RefreshCw } from 'lucide-react';
+import { SimulationStats } from '@/types/simulation';
+import dataExportUtils from '@/utils/dataExportUtils';
+
+const { exportSimulationData: exportDataAsJson, getStoredDataPoints } = dataExportUtils;
+
+// Helper function to create CSV
+const exportDataAsCsv = () => {
+  dataExportUtils.exportDataAsCsv();
+};
 
 interface SimulationDataProps {
   stats: SimulationStats;
-  onExportData: () => boolean;
-  dataPointCount?: number;
-  className?: string;
+  running: boolean;
 }
 
-const SimulationData: React.FC<SimulationDataProps> = ({
-  stats,
-  onExportData,
-  dataPointCount = 0,
-  className = ""
-}) => {
-  const [intervalId, setIntervalId] = useState<NodeJS.Timeout | null>(null);
-  const [autoExport, setAutoExport] = useState(false);
-  const [lastExport, setLastExport] = useState<Date | null>(null);
+const SimulationData: React.FC<SimulationDataProps> = ({ stats, running }) => {
+  const [dataPoints, setDataPoints] = useState<number>(0);
   
   useEffect(() => {
-    return () => {
-      if (intervalId) {
-        clearInterval(intervalId);
-      }
-    };
-  }, [intervalId]);
-  
-  const toggleAutoExport = () => {
-    if (intervalId) {
-      clearInterval(intervalId);
-      setIntervalId(null);
-      setAutoExport(false);
-      toast.info("Auto-export disabled");
-    } else {
-      const id = setInterval(() => {
-        const success = onExportData();
-        if (success) {
-          setLastExport(new Date());
-          toast.success("Data auto-exported");
-        }
-      }, 60000); // Export every minute
-      
-      setIntervalId(id);
-      setAutoExport(true);
-      toast.success("Auto-export enabled (every minute)");
-    }
-  };
-  
-  const handleManualExport = () => {
-    const success = onExportData();
-    if (success) {
-      setLastExport(new Date());
-      toast.success("Data exported successfully");
-    } else {
-      toast.error("No data to export");
-    }
-  };
+    const interval = setInterval(() => {
+      setDataPoints(getStoredDataPoints().length);
+    }, 5000);
+    
+    return () => clearInterval(interval);
+  }, []);
   
   return (
-    <Card className={`${className}`}>
+    <Card className="bg-gray-800/50 border-gray-700">
       <CardHeader className="pb-2">
-        <CardTitle className="text-xl flex items-center">
-          <Database className="mr-2 h-5 w-5" />
-          Simulation Data
+        <CardTitle className="text-lg flex items-center gap-2">
+          <BarChart2 className="h-4 w-4 text-blue-400" />
+          Data Collection
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-2 gap-2 mb-4">
-          <StatCard
-            title="Data Points"
-            value={dataPointCount.toString()}
-            icon={<BarChart className="h-4 w-4" />}
-          />
-          <StatCard
-            title="Last Export"
-            value={lastExport ? lastExport.toLocaleTimeString() : "Never"}
-            icon={<Download className="h-4 w-4" />}
-          />
-        </div>
-        
-        <div className="space-y-2">
-          <Button
-            onClick={handleManualExport}
-            className="w-full"
-            disabled={dataPointCount === 0}
-          >
-            <Download className="mr-2 h-4 w-4" />
-            Export Data
-          </Button>
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-300">Collected Data Points</p>
+              <p className="text-2xl font-semibold">{dataPoints}</p>
+            </div>
+            <div className="h-10 w-10 bg-blue-900/30 rounded-full flex items-center justify-center">
+              {running && (
+                <RefreshCw className="h-5 w-5 text-blue-400 animate-spin" />
+              )}
+            </div>
+          </div>
           
-          <Button
-            onClick={toggleAutoExport}
-            variant={autoExport ? "destructive" : "outline"}
-            className="w-full"
-            disabled={dataPointCount === 0}
-          >
-            {autoExport ? "Disable Auto-Export" : "Enable Auto-Export"}
-          </Button>
+          <div className="flex gap-2">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={exportDataAsJson}
+              className="flex-1"
+              disabled={dataPoints === 0}
+            >
+              <Download className="h-4 w-4 mr-1" />
+              Export JSON
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={exportDataAsCsv}
+              className="flex-1"
+              disabled={dataPoints === 0}
+            >
+              <Download className="h-4 w-4 mr-1" />
+              Export CSV
+            </Button>
+          </div>
+          
+          <p className="text-xs text-gray-500">
+            Data is collected while the simulation is running. Export anytime to analyze results.
+          </p>
         </div>
       </CardContent>
     </Card>

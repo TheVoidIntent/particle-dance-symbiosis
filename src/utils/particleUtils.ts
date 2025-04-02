@@ -20,7 +20,7 @@ export interface Particle {
   energyCapacity?: number;
   intentDecayRate?: number;
   adaptiveScore?: number;
-  type?: 'regular' | 'high-energy' | 'quantum' | 'composite' | 'adaptive';
+  type?: string;
   lastInteraction?: number;
   interactionCount?: number;
   interactions?: number;

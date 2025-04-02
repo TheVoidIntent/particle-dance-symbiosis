@@ -1,105 +1,171 @@
 
 import React, { useState } from 'react';
-import { SimulationControlButtons } from '@/components/SimulationControlButtons';
-import SimulationAudioControls from '@/components/simulation/SimulationAudioControls';
-import AtlasDataSelector from '@/components/simulation/AtlasDataSelector';
-import AtlasDataDisplay from '@/components/simulation/AtlasDataDisplay';
-import NeuralIntentSimulation from '@/components/simulation/NeuralIntentSimulation';
-import { Particle } from '@/utils/particleUtils';
-import { SimulationStats } from '@/hooks/useSimulationData';
-import { fetchAtlasData, AtlasDataset } from '@/utils/atlasDataIntegration';
-import { toast } from 'sonner';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Slider } from "@/components/ui/slider";
+import { Switch } from "@/components/ui/switch";
+import { Clock, Maximize, Play, Pause, RotateCw, ZapOff, Zap } from "lucide-react";
+import { SimulationStats, Particle } from '@/types/simulation';
+import SimulationAudioControls from './SimulationAudioControls';
 
-type ParticleControlsProps = {
-  particles: Particle[];
-  stats: SimulationStats;
-  isRunning: boolean;
-  dataCollectionActive: boolean;
-  onExportData: () => void;
-  onToggleDataCollection: () => void;
-  onResetSimulation: () => Particle[]; // Explicit return type of Particle[]
-};
+interface ParticleControlsProps {
+  running: boolean;
+  setRunning: (running: boolean) => void;
+  intentFluctuationRate: number;
+  setIntentFluctuationRate: (rate: number) => void;
+  maxParticles: number;
+  setMaxParticles: (count: number) => void;
+  resetSimulation?: () => void;
+  onToggleInflation?: () => void;
+  onToggleField?: () => void;
+  inflationEnabled?: boolean;
+  fieldEnabled?: boolean;
+  showAdvancedControls?: boolean;
+  particleCreationRate?: number;
+  setParticleCreationRate?: (rate: number) => void;
+  audioEnabled?: boolean;
+  setAudioEnabled?: (enabled: boolean) => void;
+  particles?: Particle[];
+  stats?: SimulationStats;
+}
 
-export const ParticleControls: React.FC<ParticleControlsProps> = ({
-  particles,
-  stats,
-  isRunning,
-  dataCollectionActive,
-  onExportData,
-  onToggleDataCollection,
-  onResetSimulation
+const ParticleControls: React.FC<ParticleControlsProps> = ({
+  running,
+  setRunning,
+  intentFluctuationRate,
+  setIntentFluctuationRate,
+  maxParticles,
+  setMaxParticles,
+  resetSimulation,
+  onToggleInflation,
+  onToggleField,
+  inflationEnabled = true,
+  fieldEnabled = true,
+  showAdvancedControls = false,
+  particleCreationRate = 1,
+  setParticleCreationRate = () => {},
+  audioEnabled = true,
+  setAudioEnabled = () => {},
+  particles = [],
+  stats = { particleCount: 0, positiveParticles: 0, negativeParticles: 0, neutralParticles: 0, totalInteractions: 0 }
 }) => {
-  const [atlasDataset, setAtlasDataset] = useState<AtlasDataset | null>(null);
-  const [isLoadingAtlasData, setIsLoadingAtlasData] = useState(false);
-  const [activeTab, setActiveTab] = useState('atlas');
-  
-  const handleAtlasDatasetSelected = async (datasetId: string) => {
-    try {
-      setIsLoadingAtlasData(true);
-      const dataset = await fetchAtlasData(datasetId);
-      setAtlasDataset(dataset);
-      
-      // Display success message
-      toast.success(`ATLAS dataset loaded: ${dataset?.name || "Unknown dataset"}`, {
-        description: `Successfully loaded ${dataset?.particles.length || 0} particles from CERN's ATLAS experiment.`
-      });
-      
-      return dataset;
-    } catch (error) {
-      console.error("Error loading ATLAS dataset:", error);
-      toast.error("Failed to load ATLAS dataset");
-      return null;
-    } finally {
-      setIsLoadingAtlasData(false);
-    }
-  };
+  const [audioVolume, setAudioVolume] = useState(70);
   
   return (
-    <>
-      <div className="absolute top-4 right-4 bg-black/60 backdrop-blur-sm p-3 rounded-lg w-80 z-10">
-        <SimulationAudioControls 
-          particles={particles} 
-          stats={stats}
-          isRunning={isRunning}
+    <div className="space-y-6">
+      <div className="flex justify-between mb-4">
+        <Button
+          variant={running ? "default" : "outline"}
+          size="sm"
+          onClick={() => setRunning(!running)}
+          className="w-24"
+        >
+          {running ? <Pause className="h-4 w-4 mr-2" /> : <Play className="h-4 w-4 mr-2" />}
+          {running ? 'Pause' : 'Start'}
+        </Button>
+        
+        {resetSimulation && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={resetSimulation}
+          >
+            <RotateCw className="h-4 w-4 mr-2" />
+            Reset
+          </Button>
+        )}
+      </div>
+      
+      <div className="space-y-2">
+        <div className="flex justify-between">
+          <Label className="text-sm text-gray-300">Intent Fluctuation Rate</Label>
+          <span className="text-sm text-gray-400">{intentFluctuationRate.toFixed(3)}</span>
+        </div>
+        <Slider 
+          value={[intentFluctuationRate]}
+          min={0.001}
+          max={0.1}
+          step={0.001}
+          onValueChange={(values) => setIntentFluctuationRate(values[0])}
         />
+        <p className="text-xs text-gray-500">Controls how often the intent field fluctuates to create particles</p>
       </div>
       
-      <div className="absolute top-4 left-4 bg-black/60 backdrop-blur-sm p-3 rounded-lg w-80 z-10">
-        <Tabs defaultValue="atlas" onValueChange={setActiveTab}>
-          <TabsList className="grid grid-cols-2 mb-2">
-            <TabsTrigger value="atlas">ATLAS Data</TabsTrigger>
-            <TabsTrigger value="neural">Neural Intent</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="atlas" className="mt-0">
-            <AtlasDataSelector 
-              onDatasetSelected={handleAtlasDatasetSelected}
-              isLoading={isLoadingAtlasData}
-            />
-            {atlasDataset && (
-              <div className="mt-3">
-                <AtlasDataDisplay dataset={atlasDataset} />
-              </div>
-            )}
-          </TabsContent>
-          
-          <TabsContent value="neural" className="mt-0">
-            <NeuralIntentSimulation
-              particles={particles}
-              stats={stats}
-              isRunning={isRunning}
-            />
-          </TabsContent>
-        </Tabs>
+      <div className="space-y-2">
+        <div className="flex justify-between">
+          <Label className="text-sm text-gray-300">Maximum Particles</Label>
+          <span className="text-sm text-gray-400">{maxParticles}</span>
+        </div>
+        <Slider 
+          value={[maxParticles]}
+          min={10}
+          max={500}
+          step={10}
+          onValueChange={(values) => setMaxParticles(values[0])}
+        />
+        <p className="text-xs text-gray-500">Limits the total number of particles in the simulation</p>
       </div>
       
-      <SimulationControlButtons 
-        dataCollectionActive={dataCollectionActive}
-        onExportData={onExportData}
-        onToggleDataCollection={onToggleDataCollection}
-        onResetSimulation={onResetSimulation}
+      {showAdvancedControls && (
+        <div className="space-y-2">
+          <div className="flex justify-between">
+            <Label className="text-sm text-gray-300">Particle Creation Rate</Label>
+            <span className="text-sm text-gray-400">{particleCreationRate.toFixed(1)} /s</span>
+          </div>
+          <Slider 
+            value={[particleCreationRate]}
+            min={0.1}
+            max={5}
+            step={0.1}
+            onValueChange={(values) => setParticleCreationRate(values[0])}
+          />
+          <p className="text-xs text-gray-500">How many new particles can be created per second</p>
+        </div>
+      )}
+      
+      <div className="space-y-3 pt-2 border-t border-gray-700">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center">
+            <Clock className="h-4 w-4 text-gray-400 mr-2" />
+            <span className="text-sm text-gray-300">Auto-Simulation</span>
+          </div>
+          <Switch checked={running} onCheckedChange={setRunning} />
+        </div>
+        
+        {onToggleInflation && (
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <Maximize className="h-4 w-4 text-gray-400 mr-2" />
+              <span className="text-sm text-gray-300">Inflation Events</span>
+            </div>
+            <Switch checked={inflationEnabled} onCheckedChange={onToggleInflation} />
+          </div>
+        )}
+        
+        {onToggleField && (
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              {fieldEnabled ? (
+                <Zap className="h-4 w-4 text-yellow-400 mr-2" />
+              ) : (
+                <ZapOff className="h-4 w-4 text-gray-400 mr-2" />
+              )}
+              <span className="text-sm text-gray-300">Intent Field</span>
+            </div>
+            <Switch checked={fieldEnabled} onCheckedChange={onToggleField} />
+          </div>
+        )}
+      </div>
+      
+      <SimulationAudioControls 
+        audioEnabled={audioEnabled} 
+        onToggleAudio={() => setAudioEnabled(!audioEnabled)}
+        audioVolume={audioVolume}
+        onVolumeChange={setAudioVolume}
+        isRunning={running}
       />
-    </>
+    </div>
   );
 };
+
+export default ParticleControls;

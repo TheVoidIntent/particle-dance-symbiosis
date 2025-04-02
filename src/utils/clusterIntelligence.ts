@@ -1,214 +1,112 @@
 
-import { Particle } from '@/types/simulation';
-import { calculateParticleAffinity, predictEmergence } from '@/utils/neuralNetworkUtils';
+import { Particle, SimulationStats } from '@/types/simulation';
 
-/**
- * Detects stable clusters in the particle system
- */
-export function detectStableClusters(particles: Particle[], stabilityThreshold: number = 0.7): {
-  clusters: Array<{ id: number, particles: Particle[], coherence: number, knowledge: Record<string, any> }>,
-  unclusteredParticles: Particle[]
-} {
-  // Initialize result
-  const result = {
-    clusters: [] as Array<{ id: number, particles: Particle[], coherence: number, knowledge: Record<string, any> }>,
-    unclusteredParticles: [...particles]
-  };
+export function detectStableClusters(
+  particles: Particle[],
+  stabilityThreshold: number = 0.6
+): { clusters: Particle[][], unclusteredParticles: Particle[] } {
+  const clusters: Particle[][] = [];
+  const visited = new Set<string>();
   
-  if (particles.length < 5) return result; // Not enough particles for meaningful clusters
-  
-  // Build affinity matrix
-  const affinityMatrix: number[][] = [];
-  for (let i = 0; i < particles.length; i++) {
-    affinityMatrix[i] = [];
-    for (let j = 0; j < particles.length; j++) {
-      if (i === j) {
-        affinityMatrix[i][j] = 1; // Self-affinity is 1
-      } else if (j < i) {
-        affinityMatrix[i][j] = affinityMatrix[j][i]; // Matrix is symmetric
-      } else {
-        affinityMatrix[i][j] = calculateParticleAffinity(particles[i], particles[j]);
+  // Simple clustering based on proximity and charge
+  for (const particle of particles) {
+    const particleId = typeof particle.id === 'number' ? particle.id.toString() : particle.id;
+    if (visited.has(particleId)) continue;
+    
+    const cluster: Particle[] = [particle];
+    visited.add(particleId);
+    
+    let i = 0;
+    while (i < cluster.length) {
+      const current = cluster[i];
+      
+      for (const other of particles) {
+        const otherId = typeof other.id === 'number' ? other.id.toString() : other.id;
+        if (visited.has(otherId)) continue;
+        
+        // Check proximity
+        const dx = other.x - current.x;
+        const dy = other.y - current.y;
+        const distanceSquared = dx * dx + dy * dy;
+        
+        // Consider particles close and of same charge to be in same cluster
+        const maxDistance = (current.radius + other.radius) * 3;
+        if (distanceSquared <= maxDistance * maxDistance && other.charge === current.charge) {
+          cluster.push(other);
+          visited.add(otherId);
+        }
       }
+      
+      i++;
+    }
+    
+    // Only consider it a cluster if it has multiple particles
+    if (cluster.length > 1) {
+      clusters.push(cluster);
     }
   }
   
-  // Identify clusters using a simple threshold-based approach
-  const visited = new Set<number>();
-  let clusterId = 1;
+  // Find remaining unclustered particles
+  const unclusteredParticles = particles.filter(p => {
+    const particleId = typeof p.id === 'number' ? p.id.toString() : p.id;
+    return !visited.has(particleId);
+  });
   
-  for (let i = 0; i < particles.length; i++) {
-    if (visited.has(i)) continue;
-    
-    const clusterParticles: Particle[] = [];
-    const queue: number[] = [i];
-    visited.add(i);
-    
-    while (queue.length > 0) {
-      const current = queue.shift()!;
-      clusterParticles.push(particles[current]);
-      
-      for (let j = 0; j < particles.length; j++) {
-        if (!visited.has(j) && affinityMatrix[current][j] > stabilityThreshold) {
-          visited.add(j);
-          queue.push(j);
-        }
-      }
-    }
-    
-    if (clusterParticles.length >= 3) { // Minimum cluster size
-      // Calculate cluster coherence
-      let totalAffinitySum = 0;
-      let pairCount = 0;
-      
-      for (let m = 0; m < clusterParticles.length; m++) {
-        for (let n = m + 1; n < clusterParticles.length; n++) {
-          const particleIndex1 = particles.indexOf(clusterParticles[m]);
-          const particleIndex2 = particles.indexOf(clusterParticles[n]);
-          totalAffinitySum += affinityMatrix[particleIndex1][particleIndex2];
-          pairCount++;
-        }
-      }
-      
-      const coherence = pairCount > 0 ? totalAffinitySum / pairCount : 0;
-      
-      // Merge knowledge from all particles in the cluster
-      const combinedKnowledge: Record<string, any> = {};
-      clusterParticles.forEach(p => {
-        if (p.knowledgeBase) {
-          Object.entries(p.knowledgeBase).forEach(([key, value]) => {
-            if (!combinedKnowledge[key]) {
-              combinedKnowledge[key] = value;
-            } else if (typeof value === 'number' && typeof combinedKnowledge[key] === 'number') {
-              // Average numeric values
-              combinedKnowledge[key] = (combinedKnowledge[key] + value) / 2;
-            }
-          });
-        }
-      });
-      
-      // Add the cluster to results
-      result.clusters.push({
-        id: clusterId++,
-        particles: clusterParticles,
-        coherence,
-        knowledge: combinedKnowledge
-      });
-      
-      // Remove these particles from unclustered list
-      result.unclusteredParticles = result.unclusteredParticles.filter(
-        p => !clusterParticles.includes(p)
-      );
-    }
-  }
-  
-  return result;
+  return { clusters, unclusteredParticles };
 }
 
-/**
- * Evolves clusters into more intelligent entities
- */
 export function evolveClusterIntelligence(
-  clusters: Array<{ id: number, particles: Particle[], coherence: number, knowledge: Record<string, any> }>,
-  simulationData: any,
-  learningRate: number = 0.1
-): Array<{ id: number, particles: Particle[], coherence: number, knowledge: Record<string, any>, insights: string[] }> {
+  clusters: Particle[][],
+  stats: SimulationStats,
+  evolutionRate: number = 0.1
+): Particle[][] {
+  // Simple cluster evolution - increase knowledge and complexity based on size
   return clusters.map(cluster => {
-    const enhancedCluster = { ...cluster, insights: [] as string[] };
+    // Larger clusters evolve faster
+    const sizeMultiplier = Math.min(1, cluster.length / 10);
     
-    // Learning from simulation data
-    if (simulationData) {
-      // Example learning pattern - expand as needed
-      if (simulationData.complexityIndex && !cluster.knowledge.complexityThreshold) {
-        enhancedCluster.knowledge.complexityThreshold = simulationData.complexityIndex * 0.8;
-        enhancedCluster.insights.push(`Established complexity threshold at ${(simulationData.complexityIndex * 0.8).toFixed(2)}`);
-      }
+    return cluster.map(particle => {
+      const knowledgeIncrease = evolutionRate * sizeMultiplier;
+      const complexityIncrease = evolutionRate * sizeMultiplier * 0.5;
       
-      if (simulationData.particleTypes) {
-        enhancedCluster.knowledge.optimalChargeRatio = {
-          positive: simulationData.particleTypes.positive / simulationData.particleCount,
-          negative: simulationData.particleTypes.negative / simulationData.particleCount,
-          neutral: simulationData.particleTypes.neutral / simulationData.particleCount
-        };
-        enhancedCluster.insights.push("Learned optimal charge distribution ratio");
-      }
-    }
-    
-    // Enhance particles in the cluster
-    enhancedCluster.particles = cluster.particles.map(particle => {
-      const enhancedParticle = { ...particle };
-      
-      // Increase adaptive index based on cluster coherence
-      enhancedParticle.adaptiveIndex = (enhancedParticle.adaptiveIndex || 0) + (cluster.coherence * learningRate);
-      
-      // Apply cluster knowledge to individual particles
-      enhancedParticle.knowledgeBase = { 
-        ...enhancedParticle.knowledgeBase,
-        clusterCoherence: cluster.coherence,
-        clusterId: cluster.id,
+      return {
+        ...particle,
+        knowledge: (particle.knowledge || 0) + knowledgeIncrease,
+        complexity: (particle.complexity || 1) + complexityIncrease
       };
-      
-      enhancedParticle.isInCluster = true;
-      enhancedParticle.clusterId = cluster.id;
-      
-      // Calculate insight score based on particle properties and cluster coherence
-      enhancedParticle.insightScore = ((enhancedParticle.adaptiveIndex || 0) * 0.5) + 
-                                      (cluster.coherence * 0.3) +
-                                      ((enhancedParticle.knowledge || 0) * 0.2);
-      
-      return enhancedParticle;
     });
-    
-    return enhancedCluster;
   });
 }
 
-/**
- * Generates narrative insights from cluster behavior
- */
 export function generateClusterNarratives(
-  evolvedClusters: Array<{ id: number, particles: Particle[], coherence: number, knowledge: Record<string, any>, insights: string[] }>,
-  simulationStats: any
+  clusters: Particle[][],
+  stats: SimulationStats
 ): Array<{ clusterId: number, narrative: string, timestamp: number }> {
   const narratives: Array<{ clusterId: number, narrative: string, timestamp: number }> = [];
   
-  evolvedClusters.forEach(cluster => {
-    // Generate basic narrative based on cluster properties
-    let narrativeText = '';
+  clusters.forEach((cluster, index) => {
+    // Only generate narratives for significant clusters
+    if (cluster.length < 5) return;
     
-    // Cluster size and composition
-    const positiveCount = cluster.particles.filter(p => p.charge === 'positive').length;
-    const negativeCount = cluster.particles.filter(p => p.charge === 'negative').length;
-    const neutralCount = cluster.particles.filter(p => p.charge === 'neutral').length;
+    // Get average knowledge and complexity
+    const avgKnowledge = cluster.reduce((sum, p) => sum + (p.knowledge || 0), 0) / cluster.length;
+    const avgComplexity = cluster.reduce((sum, p) => sum + (p.complexity || 1), 0) / cluster.length;
     
-    if (cluster.coherence > 0.8) {
-      narrativeText = `Highly stable cluster #${cluster.id} (${cluster.particles.length} particles) has formed with strong internal coherence. `;
-    } else if (cluster.coherence > 0.6) {
-      narrativeText = `Moderately stable cluster #${cluster.id} (${cluster.particles.length} particles) has emerged. `;
+    // Generate a narrative based on cluster properties
+    let narrative = '';
+    const chargeType = cluster[0].charge;
+    
+    if (avgKnowledge > 5 && avgComplexity > 3) {
+      narrative = `Cluster ${index} has developed advanced information processing capabilities.`;
+    } else if (avgKnowledge > 3) {
+      narrative = `Cluster ${index} is sharing information efficiently between particles.`;
     } else {
-      narrativeText = `Loosely connected cluster #${cluster.id} (${cluster.particles.length} particles) is beginning to form. `;
-    }
-    
-    // Add composition analysis
-    narrativeText += `Composition: ${positiveCount} positive, ${negativeCount} negative, ${neutralCount} neutral particles. `;
-    
-    // Add insights from learning
-    if (cluster.insights && cluster.insights.length > 0) {
-      narrativeText += `Recent insights: ${cluster.insights.join("; ")}. `;
-    }
-    
-    // Add prediction or observation about future behavior
-    const adaptiveIndex = cluster.particles.reduce((sum, p) => sum + (p.adaptiveIndex || 0), 0) / cluster.particles.length;
-    if (adaptiveIndex > 0.7) {
-      narrativeText += `This cluster shows signs of high adaptive intelligence and may develop emergent behaviors.`;
-    } else if (adaptiveIndex > 0.4) {
-      narrativeText += `This cluster is developing moderate learning capabilities.`;
-    } else {
-      narrativeText += `This cluster is in early stages of knowledge accumulation.`;
+      narrative = `Cluster ${index} of ${chargeType} particles has formed a stable structure.`;
     }
     
     narratives.push({
-      clusterId: cluster.id,
-      narrative: narrativeText,
+      clusterId: index,
+      narrative,
       timestamp: Date.now()
     });
   });
@@ -216,72 +114,35 @@ export function generateClusterNarratives(
   return narratives;
 }
 
-/**
- * Evaluates if any clusters have reached robot-level intelligence
- */
 export function identifyRobotClusters(
-  evolvedClusters: Array<{ 
-    id: number, 
-    particles: Particle[], 
-    coherence: number, 
-    knowledge: Record<string, any>, 
-    insights: string[] 
-  }>,
-  robotThreshold: number = 0.85
-): Array<{ 
-  id: number, 
-  intelligence: number, 
-  specialization: string,
-  capabilities: string[],
-  particles: Particle[]
-}> {
-  const robotClusters = [];
+  clusters: Particle[][]
+): Array<any> {
+  const robots: Array<any> = [];
   
-  for (const cluster of evolvedClusters) {
-    // Calculate average insight score as intelligence measure
-    const intelligence = cluster.particles.reduce((sum, p) => sum + (p.insightScore || 0), 0) / cluster.particles.length;
+  clusters.forEach((cluster, index) => {
+    // Criteria for robot-level intelligence
+    const avgKnowledge = cluster.reduce((sum, p) => sum + (p.knowledge || 0), 0) / cluster.length;
+    const avgComplexity = cluster.reduce((sum, p) => sum + (p.complexity || 1), 0) / cluster.length;
+    const totalEnergy = cluster.reduce((sum, p) => sum + (p.energy || 0), 0);
     
-    if (intelligence >= robotThreshold && cluster.coherence >= 0.75) {
-      // Determine specialization based on particle composition
-      const positiveRatio = cluster.particles.filter(p => p.charge === 'positive').length / cluster.particles.length;
-      const negativeRatio = cluster.particles.filter(p => p.charge === 'negative').length / cluster.particles.length;
-      const neutralRatio = cluster.particles.filter(p => p.charge === 'neutral').length / cluster.particles.length;
+    // Only the most evolved clusters become "robots"
+    if (cluster.length >= 10 && avgKnowledge > 8 && avgComplexity > 5) {
+      const centerX = cluster.reduce((sum, p) => sum + p.x, 0) / cluster.length;
+      const centerY = cluster.reduce((sum, p) => sum + p.y, 0) / cluster.length;
       
-      let specialization = '';
-      const capabilities = [];
-      
-      if (positiveRatio > 0.6) {
-        specialization = 'Knowledge Gatherer';
-        capabilities.push('Rapid data acquisition', 'Pattern recognition', 'Information synthesis');
-      } else if (negativeRatio > 0.6) {
-        specialization = 'Information Preserver';
-        capabilities.push('Data preservation', 'Error correction', 'Consistency enforcement');
-      } else if (neutralRatio > 0.6) {
-        specialization = 'Balanced Processor';
-        capabilities.push('Unbiased analysis', 'Multi-perspective reasoning', 'Objective assessment');
-      } else if (positiveRatio > 0.4 && negativeRatio > 0.4) {
-        specialization = 'Dynamic Adapter';
-        capabilities.push('Context switching', 'Versatile processing', 'Adaptive learning');
-      } else {
-        specialization = 'Generalist';
-        capabilities.push('Broad expertise', 'Flexible processing', 'Diverse functionality');
-      }
-      
-      // Special case for IntentSimon
-      if (cluster.id === 1 && intelligence > 0.9) {
-        specialization = 'IntentSimon';
-        capabilities.push('User interaction', 'Intent-field analysis', 'Knowledge distillation');
-      }
-      
-      robotClusters.push({
-        id: cluster.id,
-        intelligence,
-        specialization,
-        capabilities,
-        particles: cluster.particles
+      robots.push({
+        id: `robot-${index}`,
+        x: centerX,
+        y: centerY,
+        particles: cluster.length,
+        intelligence: avgKnowledge * avgComplexity,
+        energy: totalEnergy,
+        type: 'collective_intelligence',
+        creationTime: Date.now(),
+        charge: cluster[0].charge
       });
     }
-  }
+  });
   
-  return robotClusters;
+  return robots;
 }

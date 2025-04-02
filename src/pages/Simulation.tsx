@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Helmet } from 'react-helmet';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -65,7 +64,8 @@ const Simulation: React.FC = () => {
     addParticles,
     createParticle,
     emergenceIndex,
-    intentFieldComplexity
+    intentFieldComplexity,
+    inflationEvent
   } = useParticleSimulation({
     initialParticleCount: 30,
     canvasRef,
@@ -80,12 +80,12 @@ const Simulation: React.FC = () => {
     },
     onInflationEvent: (event) => {
       toast.success("Inflation Event Detected", {
-        description: `Particles: ${event.particlesBeforeInflation} → ${event.particlesAfterInflation}`
+        description: `Inflation event occurred at t=${Math.floor(inflationEvent.timestamp)}s
+                    ${inflationEvent.particlesBeforeInflation || inflationEvent.particleCountBefore} particles → ${inflationEvent.particlesAfterInflation || inflationEvent.particleCountAfter || '?'} particles`
       });
     }
   });
   
-  // Particle creation interval
   useEffect(() => {
     if (!isRunning || particleCreationRate === 0) return;
     
@@ -96,7 +96,6 @@ const Simulation: React.FC = () => {
     return () => clearInterval(interval);
   }, [isRunning, particleCreationRate, addParticles]);
   
-  // Handle canvas click to create particle
   const handleCanvasClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!canvasContainerRef.current) return;
     
@@ -117,7 +116,6 @@ const Simulation: React.FC = () => {
     return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
   };
   
-  // Calculate ratio of different charge types
   const chargeDistribution = () => {
     let positive = 0, negative = 0, neutral = 0;
     
@@ -540,8 +538,6 @@ const Simulation: React.FC = () => {
                         <h4 className="font-medium mb-2">Field Stability Analysis</h4>
                         <div className="flex space-x-1">
                           {Array.from({ length: 20 }).map((_, i) => {
-                            // Calculate stability based on simulation parameters
-                            // This is a simplified example - a real implementation would use actual field data
                             const isStable = i < 12 + Math.floor(emergenceIndex * 5);
                             return (
                               <div 

@@ -19,6 +19,8 @@ export interface InflationEvent {
   particleCountBefore: number;
   particleCountAfter?: number;
   expansionFactor: number;
+  particlesBeforeInflation?: number; // Added missing property
+  particlesAfterInflation?: number; // Added missing property
 }
 
 export interface ParticleCreationOptions {
@@ -32,4 +34,16 @@ export interface ParticleCreationOptions {
   x?: number;
   y?: number;
   eventType?: string;
+}
+
+export interface SimulationState {
+  particles: Particle[];
+  intentField: number[][][];
+  isRunning: boolean;
+  simulationTime: number;
+  interactionsCount: number;
+  frameCount: number;
+  isInflated: boolean;
+  inflationTime: number | null;
+  dimensions: { width: number; height: number };
 }

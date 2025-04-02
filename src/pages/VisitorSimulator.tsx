@@ -514,7 +514,12 @@ const VisitorSimulator: React.FC = () => {
           </div>
           
           <div className="mt-6">
-            <AudioOptionsSection />
+            <AudioOptionsSection 
+              audioEnabled={backgroundAudioActive}
+              onToggleAudio={toggleBackgroundAudio}
+              audioVolume={audioVolume}
+              onVolumeChange={(value) => setAudioVolume(value)}
+            />
           </div>
         </div>
         

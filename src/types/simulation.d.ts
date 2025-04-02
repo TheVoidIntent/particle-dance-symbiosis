@@ -19,10 +19,12 @@ export interface SimulationStats {
   systemEntropy?: number;
   intentFieldComplexity?: number;
   interactions?: number;
+  robotCount?: number;
+  timestamp?: number; // Added timestamp
 }
 
 export interface Particle extends ParticleUtil {
-  id: string | number;
+  id: string; // Changed to string only to match particleUtils
   mass?: number;
   scale?: number;
   created?: number;

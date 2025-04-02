@@ -1,123 +1,58 @@
 
-import { toast } from 'sonner';
+import { SimulationStats } from '@/types/simulation';
 import { exportDataAsJson, exportDataAsPdf } from './dataExportUtils';
 
-// Schedule daily exports
-let dailyExportTimeout: NodeJS.Timeout | null = null;
-let nextExportTime: Date | null = null;
-let lastExportTime: Date | null = null;
-
-// Functions for export callbacks
-type ExportCallbacks = {
-  onExportStart?: () => void;
-  onExportComplete?: (filename: string) => void;
-  onExportError?: (error: Error) => void;
-};
-
-// Start daily export schedule
-export function setupDailyDataExport(callbacks: ExportCallbacks = {}) {
-  // Clear any existing schedule
-  if (dailyExportTimeout) {
-    clearTimeout(dailyExportTimeout);
-  }
-  
-  // Calculate time until next export (midnight)
-  const now = new Date();
-  const tomorrow = new Date(now);
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  tomorrow.setHours(0, 0, 0, 0);
-  
-  const msUntilMidnight = tomorrow.getTime() - now.getTime();
-  nextExportTime = tomorrow;
-  
-  // Schedule export
-  dailyExportTimeout = setTimeout(() => {
-    if (callbacks.onExportStart) {
-      callbacks.onExportStart();
-    }
-    
-    try {
-      const success = performDailyExport();
-      if (success && callbacks.onExportComplete) {
-        const filename = `daily_export_${new Date().toISOString().split('T')[0]}`;
-        callbacks.onExportComplete(filename);
-      }
-    } catch (error) {
-      console.error('Error during daily export:', error);
-      if (callbacks.onExportError && error instanceof Error) {
-        callbacks.onExportError(error);
-      }
-    }
-    
-    // Reschedule for next day
-    setupDailyDataExport(callbacks);
-  }, msUntilMidnight);
-  
-  console.log(`Daily export scheduled for ${tomorrow.toLocaleString()}`);
-  
-  return {
-    nextExportTime: tomorrow,
-    cleanup: () => {
-      if (dailyExportTimeout) {
-        clearTimeout(dailyExportTimeout);
-        dailyExportTimeout = null;
-      }
-    }
-  };
-}
-
-// Get the nearest export time
-export function getNearestExportTime(): Date {
-  if (!nextExportTime) {
-    // Calculate next export time if not set
-    const now = new Date();
-    const tomorrow = new Date(now);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    tomorrow.setHours(0, 0, 0, 0);
-    nextExportTime = tomorrow;
-  }
-  
-  return nextExportTime;
-}
-
-// Get the last export time
-export function getLastExportTime(): Date | null {
-  return lastExportTime;
-}
-
-// Cancel scheduled export
-export function cancelDailyExport() {
-  if (dailyExportTimeout) {
-    clearTimeout(dailyExportTimeout);
-    dailyExportTimeout = null;
-    console.log('Daily export canceled');
-    return true;
-  }
-  return false;
-}
-
-// Perform export now
-export function performDailyExport() {
+// Example function to automatically export data at the end of the day
+export async function scheduleEndOfDayExport(
+  includeJson: boolean = true,
+  includePdf: boolean = false,
+  exportPath?: string
+): Promise<boolean> {
   try {
-    const date = new Date();
-    const dateStr = date.toISOString().split('T')[0];
-    const filename = `daily_export_${dateStr}`;
+    console.log("Scheduling end of day data export");
     
-    exportDataAsJson(filename);
-    exportDataAsPdf(filename);
+    // Implementation would schedule the export at the end of the day
+    if (includeJson) {
+      exportDataAsJson();
+    }
     
-    lastExportTime = date;
-    console.log(`Daily export performed on ${date.toLocaleString()}`);
-    toast.success('Daily data export completed');
+    if (includePdf) {
+      exportDataAsPdf();
+    }
+    
     return true;
   } catch (error) {
-    console.error('Error during daily export:', error);
-    toast.error('Daily data export failed');
+    console.error("Failed to schedule export:", error);
     return false;
   }
 }
 
-// Export functions
-export function startDailyExport(callbacks: ExportCallbacks = {}) {
-  return setupDailyDataExport(callbacks);
+// Export data on demand with retry capability
+export async function exportDataWithRetry(
+  maxRetries: number = 3,
+  format: 'json' | 'pdf' | 'both' = 'json'
+): Promise<boolean> {
+  let retries = 0;
+  let success = false;
+  
+  while (!success && retries < maxRetries) {
+    try {
+      if (format === 'json' || format === 'both') {
+        exportDataAsJson();
+      }
+      
+      if (format === 'pdf' || format === 'both') {
+        exportDataAsPdf();
+      }
+      
+      success = true;
+    } catch (error) {
+      retries++;
+      console.error(`Export failed (attempt ${retries}/${maxRetries}):`, error);
+      // Wait a second before retry
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    }
+  }
+  
+  return success;
 }

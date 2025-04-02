@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useParticleSimulation } from '@/hooks/simulation';
 import { useSimulationData } from '@/hooks/useSimulationData';
@@ -87,7 +86,6 @@ export const ParticleCanvas: React.FC<ParticleCanvasProps> = ({
 
   const { renderSimulation } = useCanvasRenderer();
 
-  // The type signature has been updated to match useSimulationReset's return type (void)
   const { resetSimulation } = useSimulationReset({
     particlesRef,
     intentFieldRef,
@@ -147,7 +145,7 @@ export const ParticleCanvas: React.FC<ParticleCanvasProps> = ({
         dataCollectionActive={dataCollectionActiveRef.current}
         onExportData={handleExportData}
         onToggleDataCollection={toggleDataCollection}
-        onResetSimulation={resetSimulation}
+        onResetSimulation={() => resetSimulation()}
       />
     </div>
   );

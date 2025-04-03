@@ -8,12 +8,13 @@ import { getSimulationStats } from "@/utils/simulation/motherSimulation";
 import { analyzeSimulationData } from "@/utils/dataAnalysisUtils";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import Footer from "@/components/Footer";
-import { checkAudioFileExists } from "@/utils/audio/audioFileUtils";
+import { checkAudioFileExists, getAvailableAudioFiles } from "@/utils/audio/audioFileUtils";
 
 const DataAnalysis: React.FC = () => {
   const [uploadedData, setUploadedData] = useState<any>(null);
   const [analysisResult, setAnalysisResult] = useState<any>(null);
   const [showLicenseAgreement, setShowLicenseAgreement] = useState(false);
+  const [audioFiles, setAudioFiles] = useState<any[]>([]);
   const { toast } = useToast();
   
   const simulationStats = getSimulationStats();
@@ -103,13 +104,17 @@ const DataAnalysis: React.FC = () => {
   };
 
   useEffect(() => {
-    checkAudioFileExists('/audio/data_analysis.mp3')
-      .then(result => {
-        if (!result.exists) {
-          console.log("Data analysis audio file not found");
-        }
-      });
+    loadAudioFiles();
   }, []);
+
+  const loadAudioFiles = async () => {
+    try {
+      const files = await getAvailableAudioFiles();
+      setAudioFiles(files);
+    } catch (error) {
+      console.error("Error loading audio files:", error);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-12">

@@ -20,7 +20,8 @@ export {
   startSimulationAudioStream,
   stopSimulationAudioStream,
   isSimulationAudioPlaying,
-  setSimulationAudioVolume
+  setSimulationAudioVolume,
+  playSimulationBackgroundLoop
 } from './simulationAudioUtils';
 
 export {

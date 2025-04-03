@@ -1,34 +1,23 @@
-
+import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import Layout from './components/Layout';
-import Home from './pages/Home';
-import About from './pages/About';
-import Simulation from './pages/Simulation';
-import Research from './pages/Research';
-import Notebook from './pages/Notebook';
-import IntentSimonPage from './pages/IntentSimonPage';
-import IntentAssistantPage from './pages/IntentAssistantPage';
-import UniverseSimulator from './pages/UniverseSimulator';
+import SimpleVisitor from './pages/SimpleVisitor';
+import CreatorDashboard from './pages/CreatorDashboard';
+import DataAnalysis from './pages/DataAnalysis';
+import Auth from './pages/Auth';
 import VisitorSimulator from './pages/VisitorSimulator';
 
-function App() {
+const App: React.FC = () => {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<Layout />}>
-          <Route index element={<Home />} />
-          <Route path="about" element={<About />} />
-          <Route path="simulation" element={<Simulation />} />
-          <Route path="universe" element={<UniverseSimulator />} />
-          <Route path="visitor" element={<VisitorSimulator />} />
-          <Route path="research" element={<Research />} />
-          <Route path="notebook" element={<Notebook />} />
-          <Route path="intentsimon" element={<IntentSimonPage />} />
-          <Route path="assistant" element={<IntentAssistantPage />} />
-        </Route>
+        <Route path="/" element={<SimpleVisitor />} />
+        <Route path="/creator" element={<CreatorDashboard />} />
+        <Route path="/analysis" element={<DataAnalysis />} />
+        <Route path="/auth" element={<Auth />} />
+        <Route path="/visitor" element={<VisitorSimulator />} />
       </Routes>
     </Router>
   );
-}
+};
 
 export default App;

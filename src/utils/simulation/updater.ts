@@ -1,4 +1,3 @@
-
 import { Particle } from '../particleUtils';
 import { simulationState, saveState } from './state';
 import { defaultConfig, simulationDimensions } from './config';

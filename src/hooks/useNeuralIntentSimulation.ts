@@ -1,317 +1,414 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { Particle } from '@/types/simulation';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
-interface UseNeuralIntentSimulationProps {
-  initialParticles?: Particle[];
-  width?: number;
-  height?: number;
-  intentLearningRate?: number;
-  shouldAutostart?: boolean;
+// Define types
+type Charge = 'positive' | 'negative' | 'neutral';
+type ParticleType = 'regular' | 'high-energy' | 'quantum' | 'composite' | 'adaptive';
+
+interface Particle {
+  id: string;
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  vz: number;
+  charge: Charge;
+  radius: number;
+  mass: number;
+  color: string;
+  type: ParticleType;
+  intent: number;
+  energy: number;
+  knowledge: number;
+  complexity: number;
+  adaptability: number;
+  lastInteraction: number;
+  interactionCount: number;
+  age: number;
+  intentDecayRate: number;
+  created: number;
+  scale: number;
+  isPostInflation: boolean;
+  creationTime: number;
+  interactions: number;
 }
 
-/**
- * Hook for running a neural intent-based simulation
- */
+interface AnomalyEvent {
+  type: string;
+  description: string;
+  particles: string[];
+  timestamp: number;
+  severity: number;
+  affectedParticles: number;
+}
+
+interface SimulationStats {
+  particleCount: number;
+  positiveParticles: number;
+  negativeParticles: number;
+  neutralParticles: number;
+  averageKnowledge: number;
+  complexityIndex: number;
+  systemEntropy: number;
+  interactions: number;
+  totalInteractions: number;
+  frame: number;
+  time: number;
+  intentField: number[][];
+  highEnergyParticles: number;
+  quantumParticles: number;
+  compositeParticles: number;
+  adaptiveParticles: number;
+}
+
+interface InflationEvent {
+  timestamp: number;
+  particleCount: number;
+  energyLevel: number;
+  description: string;
+}
+
+interface UseNeuralIntentSimulationProps {
+  width: number;
+  height: number;
+  intentFluctuationRate: number;
+  maxParticles: number;
+  learningRate: number;
+  particleCreationRate: number;
+  viewMode: '2d' | '3d';
+  running: boolean;
+  renderMode?: 'particles' | 'field' | 'density' | 'combined';
+  useAdaptiveParticles?: boolean;
+  energyConservation?: boolean;
+  probabilisticIntent?: boolean;
+  onAnomalyDetected?: (anomaly: any) => void;
+  onInflationDetected: (event: InflationEvent) => void;
+  onStatsUpdate: (stats: SimulationStats) => void;
+}
+
 export function useNeuralIntentSimulation({
-  initialParticles = [],
-  width = 800,
-  height = 600,
-  intentLearningRate = 0.01,
-  shouldAutostart = false
+  width,
+  height,
+  intentFluctuationRate,
+  maxParticles,
+  learningRate,
+  particleCreationRate,
+  viewMode,
+  running,
+  renderMode = 'particles',
+  useAdaptiveParticles = false,
+  energyConservation = false,
+  probabilisticIntent = false,
+  onAnomalyDetected,
+  onInflationDetected,
+  onStatsUpdate
 }: UseNeuralIntentSimulationProps) {
-  const [particles, setParticles] = useState<Particle[]>(initialParticles);
-  const [isRunning, setIsRunning] = useState<boolean>(shouldAutostart);
-  const [emergenceIndex, setEmergenceIndex] = useState<number>(0);
-  const [intentFieldComplexity, setIntentFieldComplexity] = useState<number>(0);
-  
-  // Track simulation metrics
-  const interactionsRef = useRef<number>(0);
-  const frameCountRef = useRef<number>(0);
-  
-  // Update a particle's position and properties
-  const updateParticle = useCallback((particle: Particle): Particle => {
-    // Get all necessary properties, handling optional values
-    const x = particle.x;
-    const y = particle.y;
-    const vx = particle.vx;
-    const vy = particle.vy;
-    const radius = particle.radius;
-    const intent = particle.intent ?? 0;
-    const age = particle.age ?? 0;
-    const energy = particle.energy ?? 100;
-    
-    // Calculate new position with boundaries
-    let newX = x + vx;
-    let newY = y + vy;
-    let newVx = vx;
-    let newVy = vy;
-    
-    // Handle boundary collisions
-    if (newX - radius < 0) {
-      newX = radius;
-      newVx = -vx * 0.8;
-    } else if (newX + radius > width) {
-      newX = width - radius;
-      newVx = -vx * 0.8;
-    }
-    
-    if (newY - radius < 0) {
-      newY = radius;
-      newVy = -vy * 0.8;
-    } else if (newY + radius > height) {
-      newY = height - radius;
-      newVy = -vy * 0.8;
-    }
-    
-    // Add small random movements to simulate brownian motion
-    newVx += (Math.random() - 0.5) * 0.1;
-    newVy += (Math.random() - 0.5) * 0.1;
-    
-    // Update particle interactions - simulating interactions with intent field
-    const interactions = (particle.interactions ?? 0) + (Math.random() < 0.05 ? 1 : 0);
-    
-    // Adjust intent based on interactions and charge
-    let newIntent = intent;
-    if (particle.charge === 'positive') {
-      newIntent += Math.random() * intentLearningRate;
-    } else if (particle.charge === 'negative') {
-      newIntent -= Math.random() * intentLearningRate;
-    } else {
-      newIntent += (Math.random() - 0.5) * intentLearningRate;
-    }
-    
-    // Keep intent in reasonable bounds
-    newIntent = Math.max(0, Math.min(10, newIntent));
-    
-    // Update energy - particles slowly lose energy over time
-    const newEnergy = Math.max(0, energy - 0.01);
-    
-    // Return updated particle
-    return {
-      ...particle,
-      x: newX,
-      y: newY,
-      vx: newVx,
-      vy: newVy,
-      intent: newIntent,
-      energy: newEnergy,
-      age: age + 1,
-      interactions
-    };
-  }, [width, height, intentLearningRate]);
-  
-  // Update all particles and calculate interactions
-  const updateSimulation = useCallback(() => {
-    if (!isRunning || particles.length === 0) return;
-    
-    // Update each particle's position and properties
-    const updatedParticles = particles.map(updateParticle);
-    
-    // Check for interactions between particles
-    for (let i = 0; i < updatedParticles.length; i++) {
-      for (let j = i + 1; j < updatedParticles.length; j++) {
-        const p1 = updatedParticles[i];
-        const p2 = updatedParticles[j];
-        
-        // Calculate distance between particles
-        const dx = p2.x - p1.x;
-        const dy = p2.y - p1.y;
-        const distance = Math.sqrt(dx * dx + dy * dy);
-        
-        // Check for collision/interaction
-        if (distance < p1.radius + p2.radius + 5) {
-          // Calculate interaction probability based on charges
-          let interactionProbability = 0.5;
-          
-          if (p1.charge === 'positive' && p2.charge === 'positive') {
-            interactionProbability = 0.7; // Positive charges like to interact
-          } else if (p1.charge === 'negative' && p2.charge === 'negative') {
-            interactionProbability = 0.3; // Negative charges avoid interaction
-          } else if (
-            (p1.charge === 'positive' && p2.charge === 'negative') ||
-            (p1.charge === 'negative' && p2.charge === 'positive')
-          ) {
-            interactionProbability = 0.8; // Opposite charges strongly attract
-          }
-          
-          // Check if interaction occurs
-          if (Math.random() < interactionProbability) {
-            // Exchange knowledge/intent between particles
-            const p1Intent = p1.intent ?? 0;
-            const p2Intent = p2.intent ?? 0;
-            
-            const intentDiff = Math.abs(p1Intent - p2Intent);
-            const exchangeAmount = intentDiff * 0.1; // 10% knowledge transfer
-            
-            // Update particles based on interaction
-            if (p1Intent > p2Intent) {
-              updatedParticles[i] = {
-                ...updatedParticles[i],
-                intent: p1Intent - exchangeAmount * 0.2,
-                knowledge: (p1.knowledge ?? 0) + 0.1
-              };
-              
-              updatedParticles[j] = {
-                ...updatedParticles[j],
-                intent: p2Intent + exchangeAmount,
-                knowledge: (p2.knowledge ?? 0) + 0.2
-              };
-            } else {
-              updatedParticles[i] = {
-                ...updatedParticles[i],
-                intent: p1Intent + exchangeAmount,
-                knowledge: (p1.knowledge ?? 0) + 0.2
-              };
-              
-              updatedParticles[j] = {
-                ...updatedParticles[j],
-                intent: p2Intent - exchangeAmount * 0.2,
-                knowledge: (p2.knowledge ?? 0) + 0.1
-              };
-            }
-            
-            // Increment interaction counter
-            interactionsRef.current++;
-          }
-        }
-      }
-    }
-    
-    // Update state with new particles
-    setParticles(updatedParticles);
-    
-    // Update frame counter
-    frameCountRef.current++;
-    
-    // Calculate emergence and complexity metrics occasionally
-    if (frameCountRef.current % 60 === 0) {
-      // Calculate emergence index based on particle properties
-      const totalKnowledge = updatedParticles.reduce((sum, p) => sum + (p.knowledge ?? 0), 0);
-      const averageKnowledge = totalKnowledge / updatedParticles.length;
-      const complexityFactor = updatedParticles.reduce((sum, p) => sum + (p.complexity ?? 0), 0) / updatedParticles.length;
-      
-      const newEmergenceIndex = Math.min(1, (averageKnowledge / 100) * complexityFactor * (interactionsRef.current / 1000));
-      setEmergenceIndex(newEmergenceIndex);
-      
-      // Calculate intent field complexity
-      const chargeDistribution = {
-        positive: updatedParticles.filter(p => p.charge === 'positive').length,
-        negative: updatedParticles.filter(p => p.charge === 'negative').length,
-        neutral: updatedParticles.filter(p => p.charge === 'neutral').length
-      };
-      
-      const chargeRatio = Math.min(
-        chargeDistribution.positive, 
-        chargeDistribution.negative, 
-        chargeDistribution.neutral
-      ) / Math.max(1, updatedParticles.length);
-      
-      const newComplexity = (chargeRatio * 0.5) + (newEmergenceIndex * 0.5);
-      setIntentFieldComplexity(newComplexity);
-    }
-  }, [isRunning, particles, updateParticle]);
-  
-  // Animation frame loop
+  const [particles, setParticles] = useState<Particle[]>([]);
+  const [intentField, setIntentField] = useState<number[][]>([]);
+  const [isRunning, setIsRunning] = useState(running);
+  const [simulationTime, setSimulationTime] = useState(0);
+  const [interactions, setInteractions] = useState(0);
+  const [frameCount, setFrameCount] = useState(0);
+  const [inflationEvents, setInflationEvents] = useState<InflationEvent[]>([]);
+
+  const particlesRef = useRef(particles);
+  const intentFieldRef = useRef(intentField);
+  const interactionsRef = useRef(interactions);
+  const frameCountRef = useRef(frameCount);
+  const simulationTimeRef = useRef(simulationTime);
+  const isAnimatingRef = useRef(false);
+  const isInflatedRef = useRef(false);
+  const inflationTimeRef = useRef(0);
+
+  const dimensions = { width, height };
+
+  const velocity = 0.5;
+  const intentStrength = 0.8;
+  const energyFactor = 0.5;
+
   useEffect(() => {
-    if (!isRunning) return;
-    
-    let animationFrameId: number;
-    
-    const animate = () => {
-      updateSimulation();
-      animationFrameId = requestAnimationFrame(animate);
-    };
-    
-    animationFrameId = requestAnimationFrame(animate);
-    
-    return () => {
-      cancelAnimationFrame(animationFrameId);
-    };
-  }, [isRunning, updateSimulation]);
-  
-  // Create a new particle
-  const createParticle = useCallback((x?: number, y?: number): Particle => {
-    const posX = x ?? Math.random() * width;
-    const posY = y ?? Math.random() * height;
-    
-    // Determine charge randomly
-    const chargeRand = Math.random();
-    const charge = chargeRand < 0.33 ? 'positive' : chargeRand < 0.66 ? 'negative' : 'neutral';
-    
-    // Set color based on charge
-    let color = '#FFFFFF';
-    if (charge === 'positive') {
-      color = '#FF5555';
-    } else if (charge === 'negative') {
-      color = '#5555FF';
-    } else {
-      color = '#55FF55';
+    particlesRef.current = particles;
+    intentFieldRef.current = intentField;
+    interactionsRef.current = interactions;
+    frameCountRef.current = frameCount;
+    simulationTimeRef.current = simulationTime;
+  }, [particles, intentField, interactions, frameCount, simulationTime]);
+
+  useEffect(() => {
+    setIsRunning(running);
+  }, [running]);
+
+  const initializeIntentField = useCallback(() => {
+    const gridSize = 20;
+    const cols = Math.ceil(width / gridSize);
+    const rows = Math.ceil(height / gridSize);
+    const newField: number[][] = [];
+
+    for (let y = 0; y < rows; y++) {
+      const row: number[] = [];
+      for (let x = 0; x < cols; x++) {
+        row.push(Math.random() * 2 - 1);
+      }
+      newField.push(row);
     }
-    
-    return {
-      id: uuidv4(),
-      x: posX,
-      y: posY,
-      vx: (Math.random() - 0.5) * 2,
-      vy: (Math.random() - 0.5) * 2,
+
+    setIntentField(newField);
+  }, [width, height]);
+
+  const getParticleColor = (type: ParticleType): string => {
+    switch (type) {
+      case 'positive':
+        return '#4ECDC4';
+      case 'negative':
+        return '#FF6B6B';
+      case 'neutral':
+        return '#5E60CE';
+      case 'high-energy':
+        return '#FFE66D';
+      case 'quantum':
+        return '#A8E6CF';
+      case 'composite':
+        return '#DCEDC2';
+      case 'adaptive':
+        return '#FFD3B4';
+      default:
+        return '#FFFFFF';
+    }
+  };
+
+  const createParticle = () => {
+    const particleType: ParticleType =
+      Math.random() < 0.1 ? 'high-energy' :
+        Math.random() < 0.2 ? 'quantum' :
+          Math.random() < 0.3 ? 'composite' :
+            Math.random() < 0.4 ? 'adaptive' : 'regular';
+
+    const newParticle = {
+      id: `p-${Date.now()}-${Math.floor(Math.random() * 100000)}`,
+      x: Math.random() * dimensions.width,
+      y: Math.random() * dimensions.height,
+      vx: (Math.random() - 0.5) * 2 * velocity,
+      vy: (Math.random() - 0.5) * 2 * velocity,
       radius: 3 + Math.random() * 3,
-      mass: 1 + Math.random() * 4,
-      charge,
-      color,
-      type: 'normal',
-      intent: Math.random() * 5,
-      energy: 100,
-      knowledge: 0,
-      complexity: Math.random() * 5,
-      interactionTendency: Math.random(),
+      mass: 1 + Math.random() * 0.5,
+      charge: Math.random() < 0.33 ? 'positive' : Math.random() < 0.66 ? 'negative' : 'neutral',
+      color: getParticleColor(particleType),
+      type: particleType,
+      intent: (Math.random() * 2 - 1) * intentStrength,
+      energy: 1 + Math.random() * energyFactor,
+      knowledge: 0.1,
+      complexity: 1,
+      adaptability: Math.random(),
       lastInteraction: 0,
       interactionCount: 0,
-      z: Math.random() * 10,
-      vz: (Math.random() - 0.5) * 0.5,
       age: 0,
-      interactions: 0,
-      intentDecayRate: 0.001 + Math.random() * 0.005,
-      energyCapacity: 100 * (0.8 + Math.random() * 0.4),
+      intentDecayRate: 0.001,
+      vz: 0,
       created: Date.now(),
       scale: 1,
-      adaptiveScore: 0,
+      isPostInflation: false,
       creationTime: Date.now(),
-      isPostInflation: false
+      interactions: 0
     };
-  }, [width, height]);
-  
-  // Add multiple particles
+
+    return newParticle;
+  };
+
   const addParticles = useCallback((count: number) => {
-    const newParticles = Array.from({ length: count }, () => createParticle());
-    setParticles(currentParticles => [...currentParticles, ...newParticles]);
-  }, [createParticle]);
-  
-  // Reset the simulation
+    setParticles(prevParticles => {
+      const newParticles = [];
+      for (let i = 0; i < count; i++) {
+        newParticles.push(createParticle());
+      }
+      return [...prevParticles, ...newParticles];
+    });
+  }, [setParticles]);
+
+  const updateIntentField = useCallback(() => {
+    setIntentField(prevField => {
+      return prevField.map(row =>
+        row.map(value => {
+          const fluctuation = (Math.random() - 0.5) * intentFluctuationRate * 2;
+          return Math.max(-1, Math.min(1, value + fluctuation));
+        })
+      );
+    });
+  }, [intentFluctuationRate, setIntentField]);
+
+  const updateParticles = useCallback(() => {
+    setParticles(prevParticles => {
+      return prevParticles.map(particle => {
+        let vx = particle.vx;
+        let vy = particle.vy;
+
+        if (intentField.length > 0) {
+          const gridSize = 20;
+          const gridX = Math.floor(particle.x / gridSize);
+          const gridY = Math.floor(particle.y / gridSize);
+
+          if (gridX >= 0 && gridX < intentField[0]?.length &&
+            gridY >= 0 && gridY < intentField.length) {
+            const fieldValue = intentField[gridY][gridX];
+            let fieldMultiplier = 0.02;
+
+            if (particle.charge === 'positive') fieldMultiplier = 0.03;
+            if (particle.charge === 'negative') fieldMultiplier = 0.01;
+
+            vx += fieldValue * fieldMultiplier;
+            vy += fieldValue * fieldMultiplier;
+          }
+        }
+
+        let x = particle.x + vx;
+        let y = particle.y + vy;
+
+        if (x < 0 || x > width) {
+          vx = -vx * 0.8;
+          x = Math.max(0, Math.min(width, x));
+        }
+
+        if (y < 0 || y > height) {
+          vy = -vy * 0.8;
+          y = Math.max(0, Math.min(height, y));
+        }
+
+        vx *= 0.99;
+        vy *= 0.99;
+
+        vx += (Math.random() - 0.5) * 0.05;
+        vy += (Math.random() - 0.5) * 0.05;
+
+        return { ...particle, x, y, vx, vy };
+      });
+    });
+  }, [width, height, intentField, setParticles]);
+
+  const detectAnomalies = useCallback(() => {
+    const anomalies: AnomalyEvent[] = [];
+    // Implement anomaly detection logic here
+    return anomalies;
+  }, []);
+
+  const handleInflation = useCallback(() => {
+    const inflationEvent: InflationEvent = {
+      timestamp: Date.now(),
+      particleCount: particles.length,
+      energyLevel: particles.reduce((sum, p) => sum + p.energy, 0) / particles.length,
+      description: 'Inflation event detected'
+    };
+    setInflationEvents(prevEvents => [...prevEvents, inflationEvent]);
+    onInflationDetected(inflationEvent);
+  }, [particles, onInflationDetected]);
+
+  const startSimulation = useCallback(() => {
+    setIsRunning(true);
+  }, []);
+
+  const stopSimulation = useCallback(() => {
+    setIsRunning(false);
+  }, []);
+
   const resetSimulation = useCallback(() => {
     setParticles([]);
-    interactionsRef.current = 0;
-    frameCountRef.current = 0;
-    setEmergenceIndex(0);
-    setIntentFieldComplexity(0);
-  }, []);
-  
-  // Start/stop the simulation
-  const toggleSimulation = useCallback(() => {
-    setIsRunning(prev => !prev);
-  }, []);
-  
+    setIntentField([]);
+    setSimulationTime(0);
+    setInteractions(0);
+    setFrameCount(0);
+    initializeIntentField();
+  }, [initializeIntentField]);
+
+  useEffect(() => {
+    if (isRunning) {
+      const animationLoop = () => {
+        setFrameCount(prevFrameCount => prevFrameCount + 1);
+        setSimulationTime(prevSimulationTime => prevSimulationTime + 1 / 60);
+
+        if (Math.random() < intentFluctuationRate) {
+          updateIntentField();
+        }
+
+        updateParticles();
+
+        if (particles.length < maxParticles && Math.random() < particleCreationRate) {
+          addParticles(1);
+        }
+
+        setInteractions(prevInteractions => prevInteractions + 1);
+
+        const anomalies = detectAnomalies();
+        if (anomalies.length > 0) {
+          anomalies.forEach(anomaly => onAnomalyDetected?.(anomaly));
+        }
+
+        onStatsUpdate({
+          particleCount: particles.length,
+          positiveParticles: particles.filter(p => p.charge === 'positive').length,
+          negativeParticles: particles.filter(p => p.charge === 'negative').length,
+          neutralParticles: particles.filter(p => p.charge === 'neutral').length,
+          averageKnowledge: particles.reduce((sum, p) => sum + p.knowledge, 0) / particles.length,
+          complexityIndex: particles.reduce((sum, p) => sum + p.complexity, 0) / particles.length,
+          systemEntropy: 0.5,
+          interactions: interactions,
+          totalInteractions: interactions,
+          frame: frameCount,
+          time: simulationTime,
+          intentField: intentField,
+          highEnergyParticles: particles.filter(p => p.type === 'high-energy').length,
+          quantumParticles: particles.filter(p => p.type === 'quantum').length,
+          compositeParticles: particles.filter(p => p.type === 'composite').length,
+          adaptiveParticles: particles.filter(p => p.type === 'adaptive').length,
+        });
+
+        if (isAnimatingRef.current) {
+          requestAnimationFrame(animationLoop);
+        }
+      };
+
+      isAnimatingRef.current = true;
+      requestAnimationFrame(animationLoop);
+    }
+
+    return () => {
+      isAnimatingRef.current = false;
+    };
+  }, [
+    isRunning,
+    intentFluctuationRate,
+    maxParticles,
+    particleCreationRate,
+    updateIntentField,
+    updateParticles,
+    detectAnomalies,
+    onAnomalyDetected,
+    onStatsUpdate,
+    particles,
+    intentField,
+    interactions,
+    frameCount,
+    simulationTime,
+    addParticles
+  ]);
+
+  useEffect(() => {
+    initializeIntentField();
+    addParticles(50);
+  }, [initializeIntentField, addParticles]);
+
   return {
     particles,
+    intentField,
     isRunning,
-    toggleSimulation,
+    simulationTime,
+    interactions,
+    frameCount,
+    startSimulation,
+    stopSimulation,
     resetSimulation,
     addParticles,
-    createParticle,
-    emergenceIndex,
-    intentFieldComplexity,
-    interactionCount: interactionsRef.current
+    updateIntentField,
+    updateParticles,
+    detectAnomalies,
+    handleInflation,
+    inflationEvents
   };
 }
-
-export default useNeuralIntentSimulation;

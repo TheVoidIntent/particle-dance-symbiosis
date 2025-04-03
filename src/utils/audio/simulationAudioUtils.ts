@@ -1,4 +1,3 @@
-
 // Export the audio functions
 export function playSimulationEventSound(eventType: string, intensity: number = 0.5): void {
   // Map event types to specific audio files
@@ -66,4 +65,35 @@ export function isSimulationAudioPlaying(): boolean {
 export function setSimulationAudioVolume(volume: number): void {
   // Implementation would set the master volume for all simulation audio
   console.log(`Setting simulation audio volume to ${volume}`);
+}
+
+// Function to play a continuous background loop for the simulation
+export function playSimulationBackgroundLoop(audioUrl: string, volume: number = 0.5): HTMLAudioElement {
+  try {
+    const audio = new Audio(audioUrl);
+    audio.loop = true;
+    audio.volume = Math.min(Math.max(volume, 0), 1.0);
+    audio.autoplay = true;
+    
+    // Handle errors and auto-restart if playback fails
+    audio.addEventListener('error', (e) => {
+      console.error("Error in background audio loop:", e);
+      // Try to restart after a delay
+      setTimeout(() => {
+        audio.play().catch(err => console.error("Failed to restart audio:", err));
+      }, 3000);
+    });
+    
+    // Ensure it keeps playing
+    audio.addEventListener('ended', () => {
+      audio.currentTime = 0;
+      audio.play().catch(e => console.error("Error restarting audio loop:", e));
+    });
+    
+    audio.play().catch(e => console.error("Error starting background audio:", e));
+    return audio;
+  } catch (e) {
+    console.error("Error setting up background audio loop:", e);
+    return new Audio(); // Return empty audio element on error
+  }
 }

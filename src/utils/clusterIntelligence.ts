@@ -1,148 +1,150 @@
 
-import { Particle, SimulationStats } from '@/types/simulation';
+import { Particle } from '@/types/simulation';
 
+/**
+ * Detect stable clusters of particles
+ */
 export function detectStableClusters(
-  particles: Particle[],
-  stabilityThreshold: number = 0.6
-): { clusters: Particle[][], unclusteredParticles: Particle[] } {
+  particles: Particle[], 
+  stabilityThreshold: number = 0.5
+): { 
+  clusters: Particle[][]; 
+  unclusteredParticles: Particle[]; 
+} {
   const clusters: Particle[][] = [];
   const visited = new Set<string>();
   
-  // Simple clustering based on proximity and charge
+  // Find clusters using a simple proximity algorithm
   for (const particle of particles) {
-    const particleId = typeof particle.id === 'number' ? particle.id.toString() : particle.id;
-    if (visited.has(particleId)) continue;
+    if (visited.has(particle.id)) continue;
     
-    const cluster: Particle[] = [particle];
-    visited.add(particleId);
+    const cluster = [particle];
+    visited.add(particle.id);
     
+    // Expand cluster
     let i = 0;
     while (i < cluster.length) {
       const current = cluster[i];
       
       for (const other of particles) {
-        const otherId = typeof other.id === 'number' ? other.id.toString() : other.id;
-        if (visited.has(otherId)) continue;
+        if (visited.has(other.id)) continue;
         
-        // Check proximity
+        // Calculate distance
         const dx = other.x - current.x;
         const dy = other.y - current.y;
         const distanceSquared = dx * dx + dy * dy;
         
-        // Consider particles close and of same charge to be in same cluster
+        // Add to cluster if close enough and similar charge
         const maxDistance = (current.radius + other.radius) * 3;
         if (distanceSquared <= maxDistance * maxDistance && other.charge === current.charge) {
           cluster.push(other);
-          visited.add(otherId);
+          visited.add(other.id);
         }
       }
       
       i++;
     }
     
-    // Only consider it a cluster if it has multiple particles
-    if (cluster.length > 1) {
+    // Only consider it a cluster if it has multiple particles and meets stability criteria
+    if (cluster.length > 1 && cluster.length > particles.length * stabilityThreshold) {
       clusters.push(cluster);
     }
   }
   
-  // Find remaining unclustered particles
-  const unclusteredParticles = particles.filter(p => {
-    const particleId = typeof p.id === 'number' ? p.id.toString() : p.id;
-    return !visited.has(particleId);
-  });
+  // Find unclustered particles
+  const unclusteredParticles = particles.filter(p => 
+    !clusters.some(cluster => cluster.some(cp => cp.id === p.id))
+  );
   
-  return { clusters, unclusteredParticles };
+  return {
+    clusters,
+    unclusteredParticles
+  };
 }
 
+/**
+ * Evolve cluster intelligence
+ */
 export function evolveClusterIntelligence(
-  clusters: Particle[][],
-  stats: SimulationStats,
-  evolutionRate: number = 0.1
+  clusters: Particle[][], 
+  stats: any, 
+  learningRate: number = 0.1
 ): Particle[][] {
-  // Simple cluster evolution - increase knowledge and complexity based on size
   return clusters.map(cluster => {
-    // Larger clusters evolve faster
-    const sizeMultiplier = Math.min(1, cluster.length / 10);
+    // Calculate cluster properties
+    const averageKnowledge = cluster.reduce((sum, p) => sum + (p.knowledge || 0), 0) / cluster.length;
+    const averageComplexity = cluster.reduce((sum, p) => sum + (p.complexity || 1), 0) / cluster.length;
     
+    // Evolve each particle in the cluster
     return cluster.map(particle => {
-      const knowledgeIncrease = evolutionRate * sizeMultiplier;
-      const complexityIncrease = evolutionRate * sizeMultiplier * 0.5;
+      const evolutionFactor = Math.min(1, (particle.interactions || 0) / 100);
       
       return {
         ...particle,
-        knowledge: (particle.knowledge || 0) + knowledgeIncrease,
-        complexity: (particle.complexity || 1) + complexityIncrease
+        knowledge: (particle.knowledge || 0) + learningRate * evolutionFactor,
+        complexity: (particle.complexity || 1) + (learningRate * 0.5 * evolutionFactor)
       };
     });
   });
 }
 
+/**
+ * Generate narratives for evolved clusters
+ */
 export function generateClusterNarratives(
-  clusters: Particle[][],
-  stats: SimulationStats
-): Array<{ clusterId: number, narrative: string, timestamp: number }> {
-  const narratives: Array<{ clusterId: number, narrative: string, timestamp: number }> = [];
-  
-  clusters.forEach((cluster, index) => {
-    // Only generate narratives for significant clusters
-    if (cluster.length < 5) return;
+  clusters: Particle[][], 
+  stats: any
+): Array<{ clusterId: number; narrative: string; timestamp: number }> {
+  return clusters.map((cluster, index) => {
+    const averageKnowledge = cluster.reduce((sum, p) => sum + (p.knowledge || 0), 0) / cluster.length;
+    const averageComplexity = cluster.reduce((sum, p) => sum + (p.complexity || 1), 0) / cluster.length;
     
-    // Get average knowledge and complexity
-    const avgKnowledge = cluster.reduce((sum, p) => sum + (p.knowledge || 0), 0) / cluster.length;
-    const avgComplexity = cluster.reduce((sum, p) => sum + (p.complexity || 1), 0) / cluster.length;
+    let narrative = "";
     
-    // Generate a narrative based on cluster properties
-    let narrative = '';
-    const chargeType = cluster[0].charge;
-    
-    if (avgKnowledge > 5 && avgComplexity > 3) {
-      narrative = `Cluster ${index} has developed advanced information processing capabilities.`;
-    } else if (avgKnowledge > 3) {
-      narrative = `Cluster ${index} is sharing information efficiently between particles.`;
+    if (averageComplexity > 5) {
+      narrative = "Cluster developing complex knowledge structures and beginning proto-consciousness";
+    } else if (averageComplexity > 3) {
+      narrative = "Cluster showing emergent information processing capabilities";
+    } else if (averageComplexity > 2) {
+      narrative = "Cluster beginning to form coherent information patterns";
     } else {
-      narrative = `Cluster ${index} of ${chargeType} particles has formed a stable structure.`;
+      narrative = "Cluster exhibiting basic intentional alignment";
     }
     
-    narratives.push({
+    return {
       clusterId: index,
       narrative,
       timestamp: Date.now()
-    });
+    };
   });
-  
-  return narratives;
 }
 
+/**
+ * Identify robot-level intelligence in evolved clusters
+ */
 export function identifyRobotClusters(
   clusters: Particle[][]
 ): Array<any> {
-  const robots: Array<any> = [];
-  
-  clusters.forEach((cluster, index) => {
-    // Criteria for robot-level intelligence
-    const avgKnowledge = cluster.reduce((sum, p) => sum + (p.knowledge || 0), 0) / cluster.length;
-    const avgComplexity = cluster.reduce((sum, p) => sum + (p.complexity || 1), 0) / cluster.length;
-    const totalEnergy = cluster.reduce((sum, p) => sum + (p.energy || 0), 0);
-    
-    // Only the most evolved clusters become "robots"
-    if (cluster.length >= 10 && avgKnowledge > 8 && avgComplexity > 5) {
-      const centerX = cluster.reduce((sum, p) => sum + p.x, 0) / cluster.length;
-      const centerY = cluster.reduce((sum, p) => sum + p.y, 0) / cluster.length;
+  return clusters
+    .filter(cluster => {
+      // Calculate cluster intelligence metrics
+      const averageKnowledge = cluster.reduce((sum, p) => sum + (p.knowledge || 0), 0) / cluster.length;
+      const averageComplexity = cluster.reduce((sum, p) => sum + (p.complexity || 1), 0) / cluster.length;
+      const interactionDensity = cluster.reduce((sum, p) => sum + (p.interactions || 0), 0) / cluster.length;
       
-      robots.push({
-        id: `robot-${index}`,
-        x: centerX,
-        y: centerY,
-        particles: cluster.length,
-        intelligence: avgKnowledge * avgComplexity,
-        energy: totalEnergy,
-        type: 'collective_intelligence',
+      // Check if cluster reaches robot-level intelligence threshold
+      return averageKnowledge > 5 && averageComplexity > 8 && interactionDensity > 100;
+    })
+    .map((cluster, index) => {
+      // Create robot entity from cluster
+      return {
+        id: `robot-${Date.now()}-${index}`,
+        particles: cluster.map(p => p.id),
+        knowledgeBase: cluster.reduce((sum, p) => sum + (p.knowledge || 0), 0),
+        complexity: cluster.reduce((sum, p) => sum + (p.complexity || 1), 0) / cluster.length,
         creationTime: Date.now(),
-        charge: cluster[0].charge
-      });
-    }
-  });
-  
-  return robots;
+        charge: cluster[0].charge,
+        intentFactor: cluster.reduce((sum, p) => sum + (p.intent || 0), 0) / cluster.length
+      };
+    });
 }

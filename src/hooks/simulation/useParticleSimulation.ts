@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Particle } from '@/utils/particleUtils';
 import { useParticleCreation } from './useParticleCreation';
@@ -136,10 +135,10 @@ export function useParticleSimulation({
     setSimulationTime(prev => prev + deltaTime);
     setFrameCount(prev => prev + 1);
     
-    let currentParticles = [...particlesRef.current];
+    let currentParticles = [...particlesRef.current] as Particle[];
     
     if (inflationHandler.checkForInflation(currentParticles)) {
-      currentParticles = inflationHandler.handleInflation(currentParticles);
+      currentParticles = inflationHandler.handleInflation([...currentParticles]) as Particle[];
     }
     
     const result = particleUpdater.updateAllParticles();
@@ -256,7 +255,7 @@ export function useParticleSimulation({
       return [...prev, newParticle];
     });
     
-    return newParticle;
+    return newParticle as Particle;
   }, [setParticles, particleCreation, fullConfig.maxParticles]);
 
   const calculateEmergenceIndex = useCallback(() => {

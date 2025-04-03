@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Helmet } from 'react-helmet';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -36,6 +36,7 @@ const Simulation: React.FC = () => {
   const [showIntentField, setShowIntentField] = useState<boolean>(true);
   const [particleCreationRate, setParticleCreationRate] = useState<number>(5);
   const [canvasDimensions, setCanvasDimensions] = useState({ width: 800, height: 600 });
+  const [inflationEvents, setInflationEvents] = useState<any[]>([]);
   
   useEffect(() => {
     const updateDimensions = () => {
@@ -67,22 +68,22 @@ const Simulation: React.FC = () => {
     intentFieldComplexity,
     inflationEvent
   } = useParticleSimulation({
-    initialParticleCount: 30,
+    initialParticleCount: 50,
     canvasRef,
     config: {
       maxParticles: 500,
-      fieldResolution: 30,
-      intentFluctuationRate: 0.1,
+      fieldResolution: 20,
+      intentFluctuationRate: 0.05,
       interactionRadius: 50,
       boundaryCondition: 'wrap',
+      particleLifetime: null,
       inflationEnabled: true,
-      inflationThreshold: 200
+      inflationThreshold: 200,
+      inflationMultiplier: 1.5
     },
-    onInflationEvent: (event) => {
-      toast.success("Inflation Event Detected", {
-        description: `Inflation event occurred at t=${Math.floor(inflationEvent.timestamp)}s
-                    ${inflationEvent.particlesBeforeInflation || inflationEvent.particleCountBefore} particles → ${inflationEvent.particlesAfterInflation || inflationEvent.particleCountAfter || '?'} particles`
-      });
+    onInflationEvent: (event: any) => {
+      setInflationEvents(prev => [...prev, event]);
+      toast.info("Universe inflation event detected!");
     }
   });
   

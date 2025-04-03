@@ -2,29 +2,53 @@
 import { SimulationStats } from '@/types/simulation';
 import { exportDataAsJson, exportDataAsPdf } from './dataExportUtils';
 
-// Example function to automatically export data at the end of the day
-export async function scheduleEndOfDayExport(
-  includeJson: boolean = true,
-  includePdf: boolean = false,
-  exportPath?: string
-): Promise<boolean> {
+// Schedule end of day data export
+export function setupDailyDataExport({
+  onExportStart = () => {},
+  onExportComplete = () => {}
+}: {
+  onExportStart?: () => void;
+  onExportComplete?: (filename: string) => void;
+} = {}): { cleanup?: () => void } {
   try {
-    console.log("Scheduling end of day data export");
+    console.log("Setting up daily data export");
     
-    // Implementation would schedule the export at the end of the day
-    if (includeJson) {
-      exportDataAsJson();
-    }
+    // Schedule next export at midnight
+    const now = new Date();
+    const tomorrow = new Date();
+    tomorrow.setDate(now.getDate() + 1);
+    tomorrow.setHours(0, 0, 0, 0);
     
-    if (includePdf) {
+    const timeUntilExport = tomorrow.getTime() - now.getTime();
+    
+    // Schedule the export
+    const exportTimeout = setTimeout(() => {
+      onExportStart();
+      const filename = `simulation_export_${new Date().toISOString().slice(0, 10)}.pdf`;
       exportDataAsPdf();
-    }
+      onExportComplete(filename);
+      
+      // Schedule next export
+      setupDailyDataExport({ onExportStart, onExportComplete });
+    }, timeUntilExport);
     
-    return true;
+    // Return cleanup function
+    return {
+      cleanup: () => clearTimeout(exportTimeout)
+    };
   } catch (error) {
     console.error("Failed to schedule export:", error);
-    return false;
+    return {};
   }
+}
+
+// Get next export time
+export function getNearestExportTime(): Date {
+  const now = new Date();
+  const tomorrow = new Date();
+  tomorrow.setDate(now.getDate() + 1);
+  tomorrow.setHours(0, 0, 0, 0);
+  return tomorrow;
 }
 
 // Export data on demand with retry capability
@@ -35,7 +59,7 @@ export async function exportDataWithRetry(
   let retries = 0;
   let success = false;
   
-  while (!success && retries < maxRetries) {
+  while (!retries < maxRetries && !success) {
     try {
       if (format === 'json' || format === 'both') {
         exportDataAsJson();

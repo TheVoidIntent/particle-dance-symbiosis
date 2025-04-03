@@ -34,11 +34,36 @@ export function initAudioContext(): void {
   }
 }
 
-// Create these stub functions to satisfy the imports until they're properly implemented
-export function generateInteractionAudio(): void {}
-export function generateFieldFluctuationAudio(): void {}
-export function generateParticleSoundscape(): void {}
-export function startSimulationAudioStream(): void {}
-export function stopSimulationAudioStream(): void {}
-export function isSimulationAudioPlaying(): boolean { return false; }
-export function setSimulationAudioVolume(): void {}
+// Implement the missing functions
+export function generateInteractionAudio(intensity: number = 0.5): void {
+  playSimulationEventSound('particle_interaction', intensity);
+}
+
+export function generateFieldFluctuationAudio(intensity: number = 0.5): void {
+  playSimulationEventSound('intent_fluctuation', intensity);
+}
+
+export function generateParticleSoundscape(particleCount: number): void {
+  const intensity = Math.min(particleCount / 100, 1.0);
+  playSimulationEventSound('particle_creation', intensity);
+}
+
+export function startSimulationAudioStream(): void {
+  console.log("Starting simulation audio stream");
+  // Implementation would connect to audio context and start streaming
+}
+
+export function stopSimulationAudioStream(): void {
+  console.log("Stopping simulation audio stream");
+  // Implementation would disconnect from audio context and stop streaming
+}
+
+export function isSimulationAudioPlaying(): boolean {
+  // This would check if the audio stream is active
+  return false;
+}
+
+export function setSimulationAudioVolume(volume: number): void {
+  // Implementation would set the master volume for all simulation audio
+  console.log(`Setting simulation audio volume to ${volume}`);
+}

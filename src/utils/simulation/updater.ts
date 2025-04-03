@@ -1,3 +1,4 @@
+
 import { Particle } from '../particleUtils';
 import { simulationState, saveState } from './state';
 import { defaultConfig, simulationDimensions } from './config';
@@ -272,7 +273,7 @@ export function maybeCreateParticles() {
       
       // Play sound for particle creation
       if (i === 0) {
-        playSimulationEventSound('particle_creation', { intensity: 0.5 });
+        playSimulationEventSound('particle_creation', 0.5);
       }
     }
     

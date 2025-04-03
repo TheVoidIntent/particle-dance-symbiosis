@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,7 @@ import { getSimulationStats } from "@/utils/simulation/motherSimulation";
 import { analyzeSimulationData } from "@/utils/dataAnalysisUtils";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import Footer from "@/components/Footer";
+import { checkAudioFileExists } from "@/utils/audio/audioFileUtils";
 
 const DataAnalysis: React.FC = () => {
   const [uploadedData, setUploadedData] = useState<any>(null);
@@ -15,7 +16,6 @@ const DataAnalysis: React.FC = () => {
   const [showLicenseAgreement, setShowLicenseAgreement] = useState(false);
   const { toast } = useToast();
   
-  // Get stats from the persistent mother simulation
   const simulationStats = getSimulationStats();
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -48,7 +48,7 @@ const DataAnalysis: React.FC = () => {
 
   const handleRunAnalysis = () => {
     try {
-      const result = analyzeSimulationData();
+      const result = analyzeSimulationData({});
       setAnalysisResult(result);
       
       toast({
@@ -72,14 +72,12 @@ const DataAnalysis: React.FC = () => {
   const confirmDownload = (documentName: string) => {
     setShowLicenseAgreement(false);
     
-    // Simulate document download
     toast({
       title: "Download Started",
       description: `The document "${documentName}" is being downloaded.`,
       variant: "default",
     });
     
-    // Create a fake download link for demonstration
     const link = document.createElement('a');
     link.href = '/research-papers/intent-theory-whitepaper.pdf';
     link.download = documentName + '.pdf';
@@ -95,7 +93,6 @@ const DataAnalysis: React.FC = () => {
       variant: "default",
     });
     
-    // Simulate analysis completion after 1 second
     setTimeout(() => {
       toast({
         title: "Inflation Analysis Complete",
@@ -105,7 +102,14 @@ const DataAnalysis: React.FC = () => {
     }, 1000);
   };
 
-  checkAudioFileExists('/audio/data_analysis.mp3')
+  useEffect(() => {
+    checkAudioFileExists('/audio/data_analysis.mp3')
+      .then(result => {
+        if (!result.exists) {
+          console.log("Data analysis audio file not found");
+        }
+      });
+  }, []);
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-12">

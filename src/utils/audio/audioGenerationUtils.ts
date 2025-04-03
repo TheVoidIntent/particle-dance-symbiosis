@@ -1,13 +1,11 @@
-
 /**
  * Create a new audio context for sound generation
  * @returns AudioContext instance
  */
 export function createAudioContext(): AudioContext | null {
   try {
-    if (typeof window !== 'undefined' && (window.AudioContext || window.webkitAudioContext)) {
-      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-      return new AudioContextClass();
+    if (typeof window !== 'undefined' && window.AudioContext) {
+      return new window.AudioContext();
     }
     return null;
   } catch (e) {

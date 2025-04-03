@@ -13,7 +13,14 @@ export {
 
 export {
   playSimulationEventSound,
-  initAudioContext 
+  initAudioContext,
+  generateInteractionAudio,
+  generateFieldFluctuationAudio,
+  generateParticleSoundscape,
+  startSimulationAudioStream,
+  stopSimulationAudioStream,
+  isSimulationAudioPlaying,
+  setSimulationAudioVolume
 } from './simulationAudioUtils';
 
 export {

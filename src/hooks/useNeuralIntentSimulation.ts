@@ -276,7 +276,8 @@ export function useNeuralIntentSimulation({
       created: Date.now(),
       scale: 1,
       adaptiveScore: 0,
-      creationTime: Date.now()
+      creationTime: Date.now(),
+      isPostInflation: false
     };
   }, [width, height]);
   

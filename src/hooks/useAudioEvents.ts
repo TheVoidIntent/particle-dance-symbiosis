@@ -1,51 +1,42 @@
 
-import { useState, useEffect, useCallback } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
+import { playSimulationEvent } from '@/utils/audio/simulationAudioUtils';
 
-// Define the valid event types for audio
 export type AudioEventType = 
-  | 'particle_creation' 
-  | 'cluster_formation' 
-  | 'robot_evolution' 
-  | 'inflation_event'
-  | 'anomaly_detected'
-  | 'interaction'
-  | 'field_fluctuation';
+  'particle_creation' | 
+  'particle_interaction' | 
+  'cluster_formation' | 
+  'robot_evolution' | 
+  'intent_spike' |
+  'inflation';
 
-interface AudioEventOptions {
+export interface AudioEventOptions {
   intensity?: number;
   count?: number;
+  frequency?: number;
 }
 
-export function useAudioEvents() {
-  const [audioEnabled, setAudioEnabled] = useState<boolean>(true);
+export function useAudioEvents(enabled: boolean = true) {
+  const isEnabledRef = useRef(enabled);
   
-  const triggerAudioEvent = useCallback((eventType: AudioEventType, options: AudioEventOptions = {}) => {
-    if (!audioEnabled) return;
-    
-    // Log the event for debugging
-    console.log(`Audio event triggered: ${eventType}`, options);
-    
-    // Dispatch a custom event that the audio system can listen for
-    const event = new CustomEvent('audio-event', {
-      detail: {
-        type: eventType,
-        ...options
-      }
-    });
-    
-    window.dispatchEvent(event);
-  }, [audioEnabled]);
+  useEffect(() => {
+    isEnabledRef.current = enabled;
+  }, [enabled]);
   
-  const toggleAudio = useCallback(() => {
-    setAudioEnabled(prev => !prev);
+  const triggerAudioEvent = useCallback((
+    eventType: AudioEventType,
+    options: AudioEventOptions = {}
+  ) => {
+    if (!isEnabledRef.current) return;
+    
+    playSimulationEvent(eventType, options);
   }, []);
   
   return {
-    audioEnabled,
-    setAudioEnabled,
     triggerAudioEvent,
-    toggleAudio
+    isEnabled: isEnabledRef.current,
+    setEnabled: (value: boolean) => {
+      isEnabledRef.current = value;
+    }
   };
 }
-
-export default useAudioEvents;

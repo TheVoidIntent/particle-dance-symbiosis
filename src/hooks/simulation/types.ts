@@ -17,10 +17,10 @@ export interface SimulationConfig {
 export interface InflationEvent {
   timestamp: number;
   particleCountBefore: number;
-  particleCountAfter?: number;
+  particlesAfterInflation?: number;
   expansionFactor: number;
-  particlesBeforeInflation?: number; // Added missing property
-  particlesAfterInflation?: number; // Added missing property
+  particlesBeforeInflation?: number;
+  particleCountAfter?: number;
 }
 
 export interface ParticleCreationOptions {

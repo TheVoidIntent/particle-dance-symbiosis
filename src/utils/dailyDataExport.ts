@@ -59,7 +59,7 @@ export async function exportDataWithRetry(
   let retries = 0;
   let success = false;
   
-  while (!retries < maxRetries && !success) {
+  while (retries < maxRetries && !success) {
     try {
       if (format === 'json' || format === 'both') {
         exportDataAsJson();

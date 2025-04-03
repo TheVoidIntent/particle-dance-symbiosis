@@ -1,70 +1,124 @@
 
 /**
- * Type definition for ATLAS dataset
+ * Atlas dataset type definition
  */
+export interface AtlasParticle {
+  id: string;
+  type: string;
+  energy: number;
+  momentum: number;
+  position: {
+    x: number;
+    y: number;
+    z: number;
+  };
+  particleType: string;
+  charge: 'positive' | 'negative' | 'neutral';
+}
+
 export interface AtlasDataset {
   id: string;
   name: string;
   description: string;
-  particles: Array<{
-    id: string;
-    type: string;
-    energy: number;
-    momentum: number;
-    position: {
-      x: number;
-      y: number;
-      z: number;
-    }
-  }>;
-  metadata: {
-    collisionEnergy: number;
-    date: string;
-    experimentType: string;
-    particleCount: number;
-    runNumber: string;
-    detectorConfiguration: string;
-  };
+  particles: AtlasParticle[];
+  collisionEnergy: number;
+  date: string;
+  experimentType: string;
+  particleCount: number;
+  runNumber: string;
+  detectorConfiguration: string;
+  year: number;
+  DOI: string;
+  format: string;
+  dataSize: string;
+  eventCount: number;
 }
 
 /**
- * Fetch ATLAS data
- * @param datasetId The ID of the dataset to fetch
+ * Get available ATLAS datasets
  */
-export async function fetchAtlasData(datasetId: string): Promise<AtlasDataset> {
-  console.log(`Fetching ATLAS data for dataset ${datasetId}`);
-  
-  // Return mock data
-  return {
-    id: datasetId,
-    name: `ATLAS Run ${datasetId}`,
-    description: 'Sample ATLAS collision data',
-    particles: Array.from({ length: 20 }, (_, i) => ({
-      id: `p-${i}`,
-      type: Math.random() > 0.5 ? 'electron' : 'proton',
-      energy: Math.random() * 100,
-      momentum: Math.random() * 50,
-      position: {
-        x: (Math.random() - 0.5) * 100,
-        y: (Math.random() - 0.5) * 100,
-        z: (Math.random() - 0.5) * 100
-      }
-    })),
-    metadata: {
-      collisionEnergy: 13000,
-      date: new Date().toISOString(),
-      experimentType: 'pp-collision',
-      particleCount: 20,
-      runNumber: `R-${datasetId}`,
-      detectorConfiguration: 'Standard'
+export function getAvailableAtlasDatasets(): AtlasDataset[] {
+  // Mocked data - in a real application, this would fetch from an API
+  return [
+    {
+      id: 'atlas-1',
+      name: 'Higgs Boson Candidate Events',
+      description: 'ATLAS Higgs boson candidate events from 2012 data',
+      particles: Array.from({ length: 25 }, (_, i) => ({
+        id: `particle-${i}`,
+        type: i % 3 === 0 ? 'boson' : 'fermion',
+        energy: 100 + Math.random() * 900,
+        momentum: 50 + Math.random() * 450,
+        position: {
+          x: Math.random() * 100 - 50,
+          y: Math.random() * 100 - 50,
+          z: Math.random() * 100 - 50
+        },
+        particleType: i % 3 === 0 ? 'higgs' : i % 3 === 1 ? 'electron' : 'muon',
+        charge: i % 3 === 0 ? 'neutral' : i % 3 === 1 ? 'negative' : 'positive'
+      })),
+      collisionEnergy: 8000,
+      date: '2012-07-04',
+      experimentType: 'pp collision',
+      particleCount: 25,
+      runNumber: '205071',
+      detectorConfiguration: 'Standard',
+      year: 2012,
+      DOI: '10.7483/OPENDATA.ATLAS.ZBP2.M5T8',
+      format: 'ROOT',
+      dataSize: '1.2 GB',
+      eventCount: 1000
+    },
+    {
+      id: 'atlas-2',
+      name: 'Z Boson Event Display',
+      description: 'ATLAS Z boson event displays from 2011 data',
+      particles: Array.from({ length: 18 }, (_, i) => ({
+        id: `particle-${i}`,
+        type: i % 3 === 0 ? 'boson' : 'fermion',
+        energy: 80 + Math.random() * 300,
+        momentum: 40 + Math.random() * 150,
+        position: {
+          x: Math.random() * 100 - 50,
+          y: Math.random() * 100 - 50,
+          z: Math.random() * 100 - 50
+        },
+        particleType: i % 3 === 0 ? 'z-boson' : i % 3 === 1 ? 'electron' : 'positron',
+        charge: i % 3 === 0 ? 'neutral' : i % 3 === 1 ? 'negative' : 'positive'
+      })),
+      collisionEnergy: 7000,
+      date: '2011-05-14',
+      experimentType: 'pp collision',
+      particleCount: 18,
+      runNumber: '189751',
+      detectorConfiguration: 'Standard',
+      year: 2011,
+      DOI: '10.7483/OPENDATA.ATLAS.72WR.3YMY',
+      format: 'ROOT',
+      dataSize: '890 MB',
+      eventCount: 750
     }
-  };
+  ];
 }
 
 /**
- * Generate citation for ATLAS data
- * @param dataset The dataset to generate a citation for
+ * Get ATLAS dataset by ID
  */
-export function generateAtlasCitation(dataset: AtlasDataset): string {
-  return `ATLAS Collaboration (${new Date().getFullYear()}). ${dataset.name} [Dataset]. CERN Open Data Portal. https://doi.org/10.xxxx/atlas.${dataset.id}`;
+export function getAtlasDatasetById(id: string): AtlasDataset | undefined {
+  const datasets = getAvailableAtlasDatasets();
+  return datasets.find(dataset => dataset.id === id);
+}
+
+/**
+ * Import ATLAS dataset into simulation
+ */
+export function importAtlasDatasetToSimulation(datasetId: string): boolean {
+  try {
+    console.log(`Importing ATLAS dataset ${datasetId} into simulation`);
+    // Implementation would go here
+    return true;
+  } catch (error) {
+    console.error('Error importing ATLAS dataset:', error);
+    return false;
+  }
 }

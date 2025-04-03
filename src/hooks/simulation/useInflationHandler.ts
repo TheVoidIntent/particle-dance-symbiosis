@@ -1,104 +1,108 @@
 
 import { useCallback } from 'react';
-import { Particle } from '@/types/simulation';
-import { createParticle } from '@/utils/particleUtils';
 import { v4 as uuidv4 } from 'uuid';
-
-export interface InflationEvent {
-  id: string;
-  timestamp: number;
-  particlesBefore: number;
-  particlesAfter: number;
-  inflationFactor: number;
-  energyIncrease: number;
-  complexityIncrease: number;
-  narrative: string;
-}
+import { Particle } from '@/types/simulation';
+import { InflationEvent } from './types';
 
 interface UseInflationHandlerProps {
   config: {
-    inflationEnabled?: boolean;
-    inflationThreshold?: number;
-    inflationMultiplier?: number;
+    inflationEnabled: boolean;
+    inflationThreshold: number;
+    inflationMultiplier: number;
   };
   onInflationEvent?: (event: InflationEvent) => void;
 }
 
+export { InflationEvent };
+
+/**
+ * Hook for handling inflation events in the simulation
+ */
 export function useInflationHandler({
   config,
   onInflationEvent
 }: UseInflationHandlerProps) {
+  /**
+   * Check if conditions meet for an inflation event
+   */
   const checkForInflation = useCallback((particles: Particle[]): boolean => {
     if (!config.inflationEnabled) return false;
     
-    return particles.length >= (config.inflationThreshold || 100);
+    // Check if particle count has reached threshold
+    return particles.length >= config.inflationThreshold;
   }, [config.inflationEnabled, config.inflationThreshold]);
-  
+
+  /**
+   * Handle an inflation event when it occurs
+   */
   const handleInflation = useCallback((particles: Particle[]): Particle[] => {
-    // Don't do anything if inflation is disabled
-    if (!config.inflationEnabled) return particles;
+    // Store original particle count
+    const particlesBefore = particles.length;
     
-    const particleCountBefore = particles.length;
+    // Apply inflation effects
+    // 1. Expand the universe (not changing existing positions)
+    // 2. Add energy to existing particles
+    const inflatedParticles = particles.map(particle => ({
+      ...particle,
+      energy: (particle.energy || 1) * config.inflationMultiplier,
+      complexity: (particle.complexity || 1) * 1.2,
+      isPostInflation: true
+    }));
     
-    // Calculate the number of new particles to create
-    const inflationMultiplier = config.inflationMultiplier || 1.5;
-    const newParticleCount = Math.floor(particles.length * (inflationMultiplier - 1));
-    
-    // Create new particles with properties based on existing ones
+    // Create additional particles depending on multiplier
     const newParticles: Particle[] = [];
+    const particlesToAdd = Math.floor(particlesBefore * (config.inflationMultiplier - 1));
     
-    for (let i = 0; i < newParticleCount; i++) {
-      // Get a random existing particle to base the new one on
-      const baseParticle = particles[Math.floor(Math.random() * particles.length)];
-      
-      // Calculate position near the base particle
-      const angle = Math.random() * Math.PI * 2;
-      const distance = 20 + Math.random() * 30;
-      const x = baseParticle.x + Math.cos(angle) * distance;
-      const y = baseParticle.y + Math.sin(angle) * distance;
-      
-      // Create new particle
-      const newParticle = createParticle(
-        x,
-        y,
-        0,
-        baseParticle.charge,
-        baseParticle.type || 'standard',
-        Date.now()
-      );
-      
-      // Mark as post-inflation particle
-      newParticle.isPostInflation = true;
-      
-      newParticles.push(newParticle);
+    if (particlesToAdd > 0) {
+      // Generate new particles
+      for (let i = 0; i < particlesToAdd; i++) {
+        // Base the new particle on a random existing one
+        const template = inflatedParticles[Math.floor(Math.random() * inflatedParticles.length)];
+        
+        // Create a new particle with some randomization
+        newParticles.push({
+          ...template,
+          id: uuidv4(),
+          x: Math.random() * 800, // Replace with dimension reference
+          y: Math.random() * 600, // Replace with dimension reference
+          z: Math.random() * 10,
+          vx: (Math.random() - 0.5) * 2,
+          vy: (Math.random() - 0.5) * 2,
+          vz: (Math.random() - 0.5) * 0.5,
+          energy: template.energy * (0.8 + Math.random() * 0.4),
+          knowledge: template.knowledge * (0.5 + Math.random() * 1),
+          complexity: template.complexity * (0.7 + Math.random() * 0.6),
+          interactionCount: 0,
+          interactions: 0,
+          lastInteraction: 0,
+          created: Date.now(),
+          creationTime: Date.now(),
+          age: 0
+        });
+      }
     }
     
-    // Calculate energy and complexity increase
-    const energyBefore = particles.reduce((sum, p) => sum + (p.energy || 0), 0);
-    const complexityBefore = particles.reduce((sum, p) => sum + (p.complexity || 0), 0);
-    
-    const energyAfter = energyBefore + newParticles.reduce((sum, p) => sum + (p.energy || 0), 0);
-    const complexityAfter = complexityBefore + newParticles.reduce((sum, p) => sum + (p.complexity || 0), 0);
-    
-    const inflationEvent: InflationEvent = {
-      id: uuidv4(),
-      timestamp: Date.now(),
-      particlesBefore: particleCountBefore,
-      particlesAfter: particleCountBefore + newParticles.length,
-      inflationFactor: inflationMultiplier,
-      energyIncrease: energyAfter - energyBefore,
-      complexityIncrease: complexityAfter - complexityBefore,
-      narrative: `Universe inflation event created ${newParticles.length} new particles`
-    };
+    // Combine original and new particles
+    const result = [...inflatedParticles, ...newParticles];
+    const particlesAfter = result.length;
     
     // Notify about the inflation event
     if (onInflationEvent) {
-      onInflationEvent(inflationEvent);
+      onInflationEvent({
+        id: uuidv4(),
+        timestamp: Date.now(),
+        particlesBefore,
+        particlesAfter,
+        inflationFactor: config.inflationMultiplier,
+        energyIncrease: config.inflationMultiplier - 1,
+        complexityIncrease: 0.2,
+        narrative: `Universe inflation event: Particle count increased from ${particlesBefore} to ${particlesAfter}, energy multiplied by ${config.inflationMultiplier.toFixed(2)}.`
+      });
     }
     
-    return [...particles, ...newParticles];
-  }, [config.inflationEnabled, config.inflationMultiplier, onInflationEvent]);
-  
+    return result;
+  }, [config.inflationMultiplier, onInflationEvent]);
+
   return {
     checkForInflation,
     handleInflation

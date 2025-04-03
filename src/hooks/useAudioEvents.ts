@@ -1,66 +1,97 @@
 
-import { useCallback } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
+import { 
+  playSimulationEventSound, 
+  isSimulationAudioPlaying, 
+  startSimulationAudioStream,
+  stopSimulationAudioStream, 
+  setSimulationAudioVolume
+} from '@/utils/audio/simulationAudioUtils';
 
-export type AudioEventType = 
-  | 'particle_creation'
-  | 'particle_interaction'
-  | 'cluster_formation'
-  | 'inflation_event'
-  | 'energy_transfer'
-  | 'knowledge_transfer'
-  | 'anomaly_detected'
-  | 'simulation_reset';
-
-interface AudioEventOptions {
-  intensity?: number;
-  count?: number;
-  frequency?: number;
-  duration?: number;
+interface UseAudioEventsProps {
+  enabled?: boolean;
+  initialVolume?: number;
+  onError?: (error: any) => void;
 }
 
-/**
- * Hook for handling audio events in the simulation
- */
-export function useAudioEvents() {
-  /**
-   * Trigger an audio event
-   */
-  const triggerAudioEvent = useCallback((eventType: AudioEventType, options: AudioEventOptions = {}) => {
-    // We'll implement this fully in a future update
-    // For now, just log the event
-    console.log(`Audio event triggered: ${eventType}`, options);
-    
-    // Return true if the audio was played successfully
-    return true;
-  }, []);
+export function useAudioEvents({
+  enabled = true,
+  initialVolume = 0.5,
+  onError = () => {}
+}: UseAudioEventsProps = {}) {
+  const audioEnabledRef = useRef(enabled);
+  const volumeRef = useRef(initialVolume);
   
-  /**
-   * Set the volume for all audio events
-   */
-  const setAudioVolume = useCallback((volume: number) => {
-    // Volume should be between 0 and 1
-    const normalizedVolume = Math.max(0, Math.min(1, volume));
-    console.log(`Setting audio volume to ${normalizedVolume}`);
+  // Initialize audio on component mount
+  useEffect(() => {
+    if (enabled) {
+      try {
+        startSimulationAudioStream();
+        setSimulationAudioVolume(initialVolume);
+      } catch (error) {
+        console.error('Failed to initialize audio:', error);
+        onError(error);
+      }
+    }
     
-    // We'll implement this fully in a future update
-    return normalizedVolume;
-  }, []);
+    // Cleanup on component unmount
+    return () => {
+      if (audioEnabledRef.current) {
+        stopSimulationAudioStream();
+      }
+    };
+  }, [enabled, initialVolume, onError]);
   
-  /**
-   * Mute or unmute all audio
-   */
-  const setAudioMuted = useCallback((muted: boolean) => {
-    console.log(`Setting audio muted to ${muted}`);
+  // Function to play sound for simulation events
+  const playEventSound = useCallback((eventType: string, intensity: number = 0.5) => {
+    if (!audioEnabledRef.current) return;
     
-    // We'll implement this fully in a future update
-    return muted;
-  }, []);
+    try {
+      playSimulationEventSound(eventType, intensity);
+    } catch (error) {
+      console.error('Error playing event sound:', error);
+      onError(error);
+    }
+  }, [onError]);
+  
+  // Function to toggle audio on/off
+  const toggleAudio = useCallback(() => {
+    try {
+      if (isSimulationAudioPlaying()) {
+        stopSimulationAudioStream();
+        audioEnabledRef.current = false;
+      } else {
+        startSimulationAudioStream();
+        setSimulationAudioVolume(volumeRef.current);
+        audioEnabledRef.current = true;
+      }
+    } catch (error) {
+      console.error('Error toggling audio:', error);
+      onError(error);
+    }
+    
+    return audioEnabledRef.current;
+  }, [onError]);
+  
+  // Function to set audio volume
+  const setVolume = useCallback((volume: number) => {
+    try {
+      const normalizedVolume = Math.max(0, Math.min(1, volume));
+      setSimulationAudioVolume(normalizedVolume);
+      volumeRef.current = normalizedVolume;
+    } catch (error) {
+      console.error('Error setting audio volume:', error);
+      onError(error);
+    }
+    
+    return volumeRef.current;
+  }, [onError]);
   
   return {
-    triggerAudioEvent,
-    setAudioVolume,
-    setAudioMuted
+    isAudioEnabled: audioEnabledRef.current,
+    volume: volumeRef.current,
+    playEventSound,
+    toggleAudio,
+    setVolume
   };
 }
-
-export default useAudioEvents;

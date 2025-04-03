@@ -1,4 +1,7 @@
 
+/**
+ * Particle interface for the simulation
+ */
 export interface Particle {
   id: string;
   x: number;
@@ -8,28 +11,31 @@ export interface Particle {
   vy: number;
   vz: number;
   radius: number;
+  mass: number;
   charge: 'positive' | 'negative' | 'neutral';
   color: string;
-  type?: string;
+  type: string;
   intent: number;
   energy: number;
-  knowledge?: number;
-  complexity?: number;
+  knowledge: number;
+  complexity: number;
   interactionTendency: number;
   lastInteraction?: number;
   interactionCount?: number;
-  interactions?: number;
-  age?: number;
+  interactions: number;
   intentDecayRate?: number;
   energyCapacity?: number;
-  adaptiveScore?: number;
-  creationTime: number;
-  mass: number;
   created: number;
-  scale: number;
   isPostInflation?: boolean;
+  scale: number;
+  adaptiveScore?: number;
+  age?: number;
+  creationTime: number;
 }
 
+/**
+ * Simulation statistics interface
+ */
 export interface SimulationStats {
   particleCount: number;
   positiveParticles: number;
@@ -47,30 +53,16 @@ export interface SimulationStats {
   averageClusterSize?: number;
   systemEntropy?: number;
   intentFieldComplexity?: number;
-  shannonEntropy?: number;
-  spatialEntropy?: number;
-  fieldOrderParameter?: number;
-  clusterLifetime?: number;
-  clusterEntropyDelta?: number;
-  informationDensity?: number;
-  kolmogorovComplexity?: number;
-  robotCount?: number;
   timestamp?: number;
+  frame?: number;
+  time?: number;
+  interactions?: number;
+  robotCount?: number;
 }
 
-export interface SimulationConfig {
-  initialParticleCount?: number;
-  maxParticles?: number;
-  fieldResolution?: number;
-  intentFluctuationRate?: number;
-  interactionRadius?: number;
-  boundaryCondition?: 'wrap' | 'bounce' | 'disappear' | 'none';
-  particleLifetime?: number | null;
-  inflationEnabled?: boolean;
-  inflationThreshold?: number;
-  inflationMultiplier?: number;
-}
-
+/**
+ * Inflation event interface
+ */
 export interface InflationEvent {
   id: string;
   timestamp: number;
@@ -80,5 +72,26 @@ export interface InflationEvent {
   energyIncrease: number;
   complexityIncrease: number;
   narrative: string;
-  particleCountBefore?: number;
+  particlesBeforeInflation?: Particle[];
+  particlesAfterInflation?: Particle[];
+  expansionFactor?: number;
+}
+
+/**
+ * Cluster interface
+ */
+export interface Cluster {
+  id: string;
+  particles: Particle[];
+  avgKnowledge: number;
+  avgComplexity: number;
+  charge: 'positive' | 'negative' | 'neutral' | 'mixed';
+  size: number;
+  formation: number;
+  lastUpdate: number;
+  position: {
+    x: number;
+    y: number;
+    z: number;
+  };
 }

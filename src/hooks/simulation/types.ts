@@ -1,43 +1,70 @@
 
-import { Particle } from '@/utils/particleUtils';
+import { Particle } from '@/types/simulation';
 
+/**
+ * Simulation configuration type
+ */
 export interface SimulationConfig {
   initialParticleCount: number;
   maxParticles: number;
   fieldResolution: number;
   intentFluctuationRate: number;
   interactionRadius: number;
-  boundaryCondition: 'wrap' | 'bounce' | 'disappear' | 'none';
+  boundaryCondition: 'wrap' | 'bounce' | 'disappear';
   particleLifetime: number | null;
   inflationEnabled: boolean;
   inflationThreshold: number;
   inflationMultiplier: number;
 }
 
-export interface InflationEvent {
-  timestamp: number;
-  particlesBeforeInflation: number;
-  particlesAfterInflation: number;
-  expansionFactor: number;
-  particleCountBefore?: number;
-  particleCountAfter?: number;
-  fieldEnergyBefore?: number;
-  fieldEnergyAfter?: number;
-}
-
+/**
+ * Particle creation options type
+ */
 export interface ParticleCreationOptions {
-  type?: string;
-  charge?: string;
-  maxVelocity?: number;
-  maxIntent?: number;
-  maxEnergy?: number;
-  maxComplexity?: number;
-  isPostInflation?: boolean;
   x?: number;
   y?: number;
-  eventType?: string;
+  z?: number;
+  vx?: number;
+  vy?: number;
+  vz?: number;
+  charge?: 'positive' | 'negative' | 'neutral';
+  type?: string;
+  energy?: number;
+  knowledge?: number;
+  complexity?: number;
+  intentValue?: number;
+  isPostInflation?: boolean;
 }
 
+/**
+ * Inflation event type
+ */
+export interface InflationEvent {
+  id: string;
+  timestamp: number;
+  particlesBefore: number;
+  particlesAfter: number;
+  inflationFactor: number;
+  energyIncrease: number;
+  complexityIncrease: number;
+  narrative: string;
+}
+
+/**
+ * Intent field cell type
+ */
+export interface IntentFieldCell {
+  x: number;
+  y: number;
+  z: number;
+  value: number;
+  lastUpdate: number;
+  fluctuationRate: number;
+}
+
+/**
+ * Simulation state type
+ */
 export interface SimulationState {
   particles: Particle[];
   intentField: number[][][];
@@ -45,7 +72,9 @@ export interface SimulationState {
   simulationTime: number;
   interactionsCount: number;
   frameCount: number;
+  dimensionWidth: number;
+  dimensionHeight: number;
   isInflated: boolean;
   inflationTime: number | null;
-  dimensions: { width: number; height: number };
+  initialized: boolean;
 }

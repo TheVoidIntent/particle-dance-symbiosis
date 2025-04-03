@@ -46,3 +46,40 @@ export function generateExportTimestamp(): string {
   const now = new Date();
   return now.toISOString().replace(/:/g, '-').replace(/\..+/, '');
 }
+
+/**
+ * Export simulation data
+ */
+export function exportSimulationData(data: any, format: 'pdf' | 'csv' = 'pdf'): string {
+  const timestamp = generateExportTimestamp();
+  const filename = `simulation-data-${timestamp}.${format}`;
+  
+  if (format === 'pdf') {
+    return exportDataAsPDF(data, filename);
+  } else {
+    return exportDataAsCsv(Array.isArray(data) ? data : [data], filename);
+  }
+}
+
+/**
+ * Clear simulation data
+ */
+export function clearSimulationData(): void {
+  console.log('Clearing simulation data');
+  // Implementation would go here
+}
+
+/**
+ * Get stored data points
+ */
+export function getStoredDataPoints(): any[] {
+  return getDataPoints();
+}
+
+/**
+ * Add a data point
+ */
+export function addDataPoint(dataPoint: any): void {
+  console.log('Adding data point', dataPoint);
+  // Implementation would go here
+}

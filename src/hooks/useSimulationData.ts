@@ -1,42 +1,67 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import { SimulationStats } from '@/types/simulation';
-import { addDataPoint, exportSimulationData, exportDataAsCsv, clearSimulationData } from '@/utils/dataExportUtils';
+import { exportDataAsPDF, exportDataAsCsv, getDataPoints } from '@/utils/dataExportUtils';
 
+/**
+ * Hook for managing simulation data
+ */
 export function useSimulationData() {
-  const [dataPoints, setDataPoints] = useState<number>(0);
-  const [lastExported, setLastExported] = useState<Date | null>(null);
+  const [simulationData, setSimulationData] = useState<any[]>([]);
+  const [isExporting, setIsExporting] = useState(false);
 
-  const handleSimulationData = (stats: SimulationStats) => {
-    const dataWithTimestamp = {
-      ...stats,
-      timestamp: Date.now()
-    };
-    addDataPoint(dataWithTimestamp);
-    setDataPoints(prev => prev + 1);
-  };
+  /**
+   * Add a new data point
+   */
+  const addDataPoint = useCallback((dataPoint: any) => {
+    setSimulationData(prev => [...prev, { ...dataPoint, timestamp: Date.now() }]);
+  }, []);
 
-  const exportData = (format: 'json' | 'csv' = 'json') => {
-    if (format === 'csv') {
-      exportDataAsCsv();
-    } else {
-      exportSimulationData();
+  /**
+   * Export the current simulation data
+   */
+  const exportSimulationData = useCallback((format: 'pdf' | 'csv' = 'pdf') => {
+    setIsExporting(true);
+    
+    try {
+      if (format === 'pdf') {
+        exportDataAsPDF(simulationData, `simulation-data-${Date.now()}.pdf`);
+      } else {
+        exportDataAsCsv(simulationData, `simulation-data-${Date.now()}.csv`);
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('Error exporting simulation data:', error);
+      return false;
+    } finally {
+      setIsExporting(false);
     }
-    setLastExported(new Date());
-  };
+  }, [simulationData]);
 
-  const clearData = () => {
-    clearSimulationData();
-    setDataPoints(0);
-  };
+  /**
+   * Clear all simulation data
+   */
+  const clearSimulationData = useCallback(() => {
+    setSimulationData([]);
+  }, []);
+
+  /**
+   * Get data points for visualization
+   */
+  const getStoredDataPoints = useCallback(() => {
+    if (simulationData.length === 0) {
+      return getDataPoints();
+    }
+    return simulationData;
+  }, [simulationData]);
 
   return {
-    dataPoints,
-    lastExported,
-    addDataPoint: handleSimulationData,
-    exportData,
-    clearData
+    simulationData,
+    isExporting,
+    addDataPoint,
+    exportSimulationData,
+    clearSimulationData,
+    getStoredDataPoints
   };
 }
-
-export default useSimulationData;

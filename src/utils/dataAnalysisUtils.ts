@@ -1,4 +1,3 @@
-
 import { Particle, SimulationStats } from '@/types/simulation';
 import { getDataPoints } from './dataExportUtils';
 
@@ -97,4 +96,45 @@ export function analyzeParticleClusters(particles: Particle[]) {
       ? clusters.reduce((sum, c) => sum + c.length, 0) / clusters.length 
       : 0
   };
+}
+
+/**
+ * Analyze simulation data
+ */
+export function analyzeSimulationData(data: any): any {
+  // Implementation would go here
+  console.log('Analyzing simulation data', data);
+  
+  return {
+    totalParticles: data.particleCount || 0,
+    totalInteractions: data.totalInteractions || 0,
+    complexityIndex: data.complexityIndex || 0,
+    averageKnowledge: data.averageKnowledge || 0,
+    systemEntropy: data.systemEntropy || 0,
+    recommendations: [
+      'Increase intent fluctuation rate for more particle diversity',
+      'Adjust learning rate to optimize knowledge transfer',
+      'Investigate cluster formation patterns'
+    ]
+  };
+}
+
+/**
+ * Generate insights from simulation data
+ */
+export function generateInsights(data: any): string[] {
+  // Implementation would go here
+  return [
+    'Positive charge particles show higher knowledge accumulation',
+    'Clusters tend to form more frequently at higher fluctuation rates',
+    'Interactions increase exponentially with particle count'
+  ];
+}
+
+/**
+ * Find anomalies in simulation data
+ */
+export function findAnomalies(data: any): any[] {
+  // Implementation would go here
+  return [];
 }

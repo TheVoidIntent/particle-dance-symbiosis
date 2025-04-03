@@ -1,66 +1,86 @@
 
 /**
- * Get a list of available audio files in the specified directory
- * @param directory The directory to scan for audio files
- * @returns Promise resolving to an array of audio file names
+ * Get available audio files for the simulation
  */
-export async function getAvailableAudioFiles(directory: string): Promise<string[]> {
-  // In a real implementation, this would fetch the list from the server
-  // For now, return a mock list of files
-  console.log(`Getting available audio files from ${directory}`);
-  
-  // Return a mock list for now
+export function getAvailableAudioFiles(): string[] {
   return [
+    'ambient_field.mp3',
     'particle_creation.mp3',
     'particle_interaction.mp3',
     'cluster_formation.mp3',
     'inflation_event.mp3',
-    'field_fluctuation.mp3',
-    'positive_particle_birth.mp3',
-    'negative_particle_birth.mp3',
-    'neutral_particle_birth.mp3'
+    'anomaly_detection.mp3',
+    'robot_evolution.mp3'
   ];
 }
 
 /**
- * Preload a set of audio files for faster playback
- * @param files Array of file paths to preload
- * @returns Promise that resolves when all files are loaded
+ * Preload audio files
+ * @param files Array of audio file paths to preload
  */
-export async function preloadAudioFiles(files: string[]): Promise<boolean> {
-  console.log(`Preloading ${files.length} audio files`);
-  
-  // In a real implementation, this would create Audio objects and load each file
-  // For now, just simulate success after a delay
-  return new Promise(resolve => {
-    setTimeout(() => resolve(true), 500);
-  });
+export function preloadAudioFiles(files: string[] = getAvailableAudioFiles()): Promise<void[]> {
+  return Promise.all(
+    files.map(file => 
+      new Promise<void>((resolve, reject) => {
+        try {
+          const audio = new Audio(`/audio/${file}`);
+          audio.addEventListener('canplaythrough', () => {
+            console.log(`Preloaded audio file: ${file}`);
+            resolve();
+          });
+          audio.addEventListener('error', (error) => {
+            console.error(`Error preloading audio file ${file}:`, error);
+            reject(error);
+          });
+          // Trigger loading
+          audio.load();
+        } catch (error) {
+          console.error(`Error setting up preload for audio file ${file}:`, error);
+          reject(error);
+        }
+      })
+    )
+  );
 }
 
 /**
  * Check if an audio file exists
- * @param filePath The path to the audio file
- * @returns Promise resolving to a boolean indicating if the file exists
+ * @param filename The filename to check
  */
-export async function checkAudioFileExists(filePath: string): Promise<{exists: boolean}> {
-  console.log(`Checking if audio file exists: ${filePath}`);
-  // Simulated response
-  return { exists: true };
+export function checkAudioFileExists(filename: string): Promise<boolean> {
+  return new Promise((resolve) => {
+    fetch(`/audio/${filename}`)
+      .then(response => {
+        resolve(response.ok);
+      })
+      .catch(() => {
+        resolve(false);
+      });
+  });
 }
 
 /**
  * Get metadata for an audio file
- * @param filePath The path to the audio file
- * @returns Promise resolving to the audio file metadata
+ * @param filename The filename to get metadata for
  */
-export async function getAudioFileMetadata(filePath: string): Promise<any> {
-  console.log(`Getting metadata for audio file: ${filePath}`);
-  // Simulated response
-  return {
-    duration: 30,
-    sampleRate: 44100,
-    channels: 2,
-    format: 'mp3',
-    bitrate: 320000
-  };
+export function getAudioFileMetadata(filename: string): Promise<any> {
+  return new Promise((resolve, reject) => {
+    const audio = new Audio(`/audio/${filename}`);
+    
+    audio.addEventListener('loadedmetadata', () => {
+      resolve({
+        duration: audio.duration,
+        channels: 2, // Assumption, we can't detect this from the Audio API
+        sampleRate: 44100, // Assumption, we can't detect this from the Audio API
+        format: filename.split('.').pop(),
+        filename
+      });
+    });
+    
+    audio.addEventListener('error', (error) => {
+      reject(error);
+    });
+    
+    audio.load();
+  });
 }

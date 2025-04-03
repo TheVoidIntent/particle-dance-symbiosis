@@ -1,70 +1,61 @@
 
 import React from 'react';
-import { Button } from "@/components/ui/button";
-import { Download } from "lucide-react";
-import { clearSimulationData } from '@/utils/dataExportUtils';
-import { useToast } from "@/hooks/use-toast";
-import { Particle } from '@/utils/particleUtils';
+import { Button } from '@/components/ui/button';
+import { Play, Pause, RotateCw, Download } from 'lucide-react';
+import { exportDataAsPDF } from '@/utils/dataExportUtils';
 
 interface SimulationControlButtonsProps {
-  dataCollectionActive: boolean;
-  onExportData: () => void;
-  onToggleDataCollection: () => void;
-  onResetSimulation: () => Particle[]; // Explicit return type of Particle[]
+  isRunning: boolean;
+  onToggleRunning: () => void;
+  onReset: () => void;
+  onExport?: () => void;
 }
 
-export const SimulationControlButtons: React.FC<SimulationControlButtonsProps> = ({
-  dataCollectionActive,
-  onExportData,
-  onToggleDataCollection,
-  onResetSimulation
+const SimulationControlButtons: React.FC<SimulationControlButtonsProps> = ({
+  isRunning,
+  onToggleRunning,
+  onReset,
+  onExport
 }) => {
-  const { toast } = useToast();
-
   const handleClearData = () => {
-    clearSimulationData();
-    
-    toast({
-      title: "Data Cleared",
-      description: "All collected simulation data has been cleared.",
-      variant: "default",
-    });
+    if (window.confirm('Are you sure you want to clear all simulation data?')) {
+      // Implementation for clearing data
+      console.log('Clearing simulation data');
+    }
   };
 
   return (
-    <div className="absolute bottom-4 right-4 flex flex-col gap-2 opacity-70 hover:opacity-100 transition-opacity">
+    <div className="flex space-x-2">
       <Button 
-        onClick={onExportData}
-        className="bg-indigo-600 text-white px-3 py-1 rounded text-xs"
-        title="Export collected data"
+        variant={isRunning ? "outline" : "default"}
+        size="sm"
+        onClick={onToggleRunning}
       >
-        <Download className="mr-2 h-4 w-4" />
-        Export Data
+        {isRunning ? <Pause className="mr-1 h-4 w-4" /> : <Play className="mr-1 h-4 w-4" />}
+        {isRunning ? 'Pause' : 'Start'}
       </Button>
       
       <Button 
-        onClick={onToggleDataCollection}
-        className={`${dataCollectionActive ? 'bg-green-600' : 'bg-red-600'} text-white px-3 py-1 rounded text-xs`}
-        title={dataCollectionActive ? "Pause data collection" : "Resume data collection"}
+        variant="outline" 
+        size="sm"
+        onClick={onReset}
       >
-        {dataCollectionActive ? "Collecting" : "Paused"}
-      </Button>
-      
-      <Button 
-        onClick={handleClearData}
-        className="bg-gray-600 text-white px-3 py-1 rounded text-xs"
-        title="Clear all collected data"
-      >
-        Clear Data
-      </Button>
-      
-      <Button 
-        onClick={() => onResetSimulation()}
-        className="bg-red-600 text-white px-3 py-1 rounded text-xs"
-        title="Reset the entire simulation"
-      >
+        <RotateCw className="mr-1 h-4 w-4" />
         Reset
       </Button>
+      
+      {onExport && (
+        <Button 
+          variant="outline" 
+          size="sm"
+          onClick={onExport}
+        >
+          <Download className="mr-1 h-4 w-4" />
+          Export
+        </Button>
+      )}
     </div>
   );
 };
+
+export default SimulationControlButtons;

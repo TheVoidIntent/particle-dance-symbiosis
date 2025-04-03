@@ -54,62 +54,78 @@ const SimulationCanvas: React.FC<SimulationCanvasProps> = ({
     positiveParticles: 0,
     negativeParticles: 0,
     neutralParticles: 0,
-    totalInteractions: 0
+    totalInteractions: 0,
+    timestamp: Date.now()
   });
   const [narratives, setNarratives] = useState<Array<{ clusterId: number, narrative: string, timestamp: number }>>([]);
   const [robots, setRobots] = useState<Array<any>>([]);
   
   // Get simulation state or use provided particles
   const simulationState = useSimulationState({
-    initialParticles: particles,
+    initialParticles: [],
     dimensions: { width, height }
   });
   
+  // Use simulation particles as a fallback
   const activeParticles = particles.length > 0 ? particles : simulationState.particles;
   const activeRunning = typeof isRunning !== 'undefined' ? isRunning : running;
   
   // Process simulation data for insights
   useEffect(() => {
-    if (!activeRunning || activeParticles.length < 5) return;
+    if (!activeRunning || !activeParticles || activeParticles.length < 5) return;
     
     const processInterval = setInterval(() => {
-      // Detect stable clusters
-      const { clusters, unclusteredParticles } = detectStableClusters(activeParticles, 0.6);
+      // Only process if there are particles to work with
+      if (!activeParticles || activeParticles.length === 0) return;
       
-      if (clusters.length > 0) {
-        // Play audio event for cluster formation
-        playSimulationEvent('cluster_formation', { intensity: clusters.length / 5 });
+      // Make sure all particles have required properties for clustering
+      const validParticles = activeParticles.filter(p => 
+        p && p.id && p.x !== undefined && p.y !== undefined && p.charge
+      );
+      
+      if (validParticles.length < 5) return;
+      
+      try {
+        // Detect stable clusters
+        const { clusters, unclusteredParticles } = detectStableClusters(validParticles, 0.6);
         
-        // Evolve cluster intelligence
-        const evolvedClusters = evolveClusterIntelligence(clusters, simulationStats, 0.1);
-        
-        // Generate narratives for evolved clusters
-        const newNarratives = generateClusterNarratives(evolvedClusters, simulationStats);
-        setNarratives(prev => [...prev, ...newNarratives]);
-        
-        // Notify about new narratives
-        newNarratives.forEach(narrative => {
-          onClusterNarrative(narrative);
-        });
-        
-        // Check for robot-level intelligence
-        const newRobots = identifyRobotClusters(evolvedClusters);
-        
-        // Check if we have any new robots that weren't previously identified
-        const existingRobotIds = robots.map(r => r.id);
-        const trulyNewRobots = newRobots.filter(r => !existingRobotIds.includes(r.id));
-        
-        if (trulyNewRobots.length > 0) {
-          setRobots(prev => [...prev, ...trulyNewRobots]);
+        if (clusters.length > 0) {
+          // Play audio event for cluster formation
+          playSimulationEvent('cluster_formation', { intensity: clusters.length / 5 });
           
-          // Play special audio event for robot evolution
-          playSimulationEvent('robot_evolution', { count: trulyNewRobots.length });
+          // Evolve cluster intelligence
+          const evolvedClusters = evolveClusterIntelligence(clusters, simulationStats, 0.1);
           
-          // Notify about robot evolution
-          trulyNewRobots.forEach(robot => {
-            onRobotEvolution(robot);
+          // Generate narratives for evolved clusters
+          const newNarratives = generateClusterNarratives(evolvedClusters, simulationStats);
+          setNarratives(prev => [...prev, ...newNarratives]);
+          
+          // Notify about new narratives
+          newNarratives.forEach(narrative => {
+            onClusterNarrative(narrative);
           });
+          
+          // Check for robot-level intelligence
+          const newRobots = identifyRobotClusters(evolvedClusters);
+          
+          // Check if we have any new robots that weren't previously identified
+          const existingRobotIds = robots.map(r => r.id);
+          const trulyNewRobots = newRobots.filter(r => !existingRobotIds.includes(r.id));
+          
+          if (trulyNewRobots.length > 0) {
+            setRobots(prev => [...prev, ...trulyNewRobots]);
+            
+            // Play special audio event for robot evolution
+            playSimulationEvent('robot_evolution', { count: trulyNewRobots.length });
+            
+            // Notify about robot evolution
+            trulyNewRobots.forEach(robot => {
+              onRobotEvolution(robot);
+            });
+          }
         }
+      } catch (error) {
+        console.error("Error processing clusters:", error);
       }
     }, 5000); // Process every 5 seconds to avoid performance issues
     
@@ -118,7 +134,7 @@ const SimulationCanvas: React.FC<SimulationCanvasProps> = ({
   
   // Update simulation stats
   useEffect(() => {
-    if (activeParticles.length === 0) return;
+    if (!activeParticles || activeParticles.length === 0) return;
     
     const stats: SimulationStats = {
       particleCount: activeParticles.length,
@@ -127,7 +143,8 @@ const SimulationCanvas: React.FC<SimulationCanvasProps> = ({
       neutralParticles: activeParticles.filter(p => p.charge === 'neutral').length,
       totalInteractions: activeParticles.reduce((sum, p) => sum + (p.interactions || 0), 0),
       robotCount: robots.length,
-      clusterCount: narratives.length > 0 ? [...new Set(narratives.map(n => n.clusterId))].length : 0
+      clusterCount: narratives.length > 0 ? [...new Set(narratives.map(n => n.clusterId))].length : 0,
+      timestamp: Date.now()
     };
     
     setSimulationStats(stats);

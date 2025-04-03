@@ -1,3 +1,4 @@
+
 import { SimulationStats } from '@/types/simulation';
 import { addDataPoint } from './dataExportUtils';
 import { exportDataAsCsv } from './dataExportUtils'; // Changed from exportDataAsJson
@@ -65,6 +66,49 @@ export function exportDailyData(): void {
   } catch (error) {
     console.error("Error exporting daily data:", error);
   }
+}
+
+/**
+ * Set up daily data export
+ */
+export function setupDailyDataExport(options?: {
+  onExportStart?: () => void;
+  onExportComplete?: (filename: string) => void;
+}): { cleanup: () => void } {
+  // Schedule first export for midnight tonight
+  const midnight = new Date();
+  midnight.setHours(24, 0, 0, 0);
+  const timeUntilMidnight = midnight.getTime() - Date.now();
+  
+  const exportTimer = setTimeout(() => {
+    if (options?.onExportStart) {
+      options.onExportStart();
+    }
+    
+    exportDailyData();
+    
+    if (options?.onExportComplete) {
+      const filename = `simulation_data_${new Date().toISOString().slice(0, 10)}.pdf`;
+      options.onExportComplete(filename);
+    }
+    
+    // Schedule next export for tomorrow at midnight
+    setupDailyDataExport(options);
+  }, timeUntilMidnight);
+  
+  // Return cleanup function
+  return {
+    cleanup: () => clearTimeout(exportTimer)
+  };
+}
+
+/**
+ * Get the nearest scheduled export time
+ */
+export function getNearestExportTime(): Date {
+  const midnight = new Date();
+  midnight.setHours(24, 0, 0, 0);
+  return midnight;
 }
 
 /**

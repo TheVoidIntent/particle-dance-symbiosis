@@ -2,41 +2,41 @@
 // Define the basic particle interface
 export interface Particle {
   id: string; // Changed from string | number to just string for compatibility
-  x?: number;
-  y?: number;
-  z?: number;
-  vx?: number;
-  vy?: number;
-  vz?: number;
+  x: number; // Changed from optional to required
+  y: number; // Changed from optional to required
+  z: number; // Changed from optional to required
+  vx: number; // Changed from optional to required
+  vy: number; // Changed from optional to required
+  vz: number; // Changed from optional to required
+  radius: number; // Changed from optional to required
+  mass: number; // Added as required
+  charge: 'positive' | 'negative' | 'neutral';
+  color: string; // Changed from optional to required
+  energy: number; // Changed from optional to required
+  intent: number; // Changed from optional to required
+  complexity: number; // Changed from optional to required
+  interactionTendency: number; // Changed from optional to required
+  lastInteraction: number; // Changed from optional to required
+  interactionCount: number; // Changed from optional to required
+  age: number; // Changed from optional to required
+  interactions: number; // Changed from optional to required
+  intentDecayRate: number; // Changed from optional to required
+  created: number; // Changed from optional to required
+  scale: number; // Changed from optional to required
+  adaptiveScore: number; // Changed from optional to required
+  energyCapacity: number; // Changed from optional to required
+  creationTime: number; // Changed from optional to required
+  isPostInflation: boolean; // Changed from optional to required
+  
+  // Optional properties
   position?: { x: number, y: number, z?: number };
   velocity?: { x: number, y: number, z?: number };
-  radius?: number;
-  mass?: number;
-  charge: 'positive' | 'negative' | 'neutral';
-  color?: string;
-  energy?: number;
-  intent?: number;
-  complexity?: number;
-  isPostInflation?: boolean;
+  knowledge?: number;
   knowledgeLevel?: number;
   lifetime?: number;
-  interactionCount?: number;
   neighbours?: Particle[];
   type?: string;
-  
-  // Properties needed based on errors
-  knowledge?: number;
-  lastInteraction?: number;
-  age?: number;
-  interactions?: number;
-  interactionTendency?: number;
-  intentDecayRate?: number;
-  created?: number;
-  scale?: number;
-  adaptiveScore?: number;
-  energyCapacity?: number;
   lifespan?: number;
-  creationTime?: number;
   
   // Advanced properties for intelligent clusters
   clusterAffinity?: number;

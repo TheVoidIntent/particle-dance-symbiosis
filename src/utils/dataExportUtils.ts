@@ -1,119 +1,130 @@
-
 import { SimulationStats } from '@/types/simulation';
 
 // In-memory storage for simulation data points
-let simulationDataPoints: (SimulationStats & { timestamp: number })[] = [];
+const dataPoints: SimulationStats[] = [];
 
 /**
- * Add a data point to the collection
+ * Add a data point to the simulation data collection
  */
 export function addDataPoint(stats: SimulationStats): void {
-  // Add timestamp if not present
-  const dataPoint = {
+  // Ensure timestamp is set
+  const dataWithTimestamp = {
     ...stats,
     timestamp: stats.timestamp || Date.now()
   };
   
-  simulationDataPoints.push(dataPoint);
+  dataPoints.push(dataWithTimestamp);
   
-  // Keep last 1000 data points to prevent memory issues
-  if (simulationDataPoints.length > 1000) {
-    simulationDataPoints = simulationDataPoints.slice(-1000);
+  // Keep only the last 10000 points to avoid memory issues
+  if (dataPoints.length > 10000) {
+    dataPoints.shift();
   }
 }
 
 /**
- * Export simulation data as JSON file
+ * Export simulation data as JSON
  */
 export function exportSimulationData(): void {
-  if (simulationDataPoints.length === 0) {
-    console.warn("No simulation data to export");
+  if (dataPoints.length === 0) {
+    console.warn("No data to export");
     return;
   }
   
-  const dataToExport = {
-    exportDate: new Date().toISOString(),
-    dataPoints: simulationDataPoints.map(point => ({
-      ...point,
-      timestamp: point.timestamp || Date.now()
-    }))
-  };
-  
-  const dataStr = JSON.stringify(dataToExport, null, 2);
-  const dataUri = `data:application/json;charset=utf-8,${encodeURIComponent(dataStr)}`;
-  
-  downloadFile(dataUri, `simulation-data-${new Date().toISOString().slice(0, 10)}.json`);
+  try {
+    // Convert data to JSON
+    const jsonData = JSON.stringify({
+      data: dataPoints,
+      exportedAt: new Date().toISOString(),
+      totalPoints: dataPoints.length
+    }, null, 2);
+    
+    // Create a blob and download link
+    const blob = new Blob([jsonData], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    
+    link.href = url;
+    link.download = `simulation_data_${new Date().toISOString().slice(0, 10)}.json`;
+    document.body.appendChild(link);
+    link.click();
+    
+    // Clean up
+    URL.revokeObjectURL(url);
+    document.body.removeChild(link);
+    
+    console.log(`Exported ${dataPoints.length} data points as JSON`);
+  } catch (error) {
+    console.error("Error exporting data:", error);
+  }
 }
 
 /**
- * Export simulation data as CSV file
+ * Export simulation data as CSV
  */
 export function exportDataAsCsv(): void {
-  if (simulationDataPoints.length === 0) {
-    console.warn("No simulation data to export");
+  if (dataPoints.length === 0) {
+    console.warn("No data to export");
     return;
   }
   
-  // Get all unique keys from all data points
-  const allKeys = new Set<string>();
-  simulationDataPoints.forEach(point => {
-    Object.keys(point).forEach(key => allKeys.add(key));
-  });
-  
-  // Create CSV header
-  const headers = Array.from(allKeys);
-  let csv = headers.join(',') + '\n';
-  
-  // Add data rows
-  simulationDataPoints.forEach(point => {
-    const row = headers.map(header => {
-      const value = point[header as keyof typeof point];
-      return value !== undefined ? String(value).replace(/,/g, '') : '';
+  try {
+    // Get headers from first data point
+    const headers = Object.keys(dataPoints[0]);
+    
+    // Create CSV content
+    let csvContent = headers.join(',') + '\n';
+    
+    // Add data rows
+    dataPoints.forEach(point => {
+      const row = headers.map(header => {
+        // Format timestamp as ISO string if it exists
+        if (header === 'timestamp' && point.timestamp) {
+          return new Date(point.timestamp).toISOString();
+        }
+        return point[header as keyof SimulationStats] ?? '';
+      }).join(',');
+      
+      csvContent += row + '\n';
     });
-    csv += row.join(',') + '\n';
-  });
-  
-  // Download CSV
-  const dataUri = `data:text/csv;charset=utf-8,${encodeURIComponent(csv)}`;
-  downloadFile(dataUri, `simulation-data-${new Date().toISOString().slice(0, 10)}.csv`);
-}
-
-/**
- * Export data as PDF
- */
-export function exportDataAsPdf(): boolean {
-  console.log("PDF export functionality would go here");
-  // This would typically use a library like jsPDF
-  // For now, we'll just return a success flag
-  return true;
+    
+    // Create a blob and download link
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    
+    link.href = url;
+    link.download = `simulation_data_${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    
+    // Clean up
+    URL.revokeObjectURL(url);
+    document.body.removeChild(link);
+    
+    console.log(`Exported ${dataPoints.length} data points as CSV`);
+  } catch (error) {
+    console.error("Error exporting data:", error);
+  }
 }
 
 /**
  * Clear all stored simulation data
  */
 export function clearSimulationData(): void {
-  simulationDataPoints = [];
+  dataPoints.length = 0;
   console.log("Simulation data cleared");
 }
 
 /**
  * Get all stored data points
  */
-export function getStoredDataPoints(): (SimulationStats & { timestamp: number })[] {
-  return simulationDataPoints;
+export function getDataPoints(): SimulationStats[] {
+  return [...dataPoints];
 }
 
 /**
- * Helper function to download a file
+ * Get count of stored data points
  */
-function downloadFile(dataUri: string, filename: string): void {
-  const link = document.createElement('a');
-  link.href = dataUri;
-  link.download = filename;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
+export function getDataPointCount(): number {
+  return dataPoints.length;
 }
-
-// Export the function as named export since the module has no default export
-export { exportSimulationData as exportDataAsJson };

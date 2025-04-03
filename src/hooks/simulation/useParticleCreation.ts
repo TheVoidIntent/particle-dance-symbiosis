@@ -1,7 +1,7 @@
 
 import { MutableRefObject } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import { Particle } from '@/utils/particleUtils';
+import { Particle } from '@/types/simulation';  // Import from types/simulation instead
 import { ParticleCreationOptions } from './types';
 
 /**
@@ -69,8 +69,10 @@ export function useParticleCreation(
       id: uuidv4(),  // Use uuid to ensure string ids
       x,
       y,
+      z: Math.random() * 10, // random z position for 3D visualizations
       vx,
       vy,
+      vz: (Math.random() - 0.5) * 0.5,
       radius: 3 + Math.random() * 3, // random size between 3-6
       mass: 1 + Math.random() * 4,
       charge: charge as 'positive' | 'negative' | 'neutral', // Explicitly cast to the allowed values
@@ -83,7 +85,6 @@ export function useParticleCreation(
       interactionTendency,
       lastInteraction: 0,
       interactionCount: 0,
-      z: Math.random() * 10, // random z position for 3D visualizations
       age: 0, // starts at age 0
       interactions: 0, // starts with no interactions
       intentDecayRate: 0.001 + Math.random() * 0.005,

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Particle } from '@/types/simulation';
+import { v4 as uuidv4 } from 'uuid';
 
 interface UseNeuralIntentSimulationProps {
   initialParticles?: Particle[];
@@ -249,7 +250,7 @@ export function useNeuralIntentSimulation({
     }
     
     return {
-      id: Date.now() + Math.floor(Math.random() * 10000), // Convert to number
+      id: uuidv4(),
       x: posX,
       y: posY,
       vx: (Math.random() - 0.5) * 2,

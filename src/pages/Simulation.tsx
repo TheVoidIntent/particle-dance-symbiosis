@@ -85,20 +85,20 @@ const Simulation: React.FC = () => {
     detectSimulationAnomalies,
     onInflationEvent: inflationEvent
   } = useParticleSimulation({
-    initialParticleCount: 50,
+    initialParticleCount: 30,
     canvasRef,
     config: {
       maxParticles: 500,
       fieldResolution: 20,
       intentFluctuationRate: 0.05,
-      interactionRadius: 50,
+      interactionRadius: 30,
       boundaryCondition: 'wrap',
       particleLifetime: null,
       inflationEnabled: true,
       inflationThreshold: 200,
       inflationMultiplier: 1.5
     },
-    onInflationEvent: (event: any) => {
+    onInflationEvent: (event) => {
       setInflationEvents(prev => [...prev, event]);
       toast.info("Universe inflation event detected!");
     }

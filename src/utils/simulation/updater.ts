@@ -1,4 +1,54 @@
+
 import { playSimulationEventSound } from '@/utils/audio/simulationAudioUtils';
+import { simulationState } from './state';
+
+/**
+ * Main simulation update function that processes simulation state changes
+ */
+export function updateSimulation(): void {
+  // Update particles physics, interactions, etc.
+  console.log("Updating simulation state");
+  
+  // Check for new particle interactions
+  if (simulationState.particles && simulationState.particles.length > 0) {
+    const interactionCount = simulationState.particles.length * 0.1; // Simulate some interactions
+    simulationState.interactionsCount += interactionCount;
+  }
+
+  // Update particle positions and handle collisions
+  if (simulationState.particles) {
+    simulationState.particles.forEach(particle => {
+      // Simple position updates
+      if (particle.x !== undefined && particle.vx !== undefined) {
+        particle.x += particle.vx;
+      }
+      if (particle.y !== undefined && particle.vy !== undefined) {
+        particle.y += particle.vy;
+      }
+      
+      // Boundary handling
+      if (particle.x !== undefined && simulationState.dimensions) {
+        if (particle.x < 0 || particle.x > simulationState.dimensions.width) {
+          if (particle.vx !== undefined) particle.vx = -particle.vx * 0.8;
+        }
+      }
+      
+      if (particle.y !== undefined && simulationState.dimensions) {
+        if (particle.y < 0 || particle.y > simulationState.dimensions.height) {
+          if (particle.vy !== undefined) particle.vy = -particle.vy * 0.8;
+        }
+      }
+      
+      // Particle aging
+      if (particle.age !== undefined) {
+        particle.age += 0.01;
+      }
+      
+      // Record iteration
+      simulationState.iteration++;
+    });
+  }
+}
 
 /**
  * Update the intent field periodically

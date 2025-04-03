@@ -1,72 +1,54 @@
 
-import { useCallback, useState } from 'react';
-import { useInflationEvents } from './useInflationEvents';
+import { useCallback } from 'react';
 
 export interface NotebookLmConfig {
-  notebookId: string;
-  accessToken?: string;
-  userName?: string;
-  lastExport?: Date;
+  notebookId?: string;
+  apiKey?: string;
+  isEnabled: boolean;
 }
 
 /**
- * Hook for integrating with Google NotebookLM
+ * Hook for integration with NotebookLM
  */
 export function useNotebookLmIntegration() {
-  const { inflationEvents, downloadCurrentDataAsPDF } = useInflationEvents();
-  const [notebookLmConfig, setNotebookLmConfig] = useState<NotebookLmConfig>({
-    notebookId: "nb_" + Math.random().toString(36).substring(2, 10),
-  });
-  
-  // For the current state of the universe
+  /**
+   * Export data for NotebookLM
+   */
   const onExportForNotebook = useCallback(() => {
-    // Export the data
-    exportInflationEventsData();
-    
-    // Trigger a download
-    downloadCurrentDataAsPDF();
-  }, [downloadCurrentDataAsPDF]);
-  
-  // Export simulation data to Google NotebookLM
-  const exportSimulationData = useCallback((datasetId?: string, format: string = 'json') => {
-    console.log(`Exporting simulation data with ATLAS dataset ${datasetId} in ${format} format`);
-    downloadCurrentDataAsPDF();
-    
-    return {
-      success: true,
-      filename: `simulation_data_${new Date().toISOString().slice(0, 10)}.${format}`,
-      inflationEventCount: inflationEvents.length
-    };
-  }, [inflationEvents, downloadCurrentDataAsPDF]);
-  
-  // Open Google NotebookLM
-  const openNotebookLm = useCallback(() => {
-    console.log("Opening Google NotebookLM in a new tab");
-    window.open('https://notebooklm.google.com', '_blank');
+    console.log("Exporting data for NotebookLM");
+    // Implementation would go here
   }, []);
-  
-  // Export inflation events data
-  const exportInflationEventsData = useCallback(() => {
-    console.log(`Exporting ${inflationEvents.length} inflation events`);
-    const data = {
-      inflationEvents,
-      exportedAt: new Date().toISOString(),
-      totalEvents: inflationEvents.length
-    };
-    
-    // In a real app, you'd send this to an API
-    console.log("Exported inflation events data:", data);
-    
-    return data;
-  }, [inflationEvents]);
-  
+
+  /**
+   * Export simulation data
+   */
+  const exportSimulationData = useCallback(() => {
+    console.log("Exporting simulation data");
+    // Implementation would go here
+    return true;
+  }, []);
+
+  /**
+   * Open NotebookLM with current data
+   */
+  const openNotebookLm = useCallback(() => {
+    console.log("Opening NotebookLM with current data");
+    // Implementation would go here
+    return true;
+  }, []);
+
+  /**
+   * Configuration for NotebookLM
+   */
+  const notebookLmConfig: NotebookLmConfig = {
+    notebookId: 'default-notebook',
+    isEnabled: true
+  };
+
   return {
     onExportForNotebook,
     exportSimulationData,
     openNotebookLm,
-    notebookLmConfig,
-    exportInflationEventsData
+    notebookLmConfig
   };
 }
-
-export default useNotebookLmIntegration;

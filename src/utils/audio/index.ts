@@ -1,35 +1,34 @@
 
-// Export audio utilities from individual files
-export { 
-  playSimulationAudio,
+// Export all audio-related utilities for easy imports
+export {
+  playLoopingAudio,
+  stopLoopingAudio,
+  setLoopingAudioVolume,
+  initAudioContext
+} from './audioPlaybackUtils';
+
+export {
+  getAvailableAudioFiles,
+  preloadAudioFiles,
+  checkAudioFileExists,
+  getAudioFileMetadata
+} from './audioFileUtils';
+
+export {
+  generateInteractionAudio,
+  generateFieldFluctuationAudio,
+  playSimulationEventSound,
   playSimulationEvent,
   generateParticleSoundscape,
   startSimulationAudioStream,
   stopSimulationAudioStream,
   isSimulationAudioPlaying,
   setSimulationAudioVolume,
-  initAudioContext
+  initAudioContext as initSimulationAudioContext
 } from './simulationAudioUtils';
 
 export {
-  checkAudioFileExists,
-  getAudioFileMetadata,
-  getAvailableAudioFiles
-} from './audioFileUtils';
-
-export {
-  generateSampleAudio,
-  generateParticleTone,
-  createFallbackAudioIfNeeded
+  createAudioContext,
+  generateTone,
+  generateToneSequence
 } from './audioGenerationUtils';
-
-// Export from audioPlaybackUtils
-export {
-  playAudio,
-  playAudioWithErrorHandling,
-  playLoopingAudio,
-  stopLoopingAudio,
-  setLoopingAudioVolume,
-  resumeAudioContext,
-  createFallbackAudioIfNeeded as createPlaybackFallbackAudio
-} from './audioPlaybackUtils';

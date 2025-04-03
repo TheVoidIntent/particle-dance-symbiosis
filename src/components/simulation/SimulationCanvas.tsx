@@ -3,7 +3,7 @@ import React, { useRef, useEffect, useState } from 'react';
 import { useSimulationState } from '@/hooks/simulation';
 import { Particle, SimulationStats } from '@/types/simulation';
 import { detectStableClusters, evolveClusterIntelligence, generateClusterNarratives, identifyRobotClusters } from '@/utils/clusterIntelligence';
-import { playSimulationEvent } from '@/utils/audio/simulationAudioUtils';
+import { playSimulationEventSound } from '@/utils/audio/simulationAudioUtils';
 
 export interface SimulationCanvasProps {
   width?: number;
@@ -81,7 +81,7 @@ const SimulationCanvas: React.FC<SimulationCanvasProps> = ({
       // Make sure all particles have required properties for clustering
       const validParticles = activeParticles.filter(p => 
         p && p.id && p.x !== undefined && p.y !== undefined && p.charge
-      );
+      ) as Particle[];
       
       if (validParticles.length < 5) return;
       
@@ -91,7 +91,7 @@ const SimulationCanvas: React.FC<SimulationCanvasProps> = ({
         
         if (clusters.length > 0) {
           // Play audio event for cluster formation
-          playSimulationEvent('cluster_formation', { intensity: clusters.length / 5 });
+          playSimulationEventSound('cluster_formation', clusters.length / 5);
           
           // Evolve cluster intelligence
           const evolvedClusters = evolveClusterIntelligence(clusters, simulationStats, 0.1);
@@ -116,7 +116,7 @@ const SimulationCanvas: React.FC<SimulationCanvasProps> = ({
             setRobots(prev => [...prev, ...trulyNewRobots]);
             
             // Play special audio event for robot evolution
-            playSimulationEvent('robot_evolution', { count: trulyNewRobots.length });
+            playSimulationEventSound('robot_evolution', trulyNewRobots.length);
             
             // Notify about robot evolution
             trulyNewRobots.forEach(robot => {

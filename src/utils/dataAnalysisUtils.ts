@@ -1,205 +1,100 @@
 
-import { SimulationStats } from '@/types/simulation';
-import { getStoredDataPoints } from './dataExportUtils';
+import { Particle, SimulationStats } from '@/types/simulation';
+import { getDataPoints } from './dataExportUtils';
 
 /**
- * Analyze simulation data for trends and patterns
+ * Calculate the complexity of the simulation
+ * @param particles The particles to analyze
+ * @param stats The current simulation stats
  */
-export function analyzeSimulationData(timeRange: number = 24 * 60 * 60 * 1000): any {
-  const dataPoints = getStoredDataPoints();
+export function calculateSimulationComplexity(
+  particles: Particle[],
+  stats: SimulationStats
+): number {
+  if (particles.length === 0) return 0;
   
-  if (dataPoints.length === 0) {
-    return {
-      error: "No data available for analysis",
-      status: "error"
-    };
-  }
-  
-  // Filter data points by time range
-  const now = Date.now();
-  const filteredData = dataPoints.filter(point => 
-    (now - (point.timestamp || 0)) <= timeRange
-  );
-  
-  if (filteredData.length === 0) {
-    return {
-      error: "No data in the selected time range",
-      status: "error"
-    };
-  }
-  
-  // Calculate basic statistics
-  const statistics = calculateBasicStatistics(filteredData);
-  
-  // Identify trends
-  const trends = identifyTrends(filteredData);
-  
-  // Detect anomalies
-  const anomalies = detectAnomalies(filteredData);
-  
-  return {
-    status: "success",
-    dataPoints: filteredData.length,
-    timeRange,
-    statistics,
-    trends,
-    anomalies
+  // Count different charge types
+  const chargeTypes = {
+    positive: particles.filter(p => p.charge === 'positive').length,
+    negative: particles.filter(p => p.charge === 'negative').length,
+    neutral: particles.filter(p => p.charge === 'neutral').length
   };
-}
-
-/**
- * Calculate basic statistics from data points
- */
-function calculateBasicStatistics(dataPoints: (SimulationStats & { timestamp: number })[]) {
-  // Sort by timestamp
-  const sortedData = [...dataPoints].sort((a, b) => 
-    (a.timestamp || 0) - (b.timestamp || 0)
-  );
   
-  // Get last data point
-  const latest = sortedData[sortedData.length - 1];
-  
-  // Calculate averages
-  const avgParticleCount = average(sortedData.map(d => d.particleCount));
-  const avgPositiveParticles = average(sortedData.map(d => d.positiveParticles));
-  const avgNegativeParticles = average(sortedData.map(d => d.negativeParticles));
-  const avgNeutralParticles = average(sortedData.map(d => d.neutralParticles));
-  const avgComplexityIndex = average(sortedData.map(d => d.complexityIndex || 0));
-  
-  // Calculate growth rates
-  const first = sortedData[0];
-  const particleGrowthRate = calculateGrowthRate(
-    first.particleCount,
-    latest.particleCount,
-    sortedData.length
-  );
-  
-  // Calculate entropy over time
-  const entropyTrend = sortedData
-    .filter(d => d.systemEntropy !== undefined)
-    .map(d => d.systemEntropy || 0);
-  
-  return {
-    latest,
-    averages: {
-      particleCount: avgParticleCount,
-      positiveParticles: avgPositiveParticles,
-      negativeParticles: avgNegativeParticles,
-      neutralParticles: avgNeutralParticles,
-      complexityIndex: avgComplexityIndex
-    },
-    growth: {
-      particleGrowthRate
-    },
-    entropy: {
-      trend: entropyTrend,
-      average: average(entropyTrend)
-    }
-  };
-}
-
-/**
- * Identify trends in the data
- */
-function identifyTrends(dataPoints: (SimulationStats & { timestamp: number })[]) {
-  // Sort by timestamp
-  const sortedData = [...dataPoints].sort((a, b) => 
-    (a.timestamp || 0) - (b.timestamp || 0)
-  );
-  
-  // Calculate linear regression for particle count
-  const particleCountTrend = calculateLinearRegression(
-    sortedData.map((_, i) => i),
-    sortedData.map(d => d.particleCount)
-  );
-  
-  // Calculate linear regression for complexity
-  const complexityTrend = calculateLinearRegression(
-    sortedData.filter(d => d.complexityIndex !== undefined).map((_, i) => i),
-    sortedData.filter(d => d.complexityIndex !== undefined).map(d => d.complexityIndex || 0)
-  );
-  
-  return {
-    particleCountTrend,
-    complexityTrend
-  };
-}
-
-/**
- * Detect anomalies in the simulation data
- */
-function detectAnomalies(dataPoints: (SimulationStats & { timestamp: number })[]) {
-  const anomalies = [];
-  
-  // Sort by timestamp
-  const sortedData = [...dataPoints].sort((a, b) => 
-    (a.timestamp || 0) - (b.timestamp || 0)
-  );
-  
-  // Check for sudden changes in particle count
-  for (let i = 1; i < sortedData.length; i++) {
-    const prev = sortedData[i - 1];
-    const current = sortedData[i];
-    
-    const particleChange = Math.abs(current.particleCount - prev.particleCount);
-    const percentChange = particleChange / prev.particleCount;
-    
-    if (percentChange > 0.5) {
-      anomalies.push({
-        type: 'particle_count_spike',
-        timestamp: current.timestamp,
-        from: prev.particleCount,
-        to: current.particleCount,
-        percentChange: percentChange * 100
-      });
+  // Calculate Shannon entropy
+  let entropy = 0;
+  for (const type in chargeTypes) {
+    const probability = chargeTypes[type as keyof typeof chargeTypes] / particles.length;
+    if (probability > 0) {
+      entropy -= probability * Math.log2(probability);
     }
   }
   
-  return anomalies;
+  // Normalize entropy
+  const normalizedEntropy = entropy / Math.log2(3); // 3 is the number of charge types
+  
+  // Calculate avg knowledge and energy
+  const avgKnowledge = particles.reduce((sum, p) => sum + (p.knowledge || 0), 0) / particles.length;
+  const avgEnergy = particles.reduce((sum, p) => sum + (p.energy || 0), 0) / particles.length;
+  
+  // Combine factors for complexity
+  return (normalizedEntropy * 0.3) + (avgKnowledge * 0.4) + (avgEnergy / 100 * 0.3);
 }
 
 /**
- * Helper function to calculate average
+ * Get stored data points for analysis
  */
-function average(values: number[]): number {
-  if (values.length === 0) return 0;
-  return values.reduce((sum, val) => sum + val, 0) / values.length;
+export function getStoredDataPoints() {
+  return getDataPoints();
 }
 
 /**
- * Helper function to calculate growth rate
+ * Analyze particle clusters
+ * @param particles The particles to analyze
  */
-function calculateGrowthRate(initial: number, final: number, periods: number): number {
-  if (initial === 0 || periods === 0) return 0;
-  return ((final / initial) ** (1 / periods)) - 1;
-}
-
-/**
- * Helper function to calculate linear regression
- */
-function calculateLinearRegression(x: number[], y: number[]) {
-  if (x.length !== y.length || x.length === 0) {
-    return { slope: 0, intercept: 0, r2: 0 };
-  }
+export function analyzeParticleClusters(particles: Particle[]) {
+  // Calculate distances between particles
+  const distanceMatrix: number[][] = [];
   
-  const n = x.length;
-  const sumX = x.reduce((sum, val) => sum + val, 0);
-  const sumY = y.reduce((sum, val) => sum + val, 0);
-  const sumXY = x.reduce((sum, val, i) => sum + val * y[i], 0);
-  const sumXX = x.reduce((sum, val) => sum + val * val, 0);
-  const sumYY = y.reduce((sum, val) => sum + val * val, 0);
+  particles.forEach((p1, i) => {
+    distanceMatrix[i] = [];
+    particles.forEach((p2, j) => {
+      const dx = p2.x - p1.x;
+      const dy = p2.y - p1.y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+      distanceMatrix[i][j] = distance;
+    });
+  });
   
-  const slope = (n * sumXY - sumX * sumY) / (n * sumXX - sumX * sumX);
-  const intercept = (sumY - slope * sumX) / n;
+  // Find clusters based on proximity
+  const clusters: Particle[][] = [];
+  const visited = new Set<string>();
   
-  // Calculate R-squared
-  const yMean = sumY / n;
-  const ssTotal = y.reduce((sum, val) => sum + (val - yMean) ** 2, 0);
-  const ssResidual = y.reduce((sum, val, i) => {
-    const prediction = slope * x[i] + intercept;
-    return sum + (val - prediction) ** 2;
-  }, 0);
-  const r2 = 1 - (ssResidual / ssTotal);
+  // Simple DBSCAN-like algorithm
+  const eps = 50; // Max distance for neighborhood
   
-  return { slope, intercept, r2 };
+  particles.forEach((p1, i) => {
+    if (visited.has(p1.id)) return;
+    
+    visited.add(p1.id);
+    const cluster: Particle[] = [p1];
+    
+    particles.forEach((p2, j) => {
+      if (i !== j && !visited.has(p2.id) && distanceMatrix[i][j] < eps) {
+        cluster.push(p2);
+        visited.add(p2.id);
+      }
+    });
+    
+    if (cluster.length > 1) {
+      clusters.push(cluster);
+    }
+  });
+  
+  return {
+    clusters,
+    clusterCount: clusters.length,
+    averageClusterSize: clusters.length > 0 
+      ? clusters.reduce((sum, c) => sum + c.length, 0) / clusters.length 
+      : 0
+  };
 }

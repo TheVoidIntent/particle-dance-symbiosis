@@ -1,80 +1,87 @@
 
-import { initAudioContext } from "./simulationAudioUtils";
-
 /**
- * Generate a sample audio buffer for testing
+ * Create an audio context for audio generation
  */
-export function generateSampleAudio(
-  frequency: number = 440, 
-  duration: number = 1, 
-  volume: number = 0.5
-): AudioBuffer {
-  const context = initAudioContext();
-  const sampleRate = context.sampleRate;
-  const buffer = context.createBuffer(1, sampleRate * duration, sampleRate);
-  
-  // Get the data
-  const channelData = buffer.getChannelData(0);
-  
-  // Fill the buffer with a sine wave
-  for (let i = 0; i < channelData.length; i++) {
-    // Simple sine wave with decreasing volume
-    const t = i / sampleRate;
-    const fadeFactor = 1 - t / duration; // Linear fade-out
-    channelData[i] = Math.sin(2 * Math.PI * frequency * t) * volume * fadeFactor;
+let audioContextInstance: AudioContext | null = null;
+
+export function createAudioContext(): AudioContext | null {
+  try {
+    if (!audioContextInstance) {
+      audioContextInstance = new (window.AudioContext || (window as any).webkitAudioContext)();
+    }
+    return audioContextInstance;
+  } catch (e) {
+    console.error('Failed to create AudioContext', e);
+    return null;
   }
-  
-  return buffer;
 }
 
 /**
- * Generate a tone based on particle properties
+ * Generate a simple sine wave tone
+ * @param frequency The frequency of the tone in Hz
+ * @param duration The duration of the tone in seconds
+ * @param volume The volume of the tone (0-1)
  */
-export function generateParticleTone(
-  charge: 'positive' | 'negative' | 'neutral',
-  energy: number = 1,
-  complexity: number = 1
-): AudioBuffer {
-  // Generate different base frequencies based on particle charge
-  let baseFrequency = 440; // A4 note
-  
-  if (charge === 'positive') {
-    baseFrequency = 523.25; // C5 note
-  } else if (charge === 'negative') {
-    baseFrequency = 329.63; // E4 note
-  } else {
-    baseFrequency = 392.00; // G4 note
-  }
-  
-  // Adjust frequency based on energy
-  const frequency = baseFrequency * (0.8 + energy * 0.4);
-  
-  // Duration based on complexity
-  const duration = 0.2 + complexity * 0.3;
-  
-  // Generate the audio
-  return generateSampleAudio(frequency, duration, 0.4);
-}
-
-/**
- * Create a fallback audio if Web Audio API is not available
- */
-export function createFallbackAudioIfNeeded(): boolean {
-  const context = initAudioContext();
+export function generateTone(frequency: number, duration: number, volume: number = 0.5): void {
+  const audioContext = createAudioContext();
+  if (!audioContext) return;
   
   try {
-    // Create a short silent buffer
-    const buffer = context.createBuffer(1, context.sampleRate * 0.1, context.sampleRate);
-    const source = context.createBufferSource();
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
     
-    // Connect and play
-    source.buffer = buffer;
-    source.connect(context.destination);
-    source.start(context.currentTime);
+    oscillator.type = 'sine';
+    oscillator.frequency.value = frequency;
     
-    return true;
-  } catch (error) {
-    console.error("Error creating fallback audio:", error);
-    return false;
+    gainNode.gain.value = volume;
+    
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    
+    oscillator.start();
+    oscillator.stop(audioContext.currentTime + duration);
+  } catch (e) {
+    console.error('Error generating tone', e);
   }
+}
+
+/**
+ * Generate a sequence of tones
+ * @param frequencies Array of frequencies
+ * @param durations Array of durations
+ * @param volume The volume of the tones
+ */
+export function generateToneSequence(
+  frequencies: number[],
+  durations: number[],
+  volume: number = 0.5
+): void {
+  const audioContext = createAudioContext();
+  if (!audioContext) return;
+  
+  let startTime = audioContext.currentTime;
+  
+  frequencies.forEach((freq, index) => {
+    const duration = durations[index] || durations[0];
+    
+    try {
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      
+      oscillator.type = 'sine';
+      oscillator.frequency.value = freq;
+      
+      gainNode.gain.value = volume;
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+      
+      oscillator.start(startTime);
+      oscillator.stop(startTime + duration);
+      
+      startTime += duration;
+    } catch (e) {
+      console.error('Error generating tone in sequence', e);
+    }
+  });
 }

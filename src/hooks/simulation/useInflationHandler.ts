@@ -1,95 +1,106 @@
-import { useCallback, useRef } from 'react';
-import { SimulationConfig, InflationEvent } from '@/hooks/simulation/types';
-import { Particle } from '@/utils/particleUtils';
 
-export interface UseInflationHandlerProps {
-  config: SimulationConfig;
+import { useCallback } from 'react';
+import { Particle } from '@/types/simulation';
+import { createParticle } from '@/utils/particleUtils';
+import { v4 as uuidv4 } from 'uuid';
+
+export interface InflationEvent {
+  id: string;
+  timestamp: number;
+  particlesBefore: number;
+  particlesAfter: number;
+  inflationFactor: number;
+  energyIncrease: number;
+  complexityIncrease: number;
+  narrative: string;
+}
+
+interface UseInflationHandlerProps {
+  config: {
+    inflationEnabled?: boolean;
+    inflationThreshold?: number;
+    inflationMultiplier?: number;
+  };
   onInflationEvent?: (event: InflationEvent) => void;
 }
 
-/**
- * Hook for handling the "inflation" event in the simulation
- */
 export function useInflationHandler({
   config,
   onInflationEvent
 }: UseInflationHandlerProps) {
-  // Keep track of if inflation has already occurred
-  const hasInflatedRef = useRef<boolean>(false);
-  
-  /**
-   * Check if inflation should occur based on particle count
-   */
   const checkForInflation = useCallback((particles: Particle[]): boolean => {
-    if (!config.inflationEnabled || hasInflatedRef.current) {
-      return false;
-    }
+    if (!config.inflationEnabled) return false;
     
-    // Trigger inflation if particle count exceeds threshold
-    return particles.length >= config.inflationThreshold;
+    return particles.length >= (config.inflationThreshold || 100);
   }, [config.inflationEnabled, config.inflationThreshold]);
   
-  /**
-   * Generate a new set of post-inflation particles
-   */
-  const createPostInflationParticles = useCallback((particles: Particle[]): Particle[] => {
-    // Create new particles with "post-inflation" flag set to true
-    return particles.map(particle => ({
-      ...particle,
-      isPostInflation: true
-    }));
-  }, []);
-  
-  /**
-   * Handle the inflation event
-   */
   const handleInflation = useCallback((particles: Particle[]): Particle[] => {
-    if (hasInflatedRef.current) {
-      return particles;
-    }
+    // Don't do anything if inflation is disabled
+    if (!config.inflationEnabled) return particles;
     
-    const timestamp = Date.now();
     const particleCountBefore = particles.length;
     
-    // Create post-inflation particle set
-    const newParticles = createPostInflationParticles(particles);
+    // Calculate the number of new particles to create
+    const inflationMultiplier = config.inflationMultiplier || 1.5;
+    const newParticleCount = Math.floor(particles.length * (inflationMultiplier - 1));
     
-    // Mark inflation as occurred
-    hasInflatedRef.current = true;
+    // Create new particles with properties based on existing ones
+    const newParticles: Particle[] = [];
     
-    // Create inflation event object
-    const event: InflationEvent = {
-      timestamp,
-      particlesBeforeInflation: particleCountBefore,
-      particlesAfterInflation: newParticles.length,
-      expansionFactor: config.inflationMultiplier,
-      particleCountBefore,
-      fieldEnergyBefore: Math.random() * 100,
-      fieldEnergyAfter: Math.random() * 200
+    for (let i = 0; i < newParticleCount; i++) {
+      // Get a random existing particle to base the new one on
+      const baseParticle = particles[Math.floor(Math.random() * particles.length)];
+      
+      // Calculate position near the base particle
+      const angle = Math.random() * Math.PI * 2;
+      const distance = 20 + Math.random() * 30;
+      const x = baseParticle.x + Math.cos(angle) * distance;
+      const y = baseParticle.y + Math.sin(angle) * distance;
+      
+      // Create new particle
+      const newParticle = createParticle(
+        x,
+        y,
+        0,
+        baseParticle.charge,
+        baseParticle.type || 'standard',
+        Date.now()
+      );
+      
+      // Mark as post-inflation particle
+      newParticle.isPostInflation = true;
+      
+      newParticles.push(newParticle);
+    }
+    
+    // Calculate energy and complexity increase
+    const energyBefore = particles.reduce((sum, p) => sum + (p.energy || 0), 0);
+    const complexityBefore = particles.reduce((sum, p) => sum + (p.complexity || 0), 0);
+    
+    const energyAfter = energyBefore + newParticles.reduce((sum, p) => sum + (p.energy || 0), 0);
+    const complexityAfter = complexityBefore + newParticles.reduce((sum, p) => sum + (p.complexity || 0), 0);
+    
+    const inflationEvent: InflationEvent = {
+      id: uuidv4(),
+      timestamp: Date.now(),
+      particlesBefore: particleCountBefore,
+      particlesAfter: particleCountBefore + newParticles.length,
+      inflationFactor: inflationMultiplier,
+      energyIncrease: energyAfter - energyBefore,
+      complexityIncrease: complexityAfter - complexityBefore,
+      narrative: `Universe inflation event created ${newParticles.length} new particles`
     };
     
     // Notify about the inflation event
     if (onInflationEvent) {
-      onInflationEvent(event);
+      onInflationEvent(inflationEvent);
     }
     
-    console.log(`🌌 Inflation event at ${new Date(timestamp).toLocaleTimeString()}`);
-    console.log(`📊 Particles: ${particleCountBefore} → ${newParticles.length}`);
-    
-    return newParticles;
-  }, [config.inflationMultiplier, createPostInflationParticles, onInflationEvent]);
-  
-  /**
-   * Reset inflation state
-   */
-  const resetInflation = useCallback((): void => {
-    hasInflatedRef.current = false;
-  }, []);
+    return [...particles, ...newParticles];
+  }, [config.inflationEnabled, config.inflationMultiplier, onInflationEvent]);
   
   return {
     checkForInflation,
-    handleInflation,
-    resetInflation,
-    hasInflated: hasInflatedRef.current
+    handleInflation
   };
 }

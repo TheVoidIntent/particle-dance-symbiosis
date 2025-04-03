@@ -1,5 +1,34 @@
 
-import { Particle as ParticleUtil } from '@/utils/particleUtils';
+export interface Particle {
+  id: string;
+  x: number;
+  y: number;
+  z: number;
+  vx: number;
+  vy: number;
+  vz: number;
+  radius: number;
+  charge: 'positive' | 'negative' | 'neutral';
+  color: string;
+  type?: string;
+  intent: number;
+  energy: number;
+  knowledge?: number;
+  complexity?: number;
+  interactionTendency: number;
+  lastInteraction?: number;
+  interactionCount?: number;
+  interactions?: number;
+  age?: number;
+  intentDecayRate?: number;
+  energyCapacity?: number;
+  adaptiveScore?: number;
+  creationTime: number;
+  mass: number;
+  created: number;
+  scale: number;
+  isPostInflation?: boolean;
+}
 
 export interface SimulationStats {
   particleCount: number;
@@ -18,9 +47,6 @@ export interface SimulationStats {
   averageClusterSize?: number;
   systemEntropy?: number;
   intentFieldComplexity?: number;
-  interactions?: number;
-  robotCount?: number;
-  timestamp?: number;
   shannonEntropy?: number;
   spatialEntropy?: number;
   fieldOrderParameter?: number;
@@ -28,52 +54,31 @@ export interface SimulationStats {
   clusterEntropyDelta?: number;
   informationDensity?: number;
   kolmogorovComplexity?: number;
-}
-
-export interface Particle extends ParticleUtil {
-  // Explicitly set id as string to match particleUtils
-  id: string;
-  mass?: number;
-  scale?: number;
-  created?: number;
-  // All other properties from ParticleUtil
-}
-
-export interface IntentField {
-  width: number;
-  height: number;
-  depth: number;
-  data: number[][][];
+  robotCount?: number;
+  timestamp?: number;
 }
 
 export interface SimulationConfig {
-  initialParticleCount: number;
-  maxParticles: number;
-  fieldResolution: number;
-  intentFluctuationRate: number;
-  interactionRadius: number;
-  boundaryCondition: 'wrap' | 'bounce' | 'none' | 'disappear';
-  particleLifetime: number | null;
-  inflationEnabled: boolean;
-  inflationThreshold: number;
-  inflationMultiplier: number;
+  initialParticleCount?: number;
+  maxParticles?: number;
+  fieldResolution?: number;
+  intentFluctuationRate?: number;
+  interactionRadius?: number;
+  boundaryCondition?: 'wrap' | 'bounce' | 'disappear' | 'none';
+  particleLifetime?: number | null;
+  inflationEnabled?: boolean;
+  inflationThreshold?: number;
+  inflationMultiplier?: number;
 }
 
 export interface InflationEvent {
-  timestamp: number;
-  particlesBeforeInflation: number;
-  particlesAfterInflation: number;
-  expansionFactor?: number;
-  fieldEnergyBefore?: number;
-  fieldEnergyAfter?: number;
-  particleCountBefore?: number;
-}
-
-export interface Anomaly {
   id: string;
-  type: string;
-  description: string;
   timestamp: number;
-  particles: string[];
-  severity: number;
+  particlesBefore: number;
+  particlesAfter: number;
+  inflationFactor: number;
+  energyIncrease: number;
+  complexityIncrease: number;
+  narrative: string;
+  particleCountBefore?: number;
 }

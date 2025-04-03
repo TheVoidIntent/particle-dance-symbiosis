@@ -1,3 +1,4 @@
+
 import { Particle } from '@/types/simulation';
 
 /**
@@ -37,4 +38,52 @@ export function generateFieldFluctuationAudio(fieldComplexity: number, fluctuati
 export function playSimulationEventSound(eventType: string, intensity: number = 0.5): void {
   // Placeholder for playing specific event sounds
   console.log(`Playing ${eventType} sound with intensity ${intensity}`);
+}
+
+/**
+ * Play a simulation event with options
+ * @param eventType The type of event
+ * @param options Additional options for the event
+ */
+export function playSimulationEvent(eventType: string, options: any = {}): void {
+  const intensity = options.intensity || 0.5;
+  playSimulationEventSound(eventType, intensity);
+}
+
+/**
+ * Generate soundscape based on particles
+ * @param particles The particles to generate sound for
+ */
+export function generateParticleSoundscape(particles: Particle[]): void {
+  console.log(`Generating soundscape for ${particles.length} particles`);
+}
+
+/**
+ * Start simulation audio stream
+ */
+export function startSimulationAudioStream(): boolean {
+  console.log("Starting simulation audio stream");
+  return true;
+}
+
+/**
+ * Stop simulation audio stream
+ */
+export function stopSimulationAudioStream(): void {
+  console.log("Stopping simulation audio stream");
+}
+
+/**
+ * Check if simulation audio is playing
+ */
+export function isSimulationAudioPlaying(): boolean {
+  return false;
+}
+
+/**
+ * Set simulation audio volume
+ * @param volume Volume (0-1)
+ */
+export function setSimulationAudioVolume(volume: number): void {
+  console.log(`Setting simulation audio volume to ${volume}`);
 }

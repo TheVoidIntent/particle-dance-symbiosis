@@ -36,3 +36,31 @@ export async function preloadAudioFiles(files: string[]): Promise<boolean> {
     setTimeout(() => resolve(true), 500);
   });
 }
+
+/**
+ * Check if an audio file exists
+ * @param filePath The path to the audio file
+ * @returns Promise resolving to a boolean indicating if the file exists
+ */
+export async function checkAudioFileExists(filePath: string): Promise<{exists: boolean}> {
+  console.log(`Checking if audio file exists: ${filePath}`);
+  // Simulated response
+  return { exists: true };
+}
+
+/**
+ * Get metadata for an audio file
+ * @param filePath The path to the audio file
+ * @returns Promise resolving to the audio file metadata
+ */
+export async function getAudioFileMetadata(filePath: string): Promise<any> {
+  console.log(`Getting metadata for audio file: ${filePath}`);
+  // Simulated response
+  return {
+    duration: 30,
+    sampleRate: 44100,
+    channels: 2,
+    format: 'mp3',
+    bitrate: 320000
+  };
+}

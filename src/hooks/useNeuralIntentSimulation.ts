@@ -157,12 +157,8 @@ export function useNeuralIntentSimulation({
 
   const getParticleColor = (type: ParticleType): string => {
     switch (type) {
-      case 'positive':
-        return '#4ECDC4';
-      case 'negative':
-        return '#FF6B6B';
-      case 'neutral':
-        return '#5E60CE';
+      case 'regular':
+        return '#FFFFFF';
       case 'high-energy':
         return '#FFE66D';
       case 'quantum':
@@ -183,15 +179,18 @@ export function useNeuralIntentSimulation({
           Math.random() < 0.3 ? 'composite' :
             Math.random() < 0.4 ? 'adaptive' : 'regular';
 
+    const charge: Charge = Math.random() < 0.33 ? 'positive' : Math.random() < 0.66 ? 'negative' : 'neutral';
+
     const newParticle = {
       id: `p-${Date.now()}-${Math.floor(Math.random() * 100000)}`,
       x: Math.random() * dimensions.width,
       y: Math.random() * dimensions.height,
       vx: (Math.random() - 0.5) * 2 * velocity,
       vy: (Math.random() - 0.5) * 2 * velocity,
+      vz: 0,
       radius: 3 + Math.random() * 3,
       mass: 1 + Math.random() * 0.5,
-      charge: Math.random() < 0.33 ? 'positive' : Math.random() < 0.66 ? 'negative' : 'neutral',
+      charge,
       color: getParticleColor(particleType),
       type: particleType,
       intent: (Math.random() * 2 - 1) * intentStrength,
@@ -203,7 +202,6 @@ export function useNeuralIntentSimulation({
       interactionCount: 0,
       age: 0,
       intentDecayRate: 0.001,
-      vz: 0,
       created: Date.now(),
       scale: 1,
       isPostInflation: false,

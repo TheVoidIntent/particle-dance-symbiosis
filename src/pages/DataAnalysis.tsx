@@ -109,7 +109,7 @@ const DataAnalysis: React.FC = () => {
 
   const loadAudioFiles = async () => {
     try {
-      const files = await getAvailableAudioFiles();
+      const files = await getAvailableAudioFiles('/audio');
       setAudioFiles(files);
     } catch (error) {
       console.error("Error loading audio files:", error);

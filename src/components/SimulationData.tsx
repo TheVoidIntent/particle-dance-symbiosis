@@ -4,14 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Download, BarChart2, RefreshCw } from 'lucide-react';
 import { SimulationStats } from '@/types/simulation';
-import dataExportUtils from '@/utils/dataExportUtils';
-
-const { exportSimulationData: exportDataAsJson, getStoredDataPoints } = dataExportUtils;
-
-// Helper function to create CSV
-const exportDataAsCsv = () => {
-  dataExportUtils.exportDataAsCsv();
-};
+import { exportSimulationData, exportDataAsCsv, getStoredDataPoints } from '@/utils/dataExportUtils';
 
 interface SimulationDataProps {
   stats: SimulationStats;
@@ -55,7 +48,7 @@ const SimulationData: React.FC<SimulationDataProps> = ({ stats, running }) => {
             <Button 
               variant="outline" 
               size="sm" 
-              onClick={exportDataAsJson}
+              onClick={exportSimulationData}
               className="flex-1"
               disabled={dataPoints === 0}
             >

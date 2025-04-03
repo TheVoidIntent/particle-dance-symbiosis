@@ -1,5 +1,6 @@
 
 import { initAudioContext, playSimulationEvent } from './audio/simulationAudioUtils';
+import { checkAudioFileExists, getAudioFileMetadata } from './audio/audioFileUtils';
 
 // Global settings
 const AUDIO_ENABLED = true;
@@ -98,10 +99,15 @@ export const setAudioEnabled = (enabled: boolean) => {
   console.log(`🔊 Setting audio enabled: ${enabled}`);
 };
 
+// Export functions from audioFileUtils
+export { checkAudioFileExists, getAudioFileMetadata };
+
 export default {
   initializeAudio,
   playParticleTone,
   playInteractionSound,
   playEvent,
-  setAudioEnabled
+  setAudioEnabled,
+  checkAudioFileExists,
+  getAudioFileMetadata
 };

@@ -1,129 +1,157 @@
 
-import { SimulationStats, Particle } from '@/types/simulation';
+import { SimulationStats } from '@/types/simulation';
+import { getStoredDataPoints } from './dataExportUtils';
 
 /**
- * Analyze simulation data to extract insights
+ * Analyze simulation data for trends and patterns
  */
-export function analyzeSimulationData(
-  dataPoints: SimulationStats[], 
-  options: { 
-    timeRange?: [number, number],
-    smoothing?: number
-  } = {}
-): {
-  timeSeriesData: any[];
-  trends: any;
-  anomalies: any[];
-  correlations: any[];
-} {
-  // Default result structure
-  const result = {
-    timeSeriesData: [],
-    trends: {},
-    anomalies: [],
-    correlations: []
-  };
+export function analyzeSimulationData(timeRange: number = 24 * 60 * 60 * 1000): any {
+  const dataPoints = getStoredDataPoints();
   
-  if (!dataPoints || dataPoints.length === 0) {
-    return result;
-  }
-  
-  // Add timestamps if missing
-  const timestampedData = dataPoints.map((point, index) => ({
-    ...point,
-    timestamp: point.timestamp || Date.now() - (dataPoints.length - index) * 1000
-  }));
-  
-  // Apply time range filter if provided
-  let filteredData = timestampedData;
-  if (options.timeRange) {
-    const [start, end] = options.timeRange;
-    filteredData = timestampedData.filter(point => 
-      point.timestamp >= start && point.timestamp <= end
-    );
-  }
-  
-  // Convert to time series format
-  result.timeSeriesData = filteredData.map(point => ({
-    timestamp: point.timestamp,
-    particleCount: point.particleCount,
-    positiveParticles: point.positiveParticles,
-    negativeParticles: point.negativeParticles,
-    neutralParticles: point.neutralParticles,
-    totalInteractions: point.totalInteractions,
-    complexityIndex: point.complexityIndex || 0,
-    systemEntropy: point.systemEntropy || 0
-  }));
-  
-  // Calculate basic trends
-  if (filteredData.length > 1) {
-    const first = filteredData[0];
-    const last = filteredData[filteredData.length - 1];
-    
-    result.trends = {
-      particleGrowthRate: calculateGrowthRate(first.particleCount, last.particleCount),
-      interactionGrowthRate: calculateGrowthRate(first.totalInteractions || 0, last.totalInteractions || 0),
-      complexityTrend: calculateGrowthRate(first.complexityIndex || 0, last.complexityIndex || 0),
-      entropyChange: (last.systemEntropy || 0) - (first.systemEntropy || 0)
+  if (dataPoints.length === 0) {
+    return {
+      error: "No data available for analysis",
+      status: "error"
     };
   }
   
-  // Detect anomalies in the data
-  result.anomalies = detectDataAnomalies(filteredData);
+  // Filter data points by time range
+  const now = Date.now();
+  const filteredData = dataPoints.filter(point => 
+    (now - (point.timestamp || 0)) <= timeRange
+  );
   
-  // Calculate correlations between metrics
-  result.correlations = calculateCorrelations(filteredData);
+  if (filteredData.length === 0) {
+    return {
+      error: "No data in the selected time range",
+      status: "error"
+    };
+  }
   
-  return result;
+  // Calculate basic statistics
+  const statistics = calculateBasicStatistics(filteredData);
+  
+  // Identify trends
+  const trends = identifyTrends(filteredData);
+  
+  // Detect anomalies
+  const anomalies = detectAnomalies(filteredData);
+  
+  return {
+    status: "success",
+    dataPoints: filteredData.length,
+    timeRange,
+    statistics,
+    trends,
+    anomalies
+  };
 }
 
 /**
- * Calculate growth rate between two values
+ * Calculate basic statistics from data points
  */
-function calculateGrowthRate(start: number, end: number): number {
-  if (start === 0) return end > 0 ? 1 : 0;
-  return (end - start) / start;
+function calculateBasicStatistics(dataPoints: (SimulationStats & { timestamp: number })[]) {
+  // Sort by timestamp
+  const sortedData = [...dataPoints].sort((a, b) => 
+    (a.timestamp || 0) - (b.timestamp || 0)
+  );
+  
+  // Get last data point
+  const latest = sortedData[sortedData.length - 1];
+  
+  // Calculate averages
+  const avgParticleCount = average(sortedData.map(d => d.particleCount));
+  const avgPositiveParticles = average(sortedData.map(d => d.positiveParticles));
+  const avgNegativeParticles = average(sortedData.map(d => d.negativeParticles));
+  const avgNeutralParticles = average(sortedData.map(d => d.neutralParticles));
+  const avgComplexityIndex = average(sortedData.map(d => d.complexityIndex || 0));
+  
+  // Calculate growth rates
+  const first = sortedData[0];
+  const particleGrowthRate = calculateGrowthRate(
+    first.particleCount,
+    latest.particleCount,
+    sortedData.length
+  );
+  
+  // Calculate entropy over time
+  const entropyTrend = sortedData
+    .filter(d => d.systemEntropy !== undefined)
+    .map(d => d.systemEntropy || 0);
+  
+  return {
+    latest,
+    averages: {
+      particleCount: avgParticleCount,
+      positiveParticles: avgPositiveParticles,
+      negativeParticles: avgNegativeParticles,
+      neutralParticles: avgNeutralParticles,
+      complexityIndex: avgComplexityIndex
+    },
+    growth: {
+      particleGrowthRate
+    },
+    entropy: {
+      trend: entropyTrend,
+      average: average(entropyTrend)
+    }
+  };
 }
 
 /**
- * Detect anomalies in time series data
+ * Identify trends in the data
  */
-function detectDataAnomalies(dataPoints: SimulationStats[]): any[] {
-  if (dataPoints.length < 3) return [];
+function identifyTrends(dataPoints: (SimulationStats & { timestamp: number })[]) {
+  // Sort by timestamp
+  const sortedData = [...dataPoints].sort((a, b) => 
+    (a.timestamp || 0) - (b.timestamp || 0)
+  );
   
+  // Calculate linear regression for particle count
+  const particleCountTrend = calculateLinearRegression(
+    sortedData.map((_, i) => i),
+    sortedData.map(d => d.particleCount)
+  );
+  
+  // Calculate linear regression for complexity
+  const complexityTrend = calculateLinearRegression(
+    sortedData.filter(d => d.complexityIndex !== undefined).map((_, i) => i),
+    sortedData.filter(d => d.complexityIndex !== undefined).map(d => d.complexityIndex || 0)
+  );
+  
+  return {
+    particleCountTrend,
+    complexityTrend
+  };
+}
+
+/**
+ * Detect anomalies in the simulation data
+ */
+function detectAnomalies(dataPoints: (SimulationStats & { timestamp: number })[]) {
   const anomalies = [];
   
-  // Detect spikes in metrics
-  for (let i = 1; i < dataPoints.length - 1; i++) {
-    const prev = dataPoints[i-1];
-    const curr = dataPoints[i];
-    const next = dataPoints[i+1];
+  // Sort by timestamp
+  const sortedData = [...dataPoints].sort((a, b) => 
+    (a.timestamp || 0) - (b.timestamp || 0)
+  );
+  
+  // Check for sudden changes in particle count
+  for (let i = 1; i < sortedData.length; i++) {
+    const prev = sortedData[i - 1];
+    const current = sortedData[i];
     
-    // Check for complexity spikes
-    if (curr.complexityIndex && prev.complexityIndex && next.complexityIndex) {
-      const avgComplexity = (prev.complexityIndex + next.complexityIndex) / 2;
-      if (curr.complexityIndex > avgComplexity * 1.5) {
-        anomalies.push({
-          type: 'complexity_spike',
-          timestamp: curr.timestamp,
-          value: curr.complexityIndex,
-          expected: avgComplexity
-        });
-      }
-    }
+    const particleChange = Math.abs(current.particleCount - prev.particleCount);
+    const percentChange = particleChange / prev.particleCount;
     
-    // Check for entropy changes
-    if (curr.systemEntropy !== undefined && prev.systemEntropy !== undefined) {
-      const entropyChange = Math.abs(curr.systemEntropy - prev.systemEntropy);
-      if (entropyChange > 0.2) {
-        anomalies.push({
-          type: 'entropy_shift',
-          timestamp: curr.timestamp,
-          value: curr.systemEntropy,
-          previous: prev.systemEntropy,
-          change: entropyChange
-        });
-      }
+    if (percentChange > 0.5) {
+      anomalies.push({
+        type: 'particle_count_spike',
+        timestamp: current.timestamp,
+        from: prev.particleCount,
+        to: current.particleCount,
+        percentChange: percentChange * 100
+      });
     }
   }
   
@@ -131,80 +159,47 @@ function detectDataAnomalies(dataPoints: SimulationStats[]): any[] {
 }
 
 /**
- * Calculate correlations between different metrics
+ * Helper function to calculate average
  */
-function calculateCorrelations(dataPoints: SimulationStats[]): any[] {
-  if (dataPoints.length < 5) return [];
-  
-  const correlations = [];
-  
-  // Calculate correlation between particle count and interactions
-  const particleCountValues = dataPoints.map(p => p.particleCount);
-  const interactionValues = dataPoints.map(p => p.totalInteractions || 0);
-  
-  const particleInteractionCorrelation = calculatePearsonCorrelation(
-    particleCountValues, 
-    interactionValues
-  );
-  
-  correlations.push({
-    metric1: 'particleCount',
-    metric2: 'totalInteractions',
-    correlation: particleInteractionCorrelation
-  });
-  
-  // Calculate more correlations as needed
-  
-  return correlations;
+function average(values: number[]): number {
+  if (values.length === 0) return 0;
+  return values.reduce((sum, val) => sum + val, 0) / values.length;
 }
 
 /**
- * Calculate Pearson correlation coefficient between two arrays
+ * Helper function to calculate growth rate
  */
-function calculatePearsonCorrelation(x: number[], y: number[]): number {
-  if (x.length !== y.length || x.length === 0) return 0;
-  
-  // Calculate means
-  const xMean = x.reduce((acc, val) => acc + val, 0) / x.length;
-  const yMean = y.reduce((acc, val) => acc + val, 0) / y.length;
-  
-  // Calculate the numerator and denominator
-  let numerator = 0;
-  let xDenominator = 0;
-  let yDenominator = 0;
-  
-  for (let i = 0; i < x.length; i++) {
-    const xDiff = x[i] - xMean;
-    const yDiff = y[i] - yMean;
-    
-    numerator += xDiff * yDiff;
-    xDenominator += xDiff * xDiff;
-    yDenominator += yDiff * yDiff;
+function calculateGrowthRate(initial: number, final: number, periods: number): number {
+  if (initial === 0 || periods === 0) return 0;
+  return ((final / initial) ** (1 / periods)) - 1;
+}
+
+/**
+ * Helper function to calculate linear regression
+ */
+function calculateLinearRegression(x: number[], y: number[]) {
+  if (x.length !== y.length || x.length === 0) {
+    return { slope: 0, intercept: 0, r2: 0 };
   }
   
-  if (xDenominator === 0 || yDenominator === 0) return 0;
+  const n = x.length;
+  const sumX = x.reduce((sum, val) => sum + val, 0);
+  const sumY = y.reduce((sum, val) => sum + val, 0);
+  const sumXY = x.reduce((sum, val, i) => sum + val * y[i], 0);
+  const sumXX = x.reduce((sum, val) => sum + val * val, 0);
+  const sumYY = y.reduce((sum, val) => sum + val * val, 0);
   
-  return numerator / Math.sqrt(xDenominator * yDenominator);
-}
-
-/**
- * Analyze particles to detect clusters and patterns
- */
-export function analyzeParticleDistribution(particles: Particle[]): {
-  clusters: { center: { x: number, y: number }, count: number, radius: number, charge: string }[];
-  densityMap: number[][];
-  chargeDistribution: { positive: number, negative: number, neutral: number };
-  entropy: number;
-} {
-  // This is a placeholder implementation
-  return {
-    clusters: [],
-    densityMap: [],
-    chargeDistribution: {
-      positive: particles.filter(p => p.charge === 'positive').length,
-      negative: particles.filter(p => p.charge === 'negative').length,
-      neutral: particles.filter(p => p.charge === 'neutral').length
-    },
-    entropy: 0
-  };
+  const slope = (n * sumXY - sumX * sumY) / (n * sumXX - sumX * sumX);
+  const intercept = (sumY - slope * sumX) / n;
+  
+  // Calculate R-squared
+  const yMean = sumY / n;
+  const ssTotal = y.reduce((sum, val) => sum + (val - yMean) ** 2, 0);
+  const ssResidual = y.reduce((sum, val, i) => {
+    const prediction = slope * x[i] + intercept;
+    return sum + (val - prediction) ** 2;
+  }, 0);
+  const r2 = 1 - (ssResidual / ssTotal);
+  
+  return { slope, intercept, r2 };
 }

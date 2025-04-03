@@ -1,106 +1,115 @@
-
 import { SimulationStats } from '@/types/simulation';
 
+// In-memory storage for simulation data points
+let simulationDataPoints: (SimulationStats & { timestamp: number })[] = [];
+
 /**
- * Export simulation data as JSON
+ * Add a data point to the collection
  */
-export function exportDataAsJson(data?: SimulationStats): string {
+export function addDataPoint(stats: SimulationStats): void {
   // Add timestamp if not present
-  const timestampedData = data ? {
-    ...data,
-    timestamp: data.timestamp || Date.now()
-  } : { timestamp: Date.now() };
+  const dataPoint = {
+    ...stats,
+    timestamp: stats.timestamp || Date.now()
+  };
   
-  try {
-    const json = JSON.stringify(timestampedData, null, 2);
-    console.log("📊 Exporting data as JSON", timestampedData);
-    
-    // In a real application, this would save to file or send to server
-    // For now, just return the JSON string
-    return json;
-  } catch (error) {
-    console.error("Failed to export data as JSON:", error);
-    return "{}";
+  simulationDataPoints.push(dataPoint);
+  
+  // Keep last 1000 data points to prevent memory issues
+  if (simulationDataPoints.length > 1000) {
+    simulationDataPoints = simulationDataPoints.slice(-1000);
   }
 }
 
 /**
- * Export simulation data as PDF
+ * Export simulation data as JSON file
  */
-export function exportDataAsPdf(data?: SimulationStats): boolean {
-  // Add timestamp if not present
-  const timestampedData = data ? {
-    ...data,
-    timestamp: data.timestamp || Date.now()
-  } : { timestamp: Date.now() };
-  
-  try {
-    console.log("📊 Exporting data as PDF", timestampedData);
-    
-    // In a real application, this would generate a PDF
-    // For now, just log success
-    return true;
-  } catch (error) {
-    console.error("Failed to export data as PDF:", error);
-    return false;
+export function exportSimulationData(): void {
+  if (simulationDataPoints.length === 0) {
+    console.warn("No simulation data to export");
+    return;
   }
+  
+  const dataToExport = {
+    exportDate: new Date().toISOString(),
+    dataPoints: simulationDataPoints.map(point => ({
+      ...point,
+      timestamp: point.timestamp || Date.now()
+    }))
+  };
+  
+  const dataStr = JSON.stringify(dataToExport, null, 2);
+  const dataUri = `data:application/json;charset=utf-8,${encodeURIComponent(dataStr)}`;
+  
+  downloadFile(dataUri, `simulation-data-${new Date().toISOString().slice(0, 10)}.json`);
 }
 
 /**
- * Export simulation data chart as image
+ * Export simulation data as CSV file
  */
-export function exportChartAsImage(chartId: string, filename: string = 'chart.png'): boolean {
-  try {
-    console.log(`📊 Exporting chart ${chartId} as image: ${filename}`);
-    // In a real app, this would capture canvas as image and download it
-    return true;
-  } catch (error) {
-    console.error("Failed to export chart as image:", error);
-    return false;
+export function exportDataAsCsv(): void {
+  if (simulationDataPoints.length === 0) {
+    console.warn("No simulation data to export");
+    return;
   }
-}
-
-/**
- * Format simulation stats for CSV export
- */
-export function formatStatsForCsv(stats: SimulationStats[]): string {
-  if (!stats.length) return '';
   
-  // Get headers from first stats object
-  const headers = Object.keys(stats[0]).join(',');
-  
-  // Format each stats row
-  const rows = stats.map(stat => {
-    // Ensure timestamp exists
-    const statWithTimestamp = {
-      ...stat,
-      timestamp: stat.timestamp || Date.now()
-    };
-    return Object.values(statWithTimestamp).join(',');
+  // Get all unique keys from all data points
+  const allKeys = new Set<string>();
+  simulationDataPoints.forEach(point => {
+    Object.keys(point).forEach(key => allKeys.add(key));
   });
   
-  // Combine headers and rows
-  return [headers, ...rows].join('\n');
+  // Create CSV header
+  const headers = Array.from(allKeys);
+  let csv = headers.join(',') + '\n';
+  
+  // Add data rows
+  simulationDataPoints.forEach(point => {
+    const row = headers.map(header => {
+      const value = point[header as keyof typeof point];
+      return value !== undefined ? String(value).replace(/,/g, '') : '';
+    });
+    csv += row.join(',') + '\n';
+  });
+  
+  // Download CSV
+  const dataUri = `data:text/csv;charset=utf-8,${encodeURIComponent(csv)}`;
+  downloadFile(dataUri, `simulation-data-${new Date().toISOString().slice(0, 10)}.csv`);
 }
 
 /**
- * Clear all simulation data
+ * Export data as PDF
+ */
+export function exportDataAsPdf(): boolean {
+  console.log("PDF export functionality would go here");
+  // This would typically use a library like jsPDF
+  // For now, we'll just return a success flag
+  return true;
+}
+
+/**
+ * Clear all stored simulation data
  */
 export function clearSimulationData(): void {
-  console.log("🗑️ Clearing all simulation data");
-  // In a real application, this would clear stored data
+  simulationDataPoints = [];
+  console.log("Simulation data cleared");
 }
 
 /**
- * Export data as CSV
+ * Get all stored data points
  */
-export function exportDataAsCsv(data?: SimulationStats[]): string {
-  const dataToExport = data || [];
-  return formatStatsForCsv(dataToExport);
+export function getStoredDataPoints(): (SimulationStats & { timestamp: number })[] {
+  return simulationDataPoints;
 }
 
-// Add functions for compatibility with existing code
-export const exportSimulationData = exportDataAsJson;
-export function getStoredDataPoints(): SimulationStats[] {
-  return [];
+/**
+ * Helper function to download a file
+ */
+function downloadFile(dataUri: string, filename: string): void {
+  const link = document.createElement('a');
+  link.href = dataUri;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
 }

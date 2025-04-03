@@ -1,90 +1,78 @@
 
 /**
- * Create a new audio context
+ * Create a new audio context for sound generation
+ * @returns AudioContext instance
  */
-export function createAudioContext(): AudioContext {
-  return new (window.AudioContext || (window as any).webkitAudioContext)();
+export function createAudioContext(): AudioContext | null {
+  try {
+    if (typeof window !== 'undefined' && (window.AudioContext || window.webkitAudioContext)) {
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      return new AudioContextClass();
+    }
+    return null;
+  } catch (e) {
+    console.error("Error creating AudioContext:", e);
+    return null;
+  }
 }
 
 /**
- * Generate a tone with specified parameters
- * @param context Audio context
- * @param frequency Frequency in Hz
- * @param type Oscillator type
- * @param duration Duration in seconds
- * @param volume Volume (0-1)
+ * Generate a tone with the given frequency
+ * @param frequency Frequency of the tone in Hz
+ * @param duration Duration of the tone in seconds
+ * @param volume Volume of the tone (0-1)
  */
-export function generateTone(
-  context: AudioContext,
-  frequency: number = 440,
-  type: OscillatorType = 'sine',
-  duration: number = 0.5,
-  volume: number = 0.5
-): void {
-  // Create oscillator and gain nodes
-  const oscillator = context.createOscillator();
-  const gainNode = context.createGain();
+export function generateTone(frequency: number, duration: number = 0.5, volume: number = 0.5): void {
+  const audioContext = createAudioContext();
+  if (!audioContext) return;
   
-  // Configure oscillator
-  oscillator.type = type;
-  oscillator.frequency.value = frequency;
-  
-  // Configure gain (volume)
-  gainNode.gain.value = 0;
-  
-  // Connect nodes
-  oscillator.connect(gainNode);
-  gainNode.connect(context.destination);
-  
-  // Start the oscillator
-  oscillator.start();
-  
-  // Apply volume envelope
-  gainNode.gain.setValueAtTime(0, context.currentTime);
-  gainNode.gain.linearRampToValueAtTime(volume, context.currentTime + 0.01);
-  gainNode.gain.linearRampToValueAtTime(0, context.currentTime + duration);
-  
-  // Stop the oscillator after duration
-  oscillator.stop(context.currentTime + duration + 0.01);
-  
-  // Clean up
-  setTimeout(() => {
-    oscillator.disconnect();
-    gainNode.disconnect();
-  }, duration * 1000 + 100);
+  try {
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+    
+    oscillator.type = 'sine';
+    oscillator.frequency.value = frequency;
+    gainNode.gain.value = volume;
+    
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    
+    oscillator.start();
+    
+    setTimeout(() => {
+      oscillator.stop();
+      // Close the audio context after a short delay
+      setTimeout(() => {
+        audioContext.close().catch(e => console.error("Error closing AudioContext:", e));
+      }, 100);
+    }, duration * 1000);
+  } catch (e) {
+    console.error("Error generating tone:", e);
+  }
 }
 
 /**
  * Generate a sequence of tones
- * @param context Audio context
- * @param frequencies Array of frequencies in Hz
- * @param durations Array of durations in seconds
- * @param types Array of oscillator types
- * @param volumes Array of volumes (0-1)
- * @param intervalBetweenNotes Time between notes in seconds
+ * @param frequencies Array of frequencies to play in sequence
+ * @param duration Duration of each tone in seconds
+ * @param interval Interval between tones in seconds
+ * @param volume Volume of the tones (0-1)
  */
 export function generateToneSequence(
-  context: AudioContext,
-  frequencies: number[],
-  durations: number[] = [],
-  types: OscillatorType[] = [],
-  volumes: number[] = [],
-  intervalBetweenNotes: number = 0.1
+  frequencies: number[], 
+  duration: number = 0.2, 
+  interval: number = 0.1, 
+  volume: number = 0.5
 ): void {
-  // Default duration, type and volume if not specified
-  const defaultDuration = 0.5;
-  const defaultType = 'sine' as OscillatorType;
-  const defaultVolume = 0.5;
+  let index = 0;
   
-  // Play each note in sequence
-  frequencies.forEach((frequency, index) => {
-    const duration = durations[index] || defaultDuration;
-    const type = types[index] || defaultType;
-    const volume = volumes[index] || defaultVolume;
-    
-    // Schedule each note
-    setTimeout(() => {
-      generateTone(context, frequency, type, duration, volume);
-    }, index * (defaultDuration + intervalBetweenNotes) * 1000);
-  });
+  const playNext = () => {
+    if (index < frequencies.length) {
+      generateTone(frequencies[index], duration, volume);
+      index++;
+      setTimeout(playNext, (duration + interval) * 1000);
+    }
+  };
+  
+  playNext();
 }

@@ -39,3 +39,7 @@ export async function checkAudioFileExists(url: string): Promise<{ exists: boole
     return { exists: false };
   }
 }
+
+// Create these stub functions to satisfy the imports until they're properly implemented
+export async function preloadAudioFiles(): Promise<void> {}
+export async function getAudioFileMetadata(): Promise<any> { return {}; }

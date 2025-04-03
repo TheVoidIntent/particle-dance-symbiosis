@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, MutableRefObject } from 'react';
 import { Particle } from '@/types/simulation';
 import { useParticleCreation } from './useParticleCreation';
 import { useParticleUpdater } from './useParticleUpdater';

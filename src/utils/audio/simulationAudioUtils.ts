@@ -33,3 +33,12 @@ export function initAudioContext(): void {
     console.error("Error initializing AudioContext:", e);
   }
 }
+
+// Create these stub functions to satisfy the imports until they're properly implemented
+export function generateInteractionAudio(): void {}
+export function generateFieldFluctuationAudio(): void {}
+export function generateParticleSoundscape(): void {}
+export function startSimulationAudioStream(): void {}
+export function stopSimulationAudioStream(): void {}
+export function isSimulationAudioPlaying(): boolean { return false; }
+export function setSimulationAudioVolume(): void {}

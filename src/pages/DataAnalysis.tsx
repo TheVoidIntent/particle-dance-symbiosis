@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -105,6 +104,8 @@ const DataAnalysis: React.FC = () => {
       });
     }, 1000);
   };
+
+  checkAudioFileExists('/audio/data_analysis.mp3')
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-12">

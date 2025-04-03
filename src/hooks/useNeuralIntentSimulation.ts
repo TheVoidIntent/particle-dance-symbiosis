@@ -268,8 +268,15 @@ export function useNeuralIntentSimulation({
       lastInteraction: 0,
       interactionCount: 0,
       z: Math.random() * 10,
+      vz: (Math.random() - 0.5) * 0.5,
       age: 0,
-      interactions: 0
+      interactions: 0,
+      intentDecayRate: 0.001 + Math.random() * 0.005,
+      energyCapacity: 100 * (0.8 + Math.random() * 0.4),
+      created: Date.now(),
+      scale: 1,
+      adaptiveScore: 0,
+      creationTime: Date.now()
     };
   }, [width, height]);
   

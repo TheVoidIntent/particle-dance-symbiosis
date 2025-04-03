@@ -3,28 +3,17 @@
 export {
   playLoopingAudio,
   stopLoopingAudio,
-  setLoopingAudioVolume,
-  initAudioContext
+  setLoopingAudioVolume
 } from './audioPlaybackUtils';
 
 export {
   getAvailableAudioFiles,
-  preloadAudioFiles,
-  checkAudioFileExists,
-  getAudioFileMetadata
+  checkAudioFileExists
 } from './audioFileUtils';
 
 export {
-  generateInteractionAudio,
-  generateFieldFluctuationAudio,
   playSimulationEventSound,
-  playSimulationEvent,
-  generateParticleSoundscape,
-  startSimulationAudioStream,
-  stopSimulationAudioStream,
-  isSimulationAudioPlaying,
-  setSimulationAudioVolume,
-  initAudioContext as initSimulationAudioContext
+  initAudioContext 
 } from './simulationAudioUtils';
 
 export {

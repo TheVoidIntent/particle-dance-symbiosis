@@ -1,9 +1,8 @@
-
 import { Particle } from '../particleUtils';
 import { simulationState, saveState } from './state';
 import { defaultConfig, simulationDimensions } from './config';
 import { createNewParticle } from './initialization';
-import { playSimulationEvent } from '../audio/simulationAudioUtils';
+import { playSimulationEventSound } from '../audio/simulationAudioUtils';
 
 // Update the simulation (main loop)
 export function updateSimulation() {
@@ -273,7 +272,7 @@ export function maybeCreateParticles() {
       
       // Play sound for particle creation
       if (i === 0) {
-        playSimulationEvent('particle_creation', { intensity: 0.5 });
+        playSimulationEventSound('particle_creation', { intensity: 0.5 });
       }
     }
     

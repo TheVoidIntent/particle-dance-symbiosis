@@ -1,6 +1,7 @@
 
 import { MutableRefObject } from 'react';
-import { Particle } from '@/types/simulation';
+import { v4 as uuidv4 } from 'uuid';
+import { Particle } from '@/utils/particleUtils';
 import { ParticleCreationOptions } from './types';
 
 /**
@@ -22,12 +23,10 @@ export function useParticleCreation(
       maxIntent = 10,
       maxEnergy = 100,
       maxComplexity = 5,
-      isPostInflation = false
+      isPostInflation = false,
+      x = Math.random() * canvasWidth,
+      y = Math.random() * canvasHeight
     } = options;
-    
-    // Generate random position within canvas
-    const x = Math.random() * canvasWidth;
-    const y = Math.random() * canvasHeight;
     
     // Generate random velocities
     const vx = (Math.random() - 0.5) * maxVelocity;
@@ -67,7 +66,7 @@ export function useParticleCreation(
     
     // Generate a particle with all required and optional fields
     return {
-      id: Date.now() + Math.floor(Math.random() * 10000), // Convert to number
+      id: uuidv4(),  // Use uuid to ensure string ids
       x,
       y,
       vx,
@@ -92,7 +91,8 @@ export function useParticleCreation(
       created: Date.now(),
       isPostInflation,
       scale: 1,
-      adaptiveScore: 0
+      adaptiveScore: 0,
+      creationTime: Date.now()
     };
   };
   

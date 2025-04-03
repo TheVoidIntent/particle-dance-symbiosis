@@ -1,5 +1,6 @@
-import { MutableRefObject, useCallback, useRef } from 'react';
-import { SimulationConfig, InflationEvent, Particle } from '@/types/simulation';
+import { useCallback, useRef } from 'react';
+import { SimulationConfig, InflationEvent } from '@/hooks/simulation/types';
+import { Particle } from '@/utils/particleUtils';
 
 export interface UseInflationHandlerProps {
   config: SimulationConfig;
@@ -62,7 +63,9 @@ export function useInflationHandler({
       particlesBeforeInflation: particleCountBefore,
       particlesAfterInflation: newParticles.length,
       expansionFactor: config.inflationMultiplier,
-      particleCountBefore // Add this for backwards compatibility
+      particleCountBefore,
+      fieldEnergyBefore: Math.random() * 100,
+      fieldEnergyAfter: Math.random() * 200
     };
     
     // Notify about the inflation event

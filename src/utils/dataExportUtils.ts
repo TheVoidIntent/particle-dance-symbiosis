@@ -1,3 +1,4 @@
+
 import { SimulationStats } from '@/types/simulation';
 
 // In-memory storage for simulation data points
@@ -113,3 +114,6 @@ function downloadFile(dataUri: string, filename: string): void {
   link.click();
   document.body.removeChild(link);
 }
+
+// Export the function as named export since the module has no default export
+export { exportSimulationData as exportDataAsJson };

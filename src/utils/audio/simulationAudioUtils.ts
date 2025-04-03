@@ -2,151 +2,140 @@
 // Audio context singleton
 let audioContext: AudioContext | null = null;
 
-// Audio event sources map
-const audioSources: Map<string, AudioBufferSourceNode> = new Map();
+// Store for loaded audio buffers
+const audioBuffers: { [key: string]: AudioBuffer } = {};
 
-// Audio buffers cache
-const audioBuffers: Map<string, AudioBuffer> = new Map();
+// Store for audio sources
+const audioSources: { [key: string]: AudioBufferSourceNode } = {};
 
-/**
- * Initialize Web Audio API context
- */
-export function initAudioContext(): AudioContext {
-  if (audioContext === null) {
+// Initialize audio context
+export const initAudioContext = (): AudioContext => {
+  if (!audioContext) {
     try {
-      // Create new audio context
       audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
       console.log("🔊 Audio context initialized:", audioContext.state);
-      
-      // Modern browsers need user interaction to start audio context
-      if (audioContext.state === 'suspended') {
-        const resumeOnInteraction = () => {
-          audioContext?.resume();
-          ["mousedown", "touchstart", "keydown"].forEach(event => {
-            document.removeEventListener(event, resumeOnInteraction);
-          });
-        };
-        
-        ["mousedown", "touchstart", "keydown"].forEach(event => {
-          document.addEventListener(event, resumeOnInteraction);
-        });
-      }
     } catch (e) {
-      console.error("Failed to initialize audio context:", e);
-      // Create a dummy audio context to prevent errors
-      const dummyContext = {
-        state: 'closed',
-        sampleRate: 44100,
-        createBuffer: () => ({}),
-        createBufferSource: () => ({}),
-        createGain: () => ({ connect: () => {}, gain: { value: 0 } }),
-        destination: {},
-        currentTime: 0,
-        decodeAudioData: () => Promise.resolve({}),
-        resume: () => Promise.resolve()
-      } as unknown as AudioContext;
-      
-      return dummyContext;
+      console.error("Failed to create audio context:", e);
+      throw e;
     }
   }
   
   return audioContext;
-}
+};
 
-/**
- * Play a sound for a simulation event
- */
-export function playSimulationEvent(
-  eventType: 'particle_creation' | 'particle_interaction' | 'cluster_formation' | 'intent_spike' | 'inflation' | 'robot_evolution',
-  options: {
-    intensity?: number;
-    frequency?: number;
-    count?: number;
-  } = {}
-): void {
-  const ctx = initAudioContext();
+// Get the current audio context or create one
+export const getAudioContext = (): AudioContext => {
+  if (!audioContext) {
+    return initAudioContext();
+  }
+  return audioContext;
+};
+
+// Play a simulation event sound
+export const playSimulationEvent = (
+  eventType: 'particle_creation' | 'particle_interaction' | 'cluster_formation' | 'robot_evolution' | 'intent_spike' | 'inflation',
+  options: { intensity?: number; count?: number; frequency?: number } = {}
+): void => {
+  const ctx = getAudioContext();
   
   // Default options
-  const intensity = options.intensity || 0.5;
-  const frequency = options.frequency || getFrequencyForEvent(eventType);
+  const { 
+    intensity = 0.5, 
+    count = 1,
+    frequency = 440
+  } = options;
   
-  // Create oscillator
+  // Create an oscillator
   const oscillator = ctx.createOscillator();
   const gainNode = ctx.createGain();
   
-  // Configure oscillator
-  oscillator.type = getOscillatorTypeForEvent(eventType);
-  oscillator.frequency.setValueAtTime(frequency, ctx.currentTime);
+  // Configure based on event type
+  switch (eventType) {
+    case 'particle_creation':
+      oscillator.type = 'sine';
+      oscillator.frequency.value = frequency;
+      gainNode.gain.value = 0.1 * intensity;
+      break;
+    
+    case 'particle_interaction':
+      oscillator.type = 'triangle';
+      oscillator.frequency.value = 220 + (intensity * 220);
+      gainNode.gain.value = 0.05 * intensity;
+      break;
+      
+    case 'cluster_formation':
+      oscillator.type = 'sawtooth';
+      oscillator.frequency.value = 165 + (count * 10);
+      gainNode.gain.value = 0.2 * intensity;
+      break;
+      
+    case 'robot_evolution':
+      oscillator.type = 'square';
+      oscillator.frequency.value = 330 + (count * 30);
+      gainNode.gain.value = 0.3;
+      break;
+      
+    case 'intent_spike':
+      oscillator.type = 'sine';
+      oscillator.frequency.value = 880;
+      gainNode.gain.value = 0.2 * intensity;
+      break;
+      
+    case 'inflation':
+      oscillator.type = 'sine';
+      oscillator.frequency.value = 110;
+      gainNode.gain.value = 0.5;
+      // Add a frequency sweep for dramatic effect
+      oscillator.frequency.exponentialRampToValueAtTime(
+        880, ctx.currentTime + 1.5
+      );
+      // Fade out
+      gainNode.gain.exponentialRampToValueAtTime(
+        0.001, ctx.currentTime + 2
+      );
+      break;
+  }
   
-  // Configure gain (volume)
-  gainNode.gain.setValueAtTime(0, ctx.currentTime);
-  gainNode.gain.linearRampToValueAtTime(0.3 * intensity, ctx.currentTime + 0.01);
-  gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + getDurationForEvent(eventType));
-  
-  // Connect nodes
+  // Connect the nodes
   oscillator.connect(gainNode);
   gainNode.connect(ctx.destination);
   
-  // Start and stop
-  oscillator.start(ctx.currentTime);
-  oscillator.stop(ctx.currentTime + getDurationForEvent(eventType));
+  // Play the sound
+  oscillator.start();
+  oscillator.stop(ctx.currentTime + (eventType === 'inflation' ? 2 : 0.3));
   
-  // Cleanup
+  // Clean up
   oscillator.onended = () => {
-    gainNode.disconnect();
     oscillator.disconnect();
+    gainNode.disconnect();
   };
-}
+};
 
-/**
- * Get appropriate frequency for event type
- */
-function getFrequencyForEvent(eventType: string): number {
-  switch (eventType) {
-    case 'particle_creation': return 440 + Math.random() * 220;
-    case 'particle_interaction': return 220 + Math.random() * 110;
-    case 'cluster_formation': return 330 + Math.random() * 165;
-    case 'intent_spike': return 660 + Math.random() * 330;
-    case 'inflation': return 110 + Math.random() * 55;
-    case 'robot_evolution': return 880 + Math.random() * 440;
-    default: return 440;
-  }
-}
+export const generateParticleSoundscape = (particles: any[], intentField: number[][][]): void => {
+  console.log("Generating particle soundscape...");
+  // Implementation would go here
+};
 
-/**
- * Get appropriate oscillator type for event
- */
-function getOscillatorTypeForEvent(eventType: string): OscillatorType {
-  switch (eventType) {
-    case 'particle_creation': return 'sine';
-    case 'particle_interaction': return 'square';
-    case 'cluster_formation': return 'triangle';
-    case 'intent_spike': return 'sawtooth';
-    case 'inflation': return 'sine';
-    case 'robot_evolution': return 'sine';
-    default: return 'sine';
-  }
-}
+export const startSimulationAudioStream = (): void => {
+  console.log("Starting simulation audio stream...");
+  // Implementation would go here
+};
 
-/**
- * Get appropriate duration for event
- */
-function getDurationForEvent(eventType: string): number {
-  switch (eventType) {
-    case 'particle_creation': return 0.2 + Math.random() * 0.1;
-    case 'particle_interaction': return 0.1 + Math.random() * 0.05;
-    case 'cluster_formation': return 0.5 + Math.random() * 0.25;
-    case 'intent_spike': return 0.3 + Math.random() * 0.15;
-    case 'inflation': return 1.0 + Math.random() * 0.5;
-    case 'robot_evolution': return 2.0 + Math.random() * 1.0;
-    default: return 0.3;
-  }
-}
+export const stopSimulationAudioStream = (): void => {
+  console.log("Stopping simulation audio stream...");
+  // Implementation would go here
+};
 
-// Export dummy functions for compatibility with existing code
-export const playSimulationAudio = playSimulationEvent;
-export const generateParticleSoundscape = () => {};
-export const startSimulationAudioStream = () => {};
-export const stopSimulationAudioStream = () => {};
-export const isSimulationAudioPlaying = () => false;
-export const setSimulationAudioVolume = () => {};
+export const isSimulationAudioPlaying = (): boolean => {
+  return audioContext !== null && audioContext.state === 'running';
+};
+
+export const setSimulationAudioVolume = (volume: number): void => {
+  console.log("Setting simulation audio volume:", volume);
+  // Implementation would go here
+};
+
+export const playSimulationAudio = (type: string, options: any = {}): void => {
+  console.log("Playing simulation audio:", type, options);
+  // Implementation would go here
+};

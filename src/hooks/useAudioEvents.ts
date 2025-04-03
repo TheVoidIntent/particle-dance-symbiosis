@@ -1,5 +1,5 @@
 
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback } from 'react';
 import { playSimulationEvent } from '@/utils/audio/simulationAudioUtils';
 
 export type AudioEventType = 
@@ -7,36 +7,28 @@ export type AudioEventType =
   'particle_interaction' | 
   'cluster_formation' | 
   'robot_evolution' | 
-  'intent_spike' |
+  'intent_spike' | 
   'inflation';
 
-export interface AudioEventOptions {
+interface AudioEventOptions {
   intensity?: number;
   count?: number;
   frequency?: number;
 }
 
 export function useAudioEvents(enabled: boolean = true) {
-  const isEnabledRef = useRef(enabled);
-  
-  useEffect(() => {
-    isEnabledRef.current = enabled;
-  }, [enabled]);
-  
   const triggerAudioEvent = useCallback((
-    eventType: AudioEventType,
+    eventType: AudioEventType, 
     options: AudioEventOptions = {}
   ) => {
-    if (!isEnabledRef.current) return;
+    if (!enabled) return;
     
     playSimulationEvent(eventType, options);
-  }, []);
+  }, [enabled]);
   
   return {
-    triggerAudioEvent,
-    isEnabled: isEnabledRef.current,
-    setEnabled: (value: boolean) => {
-      isEnabledRef.current = value;
-    }
+    triggerAudioEvent
   };
 }
+
+export default useAudioEvents;

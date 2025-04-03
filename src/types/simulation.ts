@@ -1,6 +1,7 @@
+
 // Define the basic particle interface
 export interface Particle {
-  id: number | string;
+  id: string; // Changed from string | number to just string for compatibility
   x?: number;
   y?: number;
   z?: number;
@@ -88,6 +89,7 @@ export interface SimulationStats {
   interactions?: number;
   frame?: number;
   time?: number;
+  timestamp?: number; // Add timestamp to resolve errors
   
   // New properties for advanced simulation
   robotCount?: number;
@@ -103,7 +105,7 @@ export interface SimulationConfig {
   fieldResolution: number;
   intentFluctuationRate: number;
   interactionRadius: number;
-  boundaryCondition: 'wrap' | 'bounce' | 'none';
+  boundaryCondition: 'wrap' | 'bounce' | 'none' | 'disappear'; // Added 'disappear' to match hooks/simulation/types.ts
   particleLifetime: number | null;
   inflationEnabled: boolean;
   inflationThreshold: number;
@@ -118,6 +120,7 @@ export interface InflationEvent {
   expansionFactor?: number;
   fieldEnergyBefore?: number;
   fieldEnergyAfter?: number;
+  particleCountBefore?: number; // Added to match hooks/simulation/types.ts
 }
 
 // Define Neural Intent Simulation properties

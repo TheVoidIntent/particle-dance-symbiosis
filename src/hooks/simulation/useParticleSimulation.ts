@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Particle } from '@/utils/particleUtils';
+import { Particle } from '@/types/simulation';
 import { useParticleCreation } from './useParticleCreation';
 import { useParticleUpdater } from './useParticleUpdater';
 import { useInflationHandler } from './useInflationHandler';
@@ -108,13 +108,13 @@ export function useParticleSimulation({
   }, [canvasRef]);
 
   const particleCreation = useParticleCreation(
-    particlesRef,
+    particlesRef as MutableRefObject<Particle[]>,
     dimensions.width,
     dimensions.height
   );
 
   const particleUpdater = useParticleUpdater(
-    particlesRef,
+    particlesRef as MutableRefObject<Particle[]>,
     intentFieldRef,
     interactionsRef,
     dimensions.width,

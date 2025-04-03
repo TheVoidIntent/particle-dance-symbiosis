@@ -1,7 +1,7 @@
 
 import { MutableRefObject } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import { Particle } from '@/types/simulation';  // Import from types/simulation instead
+import { Particle } from '@/types/simulation';
 import { ParticleCreationOptions } from './types';
 
 /**
@@ -16,21 +16,26 @@ export function useParticleCreation(
    * Create a new particle with optional customization
    */
   const createParticle = (options: ParticleCreationOptions = {}): Particle => {
+    // Destructure with proper type definitions for all properties
     const {
       type = 'normal',
       charge = Math.random() > 0.6 ? 'positive' : Math.random() > 0.5 ? 'negative' : 'neutral',
-      maxVelocity = 2,
-      maxIntent = 10,
-      maxEnergy = 100,
-      maxComplexity = 5,
       isPostInflation = false,
       x = Math.random() * canvasWidth,
-      y = Math.random() * canvasHeight
+      y = Math.random() * canvasHeight,
+      z = Math.random() * 10,
+      vx = (Math.random() - 0.5) * 2,
+      vy = (Math.random() - 0.5) * 2,
+      energy = Math.random() * 100,
+      knowledge = 0,
+      complexity = Math.random() * 5,
+      intentValue = Math.random() * 10,
     } = options;
     
-    // Generate random velocities
-    const vx = (Math.random() - 0.5) * maxVelocity;
-    const vy = (Math.random() - 0.5) * maxVelocity;
+    // Generate random velocities if not provided
+    const velocityX = vx !== undefined ? vx : (Math.random() - 0.5) * 2;
+    const velocityY = vy !== undefined ? vy : (Math.random() - 0.5) * 2;
+    const velocityZ = (Math.random() - 0.5) * 0.5;
     
     // Set color based on charge
     let color = '#FFFFFF'; // default: white
@@ -43,18 +48,15 @@ export function useParticleCreation(
     }
     
     // Calculate intent based on charge
-    let intent = Math.random() * maxIntent;
+    let intent = intentValue !== undefined ? intentValue : Math.random() * 10;
     if (charge === 'positive') {
       intent *= 1.5; // positive charges have higher intent
     } else if (charge === 'negative') {
       intent *= 0.5; // negative charges have lower intent
     }
     
-    // Generate energy level
-    const energy = Math.random() * maxEnergy;
-    
     // Generate complexity
-    const complexity = Math.random() * maxComplexity;
+    const finalComplexity = complexity !== undefined ? complexity : Math.random() * 5;
     
     // Interaction tendency based on charge
     let interactionTendency = Math.random();
@@ -64,31 +66,31 @@ export function useParticleCreation(
       interactionTendency *= 0.5; // negative charges less likely to interact
     }
     
-    // Generate a particle with all required and optional fields
+    // Generate a particle with all required fields
     return {
-      id: uuidv4(),  // Use uuid to ensure string ids
+      id: uuidv4(),
       x,
       y,
-      z: Math.random() * 10, // random z position for 3D visualizations
-      vx,
-      vy,
-      vz: (Math.random() - 0.5) * 0.5,
-      radius: 3 + Math.random() * 3, // random size between 3-6
+      z,
+      vx: velocityX,
+      vy: velocityY,
+      vz: velocityZ,
+      radius: 3 + Math.random() * 3,
       mass: 1 + Math.random() * 4,
-      charge: charge as 'positive' | 'negative' | 'neutral', // Explicitly cast to the allowed values
+      charge: charge as 'positive' | 'negative' | 'neutral',
       color,
       type,
       intent,
       energy,
-      knowledge: 0, // starts with no knowledge
-      complexity,
+      knowledge,
+      complexity: finalComplexity,
       interactionTendency,
       lastInteraction: 0,
       interactionCount: 0,
-      age: 0, // starts at age 0
-      interactions: 0, // starts with no interactions
+      age: 0,
+      interactions: 0,
       intentDecayRate: 0.001 + Math.random() * 0.005,
-      energyCapacity: maxEnergy * (0.8 + Math.random() * 0.4),
+      energyCapacity: energy * 1.2,
       created: Date.now(),
       isPostInflation,
       scale: 1,

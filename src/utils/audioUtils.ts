@@ -1,113 +1,136 @@
 
-import { initAudioContext, playSimulationEvent } from './audio/simulationAudioUtils';
-import { checkAudioFileExists, getAudioFileMetadata } from './audio/audioFileUtils';
-
-// Global settings
-const AUDIO_ENABLED = true;
-const VOLUME = 0.5;
-
-// Initialize audio context once
-let audioContextInitialized = false;
-const initializeAudio = () => {
-  if (!audioContextInitialized && AUDIO_ENABLED) {
-    try {
-      initAudioContext();
-      audioContextInitialized = true;
-      console.log("🔊 Audio context initialized");
-    } catch (e) {
-      console.error("Failed to initialize audio:", e);
-    }
+/**
+ * Utility function to check if an audio file exists
+ * @param url URL of the audio file to check
+ * @returns Promise that resolves to an object indicating whether the file exists
+ */
+export async function checkAudioFileExists(url: string): Promise<{ exists: boolean; status?: number }> {
+  try {
+    const response = await fetch(url, { method: 'HEAD' });
+    return { 
+      exists: response.ok,
+      status: response.status 
+    };
+  } catch (error) {
+    console.error('Error checking audio file:', error);
+    return { exists: false };
   }
-};
-
-// Initialize on page load
-if (typeof window !== 'undefined') {
-  window.addEventListener('load', initializeAudio);
-  
-  // Also try to initialize on first user interaction
-  const initOnInteraction = () => {
-    initializeAudio();
-    document.removeEventListener('click', initOnInteraction);
-    document.removeEventListener('keydown', initOnInteraction);
-  };
-  
-  document.addEventListener('click', initOnInteraction);
-  document.addEventListener('keydown', initOnInteraction);
 }
 
-// Play a tone for a particle
-export const playParticleTone = (
-  charge: 'positive' | 'negative' | 'neutral', 
-  energy: number = 1
-) => {
-  if (!AUDIO_ENABLED) return;
-  
-  // Define the frequency based on charge
-  let frequency = 440; // A note (neutral)
-  
-  if (charge === 'positive') {
-    frequency = 523.25; // C note 
-  } else if (charge === 'negative') {
-    frequency = 349.23; // F note
+/**
+ * Get available audio files from a directory
+ * @param directory The directory to look for audio files
+ * @returns Array of audio file names
+ */
+export async function getAvailableAudioFiles(directory: string): Promise<string[]> {
+  try {
+    // In a real implementation, this would fetch from the server
+    // For now, return mock data
+    return [
+      'ambient_background.mp3',
+      'particle_creation.mp3',
+      'intent_fluctuation.mp3',
+      'cluster_formation.mp3'
+    ];
+  } catch (error) {
+    console.error('Error getting audio files:', error);
+    return [];
   }
-  
-  // Scale by energy
-  frequency *= 0.8 + (energy * 0.4);
-  
-  // Play the tone
-  playSimulationEvent('particle_creation', { 
-    frequency,
-    intensity: energy
-  });
-};
+}
 
-// Play sound for particle interaction
-export const playInteractionSound = (
-  intensity: number = 0.5,
-  type: 'positive' | 'negative' | 'neutral' = 'positive'
-) => {
-  if (!AUDIO_ENABLED) return;
+/**
+ * Play a sound for a simulation event
+ * @param eventType Type of event to play sound for
+ * @param intensity Optional intensity of the sound (volume, pitch)
+ */
+export function playSimulationEventSound(eventType: string, intensity: number = 0.5): void {
+  // Implementation for playing audio based on event
+  console.log(`Playing sound for ${eventType} at intensity ${intensity}`);
   
-  playSimulationEvent('particle_interaction', {
-    intensity
-  });
-};
-
-// Play audio for a simulation event
-export const playEvent = (eventName: string, options: any = {}) => {
-  if (!AUDIO_ENABLED) return;
+  // Map event types to specific audio files
+  const audioMap: Record<string, string> = {
+    'particle_creation': '/audio/particle_creation.mp3',
+    'particle_interaction': '/audio/particle_interaction.mp3',
+    'cluster_formation': '/audio/cluster_formation.mp3',
+    'intent_fluctuation': '/audio/intent_fluctuation.mp3',
+    'inflation_event': '/audio/inflation_event.mp3',
+    'robot_evolution': '/audio/robot_evolution.mp3'
+  };
   
-  const validEvents = [
-    'particle_creation',
-    'particle_interaction',
-    'cluster_formation',
-    'robot_evolution',
-    'intent_spike',
-    'inflation'
-  ];
-  
-  if (validEvents.includes(eventName)) {
-    playSimulationEvent(eventName as any, options);
-  } else {
-    console.warn(`Unknown event name: ${eventName}`);
+  if (audioMap[eventType]) {
+    try {
+      const audio = new Audio(audioMap[eventType]);
+      audio.volume = Math.min(Math.max(intensity, 0.1), 1.0);
+      audio.play().catch(e => console.error("Error playing audio:", e));
+    } catch (e) {
+      console.error("Error initializing audio:", e);
+    }
   }
-};
+}
 
-// Enable or disable audio
-export const setAudioEnabled = (enabled: boolean) => {
-  // This is just a mock implementation
-  console.log(`🔊 Setting audio enabled: ${enabled}`);
-};
+/**
+ * Initialize the audio context (needed for Web Audio API)
+ * Required to be called from a user interaction event
+ */
+export function initAudioContext(): void {
+  try {
+    // Create AudioContext if it doesn't exist
+    if (typeof window !== 'undefined' && window.AudioContext) {
+      const audioContext = new window.AudioContext();
+      console.log("AudioContext initialized:", audioContext.state);
+    }
+  } catch (e) {
+    console.error("Error initializing AudioContext:", e);
+  }
+}
 
-// Export functions from audioFileUtils
-export { checkAudioFileExists, getAudioFileMetadata };
+/**
+ * Play looping background audio
+ * @param url URL of the audio file
+ */
+export function playLoopingAudio(url: string, id: string, volume: number = 0.5): void {
+  try {
+    const audioElement = document.getElementById(id) as HTMLAudioElement || new Audio();
+    
+    if (!document.getElementById(id)) {
+      audioElement.id = id;
+      audioElement.loop = true;
+      audioElement.volume = volume;
+      document.body.appendChild(audioElement);
+    }
+    
+    audioElement.src = url;
+    audioElement.play().catch(e => console.error("Error playing audio:", e));
+  } catch (e) {
+    console.error("Error with looping audio:", e);
+  }
+}
 
-export default {
-  initializeAudio,
-  playParticleTone,
-  playInteractionSound,
-  playEvent,
-  setAudioEnabled,
-  checkAudioFileExists,
-  getAudioFileMetadata
-};
+/**
+ * Stop looping background audio
+ */
+export function stopLoopingAudio(id: string): void {
+  try {
+    const audioElement = document.getElementById(id) as HTMLAudioElement;
+    if (audioElement) {
+      audioElement.pause();
+      audioElement.currentTime = 0;
+    }
+  } catch (e) {
+    console.error("Error stopping audio:", e);
+  }
+}
+
+/**
+ * Set volume for looping audio
+ */
+export function setLoopingAudioVolume(id: string, volume: number): void {
+  try {
+    const audioElement = document.getElementById(id) as HTMLAudioElement;
+    if (audioElement) {
+      audioElement.volume = Math.min(Math.max(volume, 0), 1);
+    }
+  } catch (e) {
+    console.error("Error setting audio volume:", e);
+  }
+}

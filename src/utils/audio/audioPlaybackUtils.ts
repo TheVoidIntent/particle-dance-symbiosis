@@ -1,85 +1,56 @@
 
-// Audio context for the application
-let audioContext: AudioContext | null = null;
-const audioElements: Map<string, HTMLAudioElement> = new Map();
-
 /**
- * Initialize audio context
- */
-export function initAudioContext(): AudioContext {
-  if (!audioContext) {
-    try {
-      audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-      console.log('Audio context initialized successfully');
-    } catch (error) {
-      console.error('Failed to initialize audio context:', error);
-      throw new Error('Audio context initialization failed');
-    }
-  }
-  return audioContext;
-}
-
-/**
- * Play a looping audio file
- * @param audioId Unique identifier for the audio
- * @param src Source URL for the audio file
- * @param volume Initial volume (0-1)
- */
-export function playLoopingAudio(audioId: string, src: string, volume: number = 0.5): void {
-  if (audioElements.has(audioId)) {
-    console.log(`Audio ${audioId} is already playing, adjusting volume to ${volume}`);
-    const audio = audioElements.get(audioId)!;
-    audio.volume = volume;
-    
-    if (audio.paused) {
-      audio.play().catch(error => {
-        console.error(`Error playing audio ${audioId}:`, error);
-      });
-    }
-    return;
-  }
-  
-  try {
-    const audio = new Audio(src);
-    audio.loop = true;
-    audio.volume = volume;
-    audio.addEventListener('canplaythrough', () => {
-      audio.play().catch(error => {
-        console.error(`Error playing audio ${audioId}:`, error);
-      });
-    });
-    audio.addEventListener('error', (error) => {
-      console.error(`Error loading audio ${audioId}:`, error);
-    });
-    
-    audioElements.set(audioId, audio);
-  } catch (error) {
-    console.error(`Error setting up audio ${audioId}:`, error);
-  }
-}
-
-/**
- * Stop a looping audio
- * @param audioId Unique identifier for the audio
- */
-export function stopLoopingAudio(audioId: string): void {
-  if (audioElements.has(audioId)) {
-    const audio = audioElements.get(audioId)!;
-    audio.pause();
-    audio.currentTime = 0;
-    console.log(`Stopped audio ${audioId}`);
-  }
-}
-
-/**
- * Set volume for a looping audio
- * @param audioId Unique identifier for the audio
+ * Play looping background audio
+ * @param url URL of the audio file
+ * @param id ID to assign to the audio element
  * @param volume Volume level (0-1)
  */
-export function setLoopingAudioVolume(audioId: string, volume: number): void {
-  if (audioElements.has(audioId)) {
-    const audio = audioElements.get(audioId)!;
-    audio.volume = Math.max(0, Math.min(1, volume));
-    console.log(`Set volume to ${volume} for audio ${audioId}`);
+export function playLoopingAudio(url: string, id: string, volume: number = 0.5): void {
+  try {
+    const audioElement = document.getElementById(id) as HTMLAudioElement || new Audio();
+    
+    if (!document.getElementById(id)) {
+      audioElement.id = id;
+      audioElement.loop = true;
+      audioElement.volume = volume;
+      document.body.appendChild(audioElement);
+    }
+    
+    audioElement.src = url;
+    audioElement.play().catch(e => console.error("Error playing audio:", e));
+  } catch (e) {
+    console.error("Error with looping audio:", e);
+  }
+}
+
+/**
+ * Stop looping background audio
+ * @param id ID of the audio element to stop
+ */
+export function stopLoopingAudio(id: string): void {
+  try {
+    const audioElement = document.getElementById(id) as HTMLAudioElement;
+    if (audioElement) {
+      audioElement.pause();
+      audioElement.currentTime = 0;
+    }
+  } catch (e) {
+    console.error("Error stopping audio:", e);
+  }
+}
+
+/**
+ * Set volume for looping audio
+ * @param id ID of the audio element
+ * @param volume Volume level (0-1)
+ */
+export function setLoopingAudioVolume(id: string, volume: number): void {
+  try {
+    const audioElement = document.getElementById(id) as HTMLAudioElement;
+    if (audioElement) {
+      audioElement.volume = Math.min(Math.max(volume, 0), 1);
+    }
+  } catch (e) {
+    console.error("Error setting audio volume:", e);
   }
 }

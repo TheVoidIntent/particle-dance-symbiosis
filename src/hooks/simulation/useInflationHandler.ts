@@ -13,7 +13,8 @@ interface UseInflationHandlerProps {
   onInflationEvent?: (event: InflationEvent) => void;
 }
 
-export { InflationEvent };
+// Use 'export type' instead of 'export' for type re-export
+export type { InflationEvent };
 
 /**
  * Hook for handling inflation events in the simulation

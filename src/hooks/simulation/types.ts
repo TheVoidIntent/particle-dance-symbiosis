@@ -34,6 +34,11 @@ export interface ParticleCreationOptions {
   complexity?: number;
   intentValue?: number;
   isPostInflation?: boolean;
+  // Add these additional properties to match usage in code
+  maxVelocity?: number;
+  maxIntent?: number;
+  maxEnergy?: number;
+  maxComplexity?: number;
 }
 
 /**

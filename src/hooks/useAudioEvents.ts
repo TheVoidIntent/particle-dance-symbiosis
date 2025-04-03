@@ -1,97 +1,105 @@
 
-import { useCallback, useEffect, useRef } from 'react';
-import { 
-  playSimulationEventSound, 
-  isSimulationAudioPlaying, 
-  startSimulationAudioStream,
-  stopSimulationAudioStream, 
-  setSimulationAudioVolume
-} from '@/utils/audio/simulationAudioUtils';
+import { useState, useCallback, useEffect } from 'react';
 
-interface UseAudioEventsProps {
-  enabled?: boolean;
-  initialVolume?: number;
-  onError?: (error: any) => void;
+export type AudioEventType = 
+  | 'particle_creation' 
+  | 'particle_interaction' 
+  | 'cluster_formation' 
+  | 'intent_fluctuation' 
+  | 'inflation_event'
+  | 'anomaly_detected'
+  | 'robot_evolution';
+
+/**
+ * Options for triggering audio events
+ */
+export interface AudioEventOptions {
+  intensity?: number;
+  count?: number;
+  frequency?: number;
+  duration?: number;
 }
 
-export function useAudioEvents({
-  enabled = true,
-  initialVolume = 0.5,
-  onError = () => {}
-}: UseAudioEventsProps = {}) {
-  const audioEnabledRef = useRef(enabled);
-  const volumeRef = useRef(initialVolume);
+/**
+ * Hook for handling audio events in the simulation
+ */
+export function useAudioEvents() {
+  const [isAudioEnabled, setIsAudioEnabled] = useState(true);
+  const [volume, setVolumeState] = useState(0.7);
   
-  // Initialize audio on component mount
-  useEffect(() => {
-    if (enabled) {
-      try {
-        startSimulationAudioStream();
-        setSimulationAudioVolume(initialVolume);
-      } catch (error) {
-        console.error('Failed to initialize audio:', error);
-        onError(error);
-      }
-    }
-    
-    // Cleanup on component unmount
-    return () => {
-      if (audioEnabledRef.current) {
-        stopSimulationAudioStream();
-      }
-    };
-  }, [enabled, initialVolume, onError]);
-  
-  // Function to play sound for simulation events
-  const playEventSound = useCallback((eventType: string, intensity: number = 0.5) => {
-    if (!audioEnabledRef.current) return;
-    
-    try {
-      playSimulationEventSound(eventType, intensity);
-    } catch (error) {
-      console.error('Error playing event sound:', error);
-      onError(error);
-    }
-  }, [onError]);
-  
-  // Function to toggle audio on/off
+  /**
+   * Toggle audio on/off
+   */
   const toggleAudio = useCallback(() => {
+    setIsAudioEnabled(prev => !prev);
+    return !isAudioEnabled;
+  }, [isAudioEnabled]);
+  
+  /**
+   * Set the volume for all audio events
+   */
+  const setVolume = useCallback((newVolume: number) => {
+    const clampedVolume = Math.min(Math.max(newVolume, 0), 1);
+    setVolumeState(clampedVolume);
+    return clampedVolume;
+  }, []);
+
+  /**
+   * Play a sound for a specific event
+   */
+  const playEventSound = useCallback((eventType: string, intensity: number = 0.5) => {
+    if (!isAudioEnabled) return;
+    
     try {
-      if (isSimulationAudioPlaying()) {
-        stopSimulationAudioStream();
-        audioEnabledRef.current = false;
-      } else {
-        startSimulationAudioStream();
-        setSimulationAudioVolume(volumeRef.current);
-        audioEnabledRef.current = true;
+      // Simple implementation - in a real app, this would use the Web Audio API
+      const audioMap: Record<string, string> = {
+        'particle_creation': '/audio/particle_creation.mp3',
+        'particle_interaction': '/audio/particle_interaction.mp3',
+        'cluster_formation': '/audio/cluster_formation.mp3',
+        'intent_fluctuation': '/audio/intent_fluctuation.mp3',
+        'inflation_event': '/audio/inflation_event.mp3',
+        'anomaly_detected': '/audio/anomaly_detected.mp3',
+        'robot_evolution': '/audio/robot_evolution.mp3'
+      };
+      
+      if (audioMap[eventType]) {
+        const audio = new Audio(audioMap[eventType]);
+        audio.volume = volume * intensity;
+        audio.play().catch(e => console.error("Error playing audio:", e));
       }
     } catch (error) {
-      console.error('Error toggling audio:', error);
-      onError(error);
+      console.error("Error playing event sound:", error);
     }
+  }, [isAudioEnabled, volume]);
+
+  /**
+   * Trigger an audio event with options
+   */
+  const triggerAudioEvent = useCallback((eventType: AudioEventType, options: AudioEventOptions = {}) => {
+    if (!isAudioEnabled) return;
     
-    return audioEnabledRef.current;
-  }, [onError]);
-  
-  // Function to set audio volume
-  const setVolume = useCallback((volume: number) => {
-    try {
-      const normalizedVolume = Math.max(0, Math.min(1, volume));
-      setSimulationAudioVolume(normalizedVolume);
-      volumeRef.current = normalizedVolume;
-    } catch (error) {
-      console.error('Error setting audio volume:', error);
-      onError(error);
+    const { intensity = 0.5, count = 1 } = options;
+    
+    playEventSound(eventType, intensity);
+    
+    // For multiple sounds (like particle bursts)
+    if (count > 1) {
+      for (let i = 1; i < count; i++) {
+        setTimeout(() => {
+          playEventSound(eventType, intensity * (1 - i/count)); // Fade out as we go
+        }, i * 50);
+      }
     }
-    
-    return volumeRef.current;
-  }, [onError]);
-  
+  }, [isAudioEnabled, playEventSound]);
+
   return {
-    isAudioEnabled: audioEnabledRef.current,
-    volume: volumeRef.current,
+    isAudioEnabled,
+    volume,
     playEventSound,
+    triggerAudioEvent,
     toggleAudio,
     setVolume
   };
 }
+
+export default useAudioEvents;

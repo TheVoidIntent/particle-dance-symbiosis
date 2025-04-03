@@ -1,7 +1,7 @@
 
 import { MutableRefObject } from 'react';
 import { Particle } from '@/types/simulation';
-import { useAudioEvents, AudioEventType } from './useAudioEvents';
+import useAudioEvents from './useAudioEvents';
 
 export interface ParticleCreationOptions {
   type?: string;
@@ -23,7 +23,7 @@ export function useParticleCreation(
   canvasWidth: number,
   canvasHeight: number
 ) {
-  const { triggerAudioEvent } = useAudioEvents();
+  const audioEvents = useAudioEvents();
 
   /**
    * Create a new particle with optional customization
@@ -82,10 +82,7 @@ export function useParticleCreation(
     }
     
     // Trigger audio event for particle creation
-    triggerAudioEvent('particle_creation', { 
-      intensity: Math.abs(intent) / maxIntent,
-      count: 1
-    });
+    audioEvents.playEventSound('particle_creation', Math.abs(intent) / maxIntent);
     
     // Generate a particle with all required and optional fields
     return {
@@ -115,7 +112,8 @@ export function useParticleCreation(
       isPostInflation,
       scale: 1,
       adaptiveScore: 0,
-      creationTime: Date.now()
+      creationTime: Date.now(),
+      vz: (Math.random() - 0.5) * 0.5,
     } as Particle;
   };
   

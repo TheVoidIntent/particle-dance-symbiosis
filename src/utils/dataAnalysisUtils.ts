@@ -1,169 +1,210 @@
 
-import { SimulationStats } from "@/types/simulation";
+import { SimulationStats, Particle } from '@/types/simulation';
 
 /**
- * Calculate the growth rate between two simulation states
+ * Analyze simulation data to extract insights
  */
-export function calculateGrowthRate(
-  current: SimulationStats,
-  previous: SimulationStats
+export function analyzeSimulationData(
+  dataPoints: SimulationStats[], 
+  options: { 
+    timeRange?: [number, number],
+    smoothing?: number
+  } = {}
 ): {
-  particleGrowth: number;
-  complexityGrowth: number;
-  knowledgeGrowth: number;
+  timeSeriesData: any[];
+  trends: any;
+  anomalies: any[];
+  correlations: any[];
 } {
-  // Default if no previous state
-  if (!previous) {
-    return {
-      particleGrowth: 0,
-      complexityGrowth: 0,
-      knowledgeGrowth: 0
+  // Default result structure
+  const result = {
+    timeSeriesData: [],
+    trends: {},
+    anomalies: [],
+    correlations: []
+  };
+  
+  if (!dataPoints || dataPoints.length === 0) {
+    return result;
+  }
+  
+  // Add timestamps if missing
+  const timestampedData = dataPoints.map((point, index) => ({
+    ...point,
+    timestamp: point.timestamp || Date.now() - (dataPoints.length - index) * 1000
+  }));
+  
+  // Apply time range filter if provided
+  let filteredData = timestampedData;
+  if (options.timeRange) {
+    const [start, end] = options.timeRange;
+    filteredData = timestampedData.filter(point => 
+      point.timestamp >= start && point.timestamp <= end
+    );
+  }
+  
+  // Convert to time series format
+  result.timeSeriesData = filteredData.map(point => ({
+    timestamp: point.timestamp,
+    particleCount: point.particleCount,
+    positiveParticles: point.positiveParticles,
+    negativeParticles: point.negativeParticles,
+    neutralParticles: point.neutralParticles,
+    totalInteractions: point.totalInteractions,
+    complexityIndex: point.complexityIndex || 0,
+    systemEntropy: point.systemEntropy || 0
+  }));
+  
+  // Calculate basic trends
+  if (filteredData.length > 1) {
+    const first = filteredData[0];
+    const last = filteredData[filteredData.length - 1];
+    
+    result.trends = {
+      particleGrowthRate: calculateGrowthRate(first.particleCount, last.particleCount),
+      interactionGrowthRate: calculateGrowthRate(first.totalInteractions || 0, last.totalInteractions || 0),
+      complexityTrend: calculateGrowthRate(first.complexityIndex || 0, last.complexityIndex || 0),
+      entropyChange: (last.systemEntropy || 0) - (first.systemEntropy || 0)
     };
   }
-
-  // Calculate time difference (in seconds)
-  const currentTime = current.timestamp || Date.now();
-  const previousTime = previous.timestamp || currentTime;
-  const timeDiffSeconds = Math.max(1, (currentTime - previousTime) / 1000);
-
-  // Calculate growth rates
-  const particleGrowth =
-    ((current.particleCount - previous.particleCount) / previous.particleCount) /
-    timeDiffSeconds;
-
-  const complexityGrowth =
-    current.complexityIndex && previous.complexityIndex
-      ? ((current.complexityIndex - previous.complexityIndex) /
-          Math.max(0.001, previous.complexityIndex)) /
-        timeDiffSeconds
-      : 0;
-
-  const knowledgeGrowth =
-    current.averageKnowledge && previous.averageKnowledge
-      ? ((current.averageKnowledge - previous.averageKnowledge) /
-          Math.max(0.001, previous.averageKnowledge)) /
-        timeDiffSeconds
-      : 0;
-
-  return {
-    particleGrowth,
-    complexityGrowth,
-    knowledgeGrowth
-  };
+  
+  // Detect anomalies in the data
+  result.anomalies = detectDataAnomalies(filteredData);
+  
+  // Calculate correlations between metrics
+  result.correlations = calculateCorrelations(filteredData);
+  
+  return result;
 }
 
 /**
- * Check for significant anomalies in the simulation data
+ * Calculate growth rate between two values
  */
-export function detectAnomalies(
-  current: SimulationStats,
-  previous: SimulationStats,
-  thresholds: {
-    particleGrowthThreshold: number;
-    complexityThreshold: number;
-    entropyThreshold: number;
-  } = {
-    particleGrowthThreshold: 0.5,
-    complexityThreshold: 0.3,
-    entropyThreshold: 0.2
-  }
-): Array<{
-  type: string;
-  severity: number;
-  description: string;
-  timestamp: number;
-}> {
+function calculateGrowthRate(start: number, end: number): number {
+  if (start === 0) return end > 0 ? 1 : 0;
+  return (end - start) / start;
+}
+
+/**
+ * Detect anomalies in time series data
+ */
+function detectDataAnomalies(dataPoints: SimulationStats[]): any[] {
+  if (dataPoints.length < 3) return [];
+  
   const anomalies = [];
-  const currentTime = current.timestamp || Date.now();
-
-  // Check for sudden particle count changes
-  if (
-    previous &&
-    Math.abs(current.particleCount - previous.particleCount) >
-      previous.particleCount * thresholds.particleGrowthThreshold
-  ) {
-    anomalies.push({
-      type: "particle_anomaly",
-      severity: 0.7,
-      description: `Sudden change in particle count: ${previous.particleCount} → ${current.particleCount}`,
-      timestamp: currentTime
-    });
+  
+  // Detect spikes in metrics
+  for (let i = 1; i < dataPoints.length - 1; i++) {
+    const prev = dataPoints[i-1];
+    const curr = dataPoints[i];
+    const next = dataPoints[i+1];
+    
+    // Check for complexity spikes
+    if (curr.complexityIndex && prev.complexityIndex && next.complexityIndex) {
+      const avgComplexity = (prev.complexityIndex + next.complexityIndex) / 2;
+      if (curr.complexityIndex > avgComplexity * 1.5) {
+        anomalies.push({
+          type: 'complexity_spike',
+          timestamp: curr.timestamp,
+          value: curr.complexityIndex,
+          expected: avgComplexity
+        });
+      }
+    }
+    
+    // Check for entropy changes
+    if (curr.systemEntropy !== undefined && prev.systemEntropy !== undefined) {
+      const entropyChange = Math.abs(curr.systemEntropy - prev.systemEntropy);
+      if (entropyChange > 0.2) {
+        anomalies.push({
+          type: 'entropy_shift',
+          timestamp: curr.timestamp,
+          value: curr.systemEntropy,
+          previous: prev.systemEntropy,
+          change: entropyChange
+        });
+      }
+    }
   }
-
-  // Check for complexity spikes
-  if (
-    previous &&
-    current.complexityIndex &&
-    previous.complexityIndex &&
-    current.complexityIndex >
-      previous.complexityIndex * (1 + thresholds.complexityThreshold)
-  ) {
-    anomalies.push({
-      type: "complexity_anomaly",
-      severity: 0.8,
-      description: `Significant complexity increase: ${previous.complexityIndex.toFixed(
-        2
-      )} → ${current.complexityIndex.toFixed(2)}`,
-      timestamp: currentTime
-    });
-  }
-
-  // Check for entropy changes
-  if (
-    previous &&
-    current.systemEntropy &&
-    previous.systemEntropy &&
-    Math.abs(current.systemEntropy - previous.systemEntropy) >
-      thresholds.entropyThreshold
-  ) {
-    anomalies.push({
-      type: "entropy_anomaly",
-      severity: 0.9,
-      description: `Significant entropy change: ${previous.systemEntropy.toFixed(
-        2
-      )} → ${current.systemEntropy.toFixed(2)}`,
-      timestamp: currentTime
-    });
-  }
-
+  
   return anomalies;
 }
 
 /**
- * Calculate the complexity index based on particle distribution and interactions
+ * Calculate correlations between different metrics
  */
-export function calculateComplexityIndex(stats: SimulationStats): number {
-  // Basic complexity calculation
-  let complexity = 0;
+function calculateCorrelations(dataPoints: SimulationStats[]): any[] {
+  if (dataPoints.length < 5) return [];
   
-  // Complexity from particle diversity
-  const totalParticles = stats.particleCount || 0;
-  if (totalParticles > 0) {
-    const positive = stats.positiveParticles || 0;
-    const negative = stats.negativeParticles || 0;
-    const neutral = stats.neutralParticles || 0;
+  const correlations = [];
+  
+  // Calculate correlation between particle count and interactions
+  const particleCountValues = dataPoints.map(p => p.particleCount);
+  const interactionValues = dataPoints.map(p => p.totalInteractions || 0);
+  
+  const particleInteractionCorrelation = calculatePearsonCorrelation(
+    particleCountValues, 
+    interactionValues
+  );
+  
+  correlations.push({
+    metric1: 'particleCount',
+    metric2: 'totalInteractions',
+    correlation: particleInteractionCorrelation
+  });
+  
+  // Calculate more correlations as needed
+  
+  return correlations;
+}
+
+/**
+ * Calculate Pearson correlation coefficient between two arrays
+ */
+function calculatePearsonCorrelation(x: number[], y: number[]): number {
+  if (x.length !== y.length || x.length === 0) return 0;
+  
+  // Calculate means
+  const xMean = x.reduce((acc, val) => acc + val, 0) / x.length;
+  const yMean = y.reduce((acc, val) => acc + val, 0) / y.length;
+  
+  // Calculate the numerator and denominator
+  let numerator = 0;
+  let xDenominator = 0;
+  let yDenominator = 0;
+  
+  for (let i = 0; i < x.length; i++) {
+    const xDiff = x[i] - xMean;
+    const yDiff = y[i] - yMean;
     
-    // Calculate normalized entropy
-    const pPositive = positive / totalParticles;
-    const pNegative = negative / totalParticles;
-    const pNeutral = neutral / totalParticles;
-    
-    let entropy = 0;
-    if (pPositive > 0) entropy -= pPositive * Math.log2(pPositive);
-    if (pNegative > 0) entropy -= pNegative * Math.log2(pNegative);
-    if (pNeutral > 0) entropy -= pNeutral * Math.log2(pNeutral);
-    
-    // Normalize entropy to [0,1]
-    const normalizedEntropy = entropy / Math.log2(3);
-    
-    // Add interaction complexity
-    const interactionDensity = totalParticles > 0 
-      ? (stats.totalInteractions || 0) / totalParticles 
-      : 0;
-    
-    // Combine factors
-    complexity = (normalizedEntropy * 0.4) + (interactionDensity * 0.6);
+    numerator += xDiff * yDiff;
+    xDenominator += xDiff * xDiff;
+    yDenominator += yDiff * yDiff;
   }
   
-  return complexity;
+  if (xDenominator === 0 || yDenominator === 0) return 0;
+  
+  return numerator / Math.sqrt(xDenominator * yDenominator);
+}
+
+/**
+ * Analyze particles to detect clusters and patterns
+ */
+export function analyzeParticleDistribution(particles: Particle[]): {
+  clusters: { center: { x: number, y: number }, count: number, radius: number, charge: string }[];
+  densityMap: number[][];
+  chargeDistribution: { positive: number, negative: number, neutral: number };
+  entropy: number;
+} {
+  // This is a placeholder implementation
+  return {
+    clusters: [],
+    densityMap: [],
+    chargeDistribution: {
+      positive: particles.filter(p => p.charge === 'positive').length,
+      negative: particles.filter(p => p.charge === 'negative').length,
+      neutral: particles.filter(p => p.charge === 'neutral').length
+    },
+    entropy: 0
+  };
 }

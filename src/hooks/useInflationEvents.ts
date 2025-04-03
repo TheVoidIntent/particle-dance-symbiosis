@@ -1,77 +1,46 @@
 
-import { useState, useCallback, useRef } from 'react';
-import { InflationEvent } from '@/hooks/simulation';
-import { exportSimulationDataAsPDF } from '@/utils/pdfExportUtils';
+import { useState, useCallback } from 'react';
+import { InflationEvent } from '@/types/simulation';
 import { toast } from 'sonner';
+import { exportDataAsPdf } from '@/utils/dataExportUtils';
 
 export function useInflationEvents() {
-  const [showInflationBanner, setShowInflationBanner] = useState(false);
-  const [latestInflation, setLatestInflation] = useState<InflationEvent | null>(null);
-  const inflationEventsRef = useRef<InflationEvent[]>([]);
+  const [inflationEvents, setInflationEvents] = useState<InflationEvent[]>([]);
+  const [latestEvent, setLatestEvent] = useState<InflationEvent | null>(null);
   
-  const handleInflationDetected = useCallback((event: InflationEvent) => {
-    setLatestInflation(event);
-    setShowInflationBanner(true);
+  const handleInflationEvent = useCallback((event: InflationEvent) => {
+    console.log('🌌 Inflation event detected:', event);
     
-    // Store the inflation event in our records
-    inflationEventsRef.current.push(event);
+    // Add to events list
+    setInflationEvents(prev => [...prev, event]);
     
-    // Auto-hide the banner after 5 seconds
-    setTimeout(() => {
-      setShowInflationBanner(false);
-    }, 5000);
+    // Update latest event
+    setLatestEvent(event);
+    
+    // Notify user
+    toast.success('Universe Inflation Event Detected', {
+      description: `Particles expanded from ${event.particlesBeforeInflation} to ${event.particlesAfterInflation}`,
+    });
   }, []);
   
-  // Add a method to get all inflation events
-  const getInflationEvents = useCallback((): InflationEvent[] => {
-    return inflationEventsRef.current;
-  }, []);
-  
-  // Export inflation events data
-  const exportInflationEventsData = useCallback(() => {
-    const data = {
-      timestamp: new Date().toISOString(),
-      eventCount: inflationEventsRef.current.length,
-      events: inflationEventsRef.current,
-      simulations: [
-        { type: 'adaptive', summary: { /* Placeholder for simulation stats */ } },
-        { type: 'energy_conservation', summary: { /* Placeholder for simulation stats */ } },
-        { type: 'baseline', summary: { /* Placeholder for simulation stats */ } },
-        { type: 'full_features', summary: { /* Placeholder for simulation stats */ } },
-        { type: 'cern_comparison', summary: { /* Placeholder for simulation stats */ } }
-      ]
-    };
+  const downloadCurrentDataAsPDF = useCallback(() => {
+    const success = exportDataAsPdf();
     
-    toast.success("Inflation events data exported");
-    return data;
-  }, []);
-  
-  // Download current data as PDF
-  const downloadCurrentDataAsPDF = useCallback(async () => {
-    try {
-      const data = exportInflationEventsData();
-      const filename = await exportSimulationDataAsPDF(data);
-      
-      if (filename) {
-        toast.success(`Data exported as ${filename}`);
-      } else {
-        toast.error("Failed to export data");
-      }
-      
-      return filename;
-    } catch (error) {
-      console.error("Error downloading data as PDF:", error);
-      toast.error("Failed to download data as PDF");
-      return null;
+    if (success) {
+      toast.success('Data PDF Export Complete', {
+        description: 'The simulation data has been exported as PDF',
+      });
+    } else {
+      toast.error('Data Export Failed', {
+        description: 'Failed to export simulation data',
+      });
     }
-  }, [exportInflationEventsData]);
+  }, []);
   
   return {
-    showInflationBanner,
-    latestInflation,
-    handleInflationDetected,
-    inflationEvents: inflationEventsRef.current,
-    exportInflationEventsData,
+    inflationEvents,
+    latestInflationEvent: latestEvent,
+    handleInflationEvent,
     downloadCurrentDataAsPDF
   };
 }

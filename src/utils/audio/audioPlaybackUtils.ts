@@ -1,176 +1,201 @@
 
-import { initAudioContext } from './simulationAudioUtils';
-
-// Map to keep track of looping sounds
-const loopingSounds: Map<string, { source: AudioBufferSourceNode, gain: GainNode }> = new Map();
+import { initAudioContext } from "./simulationAudioUtils";
 
 /**
- * Play an audio buffer
+ * Play audio from buffer with volume control
  */
-export const playAudio = (buffer: AudioBuffer, volume: number = 0.5): void => {
-  const audioContext = initAudioContext();
+export function playAudio(
+  buffer: AudioBuffer,
+  volume: number = 0.5,
+  loop: boolean = false
+): { source: AudioBufferSourceNode; gain: GainNode } {
+  const context = initAudioContext();
   
-  try {
-    const source = audioContext.createBufferSource();
-    const gainNode = audioContext.createGain();
-    
-    source.buffer = buffer;
-    gainNode.gain.value = volume;
-    
-    source.connect(gainNode);
-    gainNode.connect(audioContext.destination);
-    
-    source.start();
-  } catch (error) {
-    console.error('Error playing audio:', error);
-  }
-};
+  // Create source and gain nodes
+  const source = context.createBufferSource();
+  const gainNode = context.createGain();
+  
+  // Set buffer and loop
+  source.buffer = buffer;
+  source.loop = loop;
+  
+  // Set volume
+  gainNode.gain.value = volume;
+  
+  // Connect nodes
+  source.connect(gainNode);
+  gainNode.connect(context.destination);
+  
+  // Start playback
+  source.start(0);
+  
+  return { source, gain: gainNode };
+}
 
 /**
  * Play audio with error handling
  */
-export const playAudioWithErrorHandling = (buffer: AudioBuffer | null, volume: number = 0.5): void => {
+export function playAudioWithErrorHandling(
+  buffer: AudioBuffer | null,
+  volume: number = 0.5,
+  onError?: () => void
+): { source?: AudioBufferSourceNode; gain?: GainNode } {
   if (!buffer) {
-    console.warn('Attempted to play null audio buffer');
-    return;
+    console.error("Audio buffer is null or undefined");
+    if (onError) onError();
+    return {};
   }
   
   try {
-    playAudio(buffer, volume);
+    return playAudio(buffer, volume);
   } catch (error) {
-    console.error('Error playing audio with error handling:', error);
-    createFallbackAudioIfNeeded();
+    console.error("Failed to play audio:", error);
+    if (onError) onError();
+    return {};
   }
-};
+}
 
 /**
- * Play a looping audio buffer
+ * Play audio from URL
  */
-export const playLoopingAudio = (buffer: AudioBuffer | string, id: string, volume: number = 0.5): void => {
-  // Stop any existing loop with the same ID
-  if (loopingSounds.has(id)) {
-    stopLoopingAudio(id);
-  }
-  
-  const audioContext = initAudioContext();
+export async function playAudioFromURL(
+  url: string,
+  volume: number = 0.5
+): Promise<{ source: AudioBufferSourceNode; gain: GainNode } | null> {
+  const context = initAudioContext();
   
   try {
-    if (typeof buffer === 'string') {
-      // Handle URL string by loading the audio file
-      fetch(buffer)
-        .then(response => response.arrayBuffer())
-        .then(arrayBuffer => audioContext.decodeAudioData(arrayBuffer))
-        .then(audioBuffer => {
-          const source = audioContext.createBufferSource();
-          const gainNode = audioContext.createGain();
-          
-          source.buffer = audioBuffer;
-          source.loop = true;
-          gainNode.gain.value = volume;
-          
-          source.connect(gainNode);
-          gainNode.connect(audioContext.destination);
-          
-          source.start();
-          
-          loopingSounds.set(id, { source, gain: gainNode });
-        })
-        .catch(error => {
-          console.error(`Error loading audio from URL ${buffer}:`, error);
-        });
-    } else {
-      // Handle AudioBuffer directly
-      const source = audioContext.createBufferSource();
-      const gainNode = audioContext.createGain();
-      
-      source.buffer = buffer;
-      source.loop = true;
-      gainNode.gain.value = volume;
-      
-      source.connect(gainNode);
-      gainNode.connect(audioContext.destination);
-      
-      source.start();
-      
-      loopingSounds.set(id, { source, gain: gainNode });
-    }
+    // Fetch audio data
+    const response = await fetch(url);
+    const arrayBuffer = await response.arrayBuffer();
+    
+    // Decode audio data
+    const audioBuffer = await context.decodeAudioData(arrayBuffer);
+    
+    // Create source and gain nodes
+    const source = context.createBufferSource();
+    const gainNode = context.createGain();
+    
+    // Set buffer
+    source.buffer = audioBuffer;
+    
+    // Set volume
+    gainNode.gain.value = volume;
+    
+    // Connect nodes
+    source.connect(gainNode);
+    gainNode.connect(context.destination);
+    
+    // Start playback
+    source.start(0);
+    
+    return { source, gain: gainNode };
   } catch (error) {
-    console.error(`Error playing looping audio ${id}:`, error);
+    console.error("Error playing audio from URL:", error);
+    return null;
   }
-};
+}
 
 /**
- * Stop a looping audio
+ * Play looping audio with controllable parameters
  */
-export const stopLoopingAudio = (id: string): void => {
-  const sound = loopingSounds.get(id);
+let loopingSource: AudioBufferSourceNode | null = null;
+let loopingGain: GainNode | null = null;
+
+export function playLoopingAudio(
+  buffer: AudioBuffer,
+  volume: number = 0.3
+): void {
+  // Stop any currently playing looping audio
+  stopLoopingAudio();
   
-  if (sound) {
+  const context = initAudioContext();
+  
+  // Create source and gain nodes
+  const source = context.createBufferSource();
+  const gainNode = context.createGain();
+  
+  // Set buffer and loop
+  source.buffer = buffer;
+  source.loop = true;
+  
+  // Set volume
+  gainNode.gain.value = volume;
+  
+  // Connect nodes
+  source.connect(gainNode);
+  gainNode.connect(context.destination);
+  
+  // Start playback
+  source.start(0);
+  
+  // Store references
+  loopingSource = source;
+  loopingGain = gainNode;
+}
+
+/**
+ * Stop currently playing looping audio
+ */
+export function stopLoopingAudio(): void {
+  if (loopingSource) {
     try {
-      sound.source.stop();
-      loopingSounds.delete(id);
+      loopingSource.stop();
+      loopingSource = null;
+      loopingGain = null;
     } catch (error) {
-      console.error(`Error stopping looping audio ${id}:`, error);
+      console.error("Error stopping looping audio:", error);
     }
   }
-};
+}
 
 /**
- * Set the volume of a looping audio
+ * Set volume of currently playing looping audio
  */
-export const setLoopingAudioVolume = (id: string, volume: number): void => {
-  const sound = loopingSounds.get(id);
-  
-  if (sound) {
-    try {
-      sound.gain.gain.value = volume;
-    } catch (error) {
-      console.error(`Error setting volume for looping audio ${id}:`, error);
-    }
+export function setLoopingAudioVolume(volume: number): void {
+  if (loopingGain) {
+    loopingGain.gain.value = Math.max(0, Math.min(1, volume));
   }
-};
+}
 
 /**
- * Resume audio context (useful for handling autoplay restrictions)
+ * Resume audio context if suspended
  */
-export const resumeAudioContext = async (): Promise<boolean> => {
-  const audioContext = initAudioContext();
+export async function resumeAudioContext(): Promise<boolean> {
+  const context = initAudioContext();
   
-  if (audioContext.state === 'suspended') {
+  if (context.state === 'suspended') {
     try {
-      await audioContext.resume();
+      await context.resume();
       return true;
     } catch (error) {
-      console.error('Error resuming audio context:', error);
+      console.error("Failed to resume audio context:", error);
       return false;
     }
   }
   
-  return audioContext.state === 'running';
-};
+  return context.state === 'running';
+}
 
 /**
- * Create a fallback audio in case of errors
+ * Create fallback audio for iOS and other platforms that require user interaction
  */
-export const createFallbackAudioIfNeeded = (): void => {
-  const audioContext = initAudioContext();
+export function createFallbackAudioIfNeeded(): boolean {
+  const context = initAudioContext();
   
   try {
-    // Create a silent buffer
-    const buffer = audioContext.createBuffer(1, audioContext.sampleRate * 0.1, audioContext.sampleRate);
-    const source = audioContext.createBufferSource();
+    // Create a short silent buffer
+    const buffer = context.createBuffer(1, context.sampleRate * 0.1, context.sampleRate);
+    const source = context.createBufferSource();
     
+    // Connect and play
     source.buffer = buffer;
-    source.connect(audioContext.destination);
+    source.connect(context.destination);
+    source.start(context.currentTime);
     
-    source.start();
-    source.stop(audioContext.currentTime + 0.1);
-    
-    console.log('Created fallback audio');
+    return true;
   } catch (error) {
-    console.error('Error creating fallback audio:', error);
+    console.error("Error creating fallback audio:", error);
+    return false;
   }
-};
-
-// Re-export initAudioContext to avoid circular dependencies
-export { initAudioContext };
+}

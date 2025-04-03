@@ -1,111 +1,80 @@
 
-import { initAudioContext } from './simulationAudioUtils';
+import { initAudioContext } from "./simulationAudioUtils";
 
 /**
- * Generate a sample audio tone
+ * Generate a sample audio buffer for testing
  */
-export const generateSampleAudio = (frequency: number = 440, duration: number = 1, type: OscillatorType = 'sine'): AudioBuffer | null => {
-  const audioContext = initAudioContext();
+export function generateSampleAudio(
+  frequency: number = 440, 
+  duration: number = 1, 
+  volume: number = 0.5
+): AudioBuffer {
+  const context = initAudioContext();
+  const sampleRate = context.sampleRate;
+  const buffer = context.createBuffer(1, sampleRate * duration, sampleRate);
   
-  try {
-    // Create an empty buffer
-    const sampleRate = audioContext.sampleRate;
-    const buffer = audioContext.createBuffer(1, sampleRate * duration, sampleRate);
-    const channelData = buffer.getChannelData(0);
-    
-    // Fill the buffer with a waveform
-    for (let i = 0; i < buffer.length; i++) {
-      const t = i / sampleRate;
-      
-      switch (type) {
-        case 'sine':
-          channelData[i] = Math.sin(2 * Math.PI * frequency * t);
-          break;
-        case 'square':
-          channelData[i] = Math.sin(2 * Math.PI * frequency * t) > 0 ? 0.7 : -0.7;
-          break;
-        case 'sawtooth':
-          channelData[i] = 2 * ((t * frequency) % 1) - 1;
-          break;
-        case 'triangle':
-          channelData[i] = 2 * Math.abs(2 * ((t * frequency) % 1) - 1) - 1;
-          break;
-        default:
-          channelData[i] = Math.sin(2 * Math.PI * frequency * t);
-      }
-      
-      // Apply fade in/out to avoid clicks
-      const fadeTime = 0.05;
-      if (t < fadeTime) {
-        channelData[i] *= t / fadeTime;
-      } else if (t > duration - fadeTime) {
-        channelData[i] *= (duration - t) / fadeTime;
-      }
-    }
-    
-    return buffer;
-  } catch (error) {
-    console.error('Error generating audio sample:', error);
-    return null;
-  }
-};
-
-/**
- * Create a fallback audio in case of errors
- */
-export const createFallbackAudioIfNeeded = (): void => {
-  const audioContext = initAudioContext();
+  // Get the data
+  const channelData = buffer.getChannelData(0);
   
-  try {
-    // Create a silent buffer
-    const buffer = audioContext.createBuffer(1, audioContext.sampleRate * 0.1, audioContext.sampleRate);
-    const source = audioContext.createBufferSource();
-    
-    source.buffer = buffer;
-    source.connect(audioContext.destination);
-    
-    source.start();
-    source.stop(audioContext.currentTime + 0.1);
-    
-    console.log('Created fallback audio');
-  } catch (error) {
-    console.error('Error creating fallback audio:', error);
+  // Fill the buffer with a sine wave
+  for (let i = 0; i < channelData.length; i++) {
+    // Simple sine wave with decreasing volume
+    const t = i / sampleRate;
+    const fadeFactor = 1 - t / duration; // Linear fade-out
+    channelData[i] = Math.sin(2 * Math.PI * frequency * t) * volume * fadeFactor;
   }
-};
+  
+  return buffer;
+}
 
 /**
- * Generate a tone specifically for particles
+ * Generate a tone based on particle properties
  */
-export const generateParticleTone = (
+export function generateParticleTone(
   charge: 'positive' | 'negative' | 'neutral',
   energy: number = 1,
-  complexity: number = 0
-): AudioBuffer | null => {
-  let baseFrequency: number;
-  let waveType: OscillatorType;
+  complexity: number = 1
+): AudioBuffer {
+  // Generate different base frequencies based on particle charge
+  let baseFrequency = 440; // A4 note
   
-  // Determine base frequency and wave type based on particle properties
-  switch (charge) {
-    case 'positive':
-      baseFrequency = 440; // A4
-      waveType = 'sine';
-      break;
-    case 'negative':
-      baseFrequency = 329.63; // E4
-      waveType = 'triangle';
-      break;
-    case 'neutral':
-      baseFrequency = 392; // G4
-      waveType = 'sine';
-      break;
-    default:
-      baseFrequency = 440;
-      waveType = 'sine';
+  if (charge === 'positive') {
+    baseFrequency = 523.25; // C5 note
+  } else if (charge === 'negative') {
+    baseFrequency = 329.63; // E4 note
+  } else {
+    baseFrequency = 392.00; // G4 note
   }
   
-  // Adjust frequency based on energy and complexity
-  const adjustedFrequency = baseFrequency * (0.8 + energy * 0.4) * (1 + complexity * 0.1);
-  const duration = 0.5 + complexity * 0.2; // Longer duration for more complex particles
+  // Adjust frequency based on energy
+  const frequency = baseFrequency * (0.8 + energy * 0.4);
   
-  return generateSampleAudio(adjustedFrequency, duration, waveType);
-};
+  // Duration based on complexity
+  const duration = 0.2 + complexity * 0.3;
+  
+  // Generate the audio
+  return generateSampleAudio(frequency, duration, 0.4);
+}
+
+/**
+ * Create a fallback audio if Web Audio API is not available
+ */
+export function createFallbackAudioIfNeeded(): boolean {
+  const context = initAudioContext();
+  
+  try {
+    // Create a short silent buffer
+    const buffer = context.createBuffer(1, context.sampleRate * 0.1, context.sampleRate);
+    const source = context.createBufferSource();
+    
+    // Connect and play
+    source.buffer = buffer;
+    source.connect(context.destination);
+    source.start(context.currentTime);
+    
+    return true;
+  } catch (error) {
+    console.error("Error creating fallback audio:", error);
+    return false;
+  }
+}

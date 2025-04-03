@@ -52,11 +52,21 @@ export interface SimulationConfig {
   fieldResolution: number;
   intentFluctuationRate: number;
   interactionRadius: number;
-  boundaryCondition: 'wrap' | 'bounce' | 'disappear';
+  boundaryCondition: 'wrap' | 'bounce' | 'none' | 'disappear';
   particleLifetime: number | null;
   inflationEnabled: boolean;
   inflationThreshold: number;
   inflationMultiplier: number;
+}
+
+export interface InflationEvent {
+  timestamp: number;
+  particlesBeforeInflation: number;
+  particlesAfterInflation: number;
+  expansionFactor?: number;
+  fieldEnergyBefore?: number;
+  fieldEnergyAfter?: number;
+  particleCountBefore?: number;
 }
 
 export interface Anomaly {

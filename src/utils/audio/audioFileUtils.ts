@@ -2,54 +2,55 @@
 /**
  * Check if an audio file exists
  */
-export const checkAudioFileExists = async (filePath: string): Promise<{exists: boolean}> => {
-  try {
-    const response = await fetch(filePath, { method: 'HEAD' });
-    return { exists: response.ok };
-  } catch (error) {
-    console.error('Error checking audio file:', error);
-    return { exists: false };
-  }
-};
+export function checkAudioFileExists(filePath: string): Promise<boolean> {
+  return new Promise((resolve) => {
+    fetch(filePath, { method: 'HEAD' })
+      .then(response => {
+        resolve(response.ok);
+      })
+      .catch(() => {
+        resolve(false);
+      });
+  });
+}
 
 /**
  * Get metadata for an audio file
  */
-export const getAudioFileMetadata = async (filePath: string): Promise<{
+export function getAudioFileMetadata(filePath: string): Promise<{ 
   exists: boolean;
-  path: string;
-  filename: string;
-  timestamp: number;
-}> => {
-  try {
-    // In a real implementation, this would extract metadata from the audio file
-    const { exists } = await checkAudioFileExists(filePath);
-    return {
-      exists,
-      path: filePath,
-      filename: filePath.split('/').pop() || '',
-      timestamp: Date.now()
-    };
-  } catch (error) {
-    console.error('Error getting audio file metadata:', error);
-    return {
-      exists: false,
-      path: filePath,
-      filename: filePath.split('/').pop() || '',
-      timestamp: Date.now()
-    };
-  }
-};
+  contentType?: string;
+  contentLength?: number;
+}> {
+  return new Promise((resolve) => {
+    fetch(filePath, { method: 'HEAD' })
+      .then(response => {
+        if (response.ok) {
+          resolve({
+            exists: true,
+            contentType: response.headers.get('content-type') || undefined,
+            contentLength: parseInt(response.headers.get('content-length') || '0') || undefined
+          });
+        } else {
+          resolve({ exists: false });
+        }
+      })
+      .catch(() => {
+        resolve({ exists: false });
+      });
+  });
+}
 
 /**
- * Get a list of available audio files
+ * Get a list of available audio files (mock implementation)
  */
-export const getAvailableAudioFiles = async (directory: string = '/audio'): Promise<string[]> => {
-  // This would typically call an API endpoint to list files
-  // For now, return a static list
+export function getAvailableAudioFiles(): string[] {
+  // In a real app, this would fetch from an API or read from a directory
   return [
-    `${directory}/particle_creation.mp3`,
-    `${directory}/cluster_formation.mp3`,
-    `${directory}/robot_evolution.mp3`
+    'particle_creation.mp3',
+    'particle_interaction.mp3',
+    'cluster_formation.mp3',
+    'inflation_event.mp3',
+    'intent_spike.mp3'
   ];
-};
+}

@@ -7,7 +7,7 @@ export interface SimulationConfig {
   fieldResolution: number;
   intentFluctuationRate: number;
   interactionRadius: number;
-  boundaryCondition: 'wrap' | 'bounce' | 'disappear';
+  boundaryCondition: 'wrap' | 'bounce' | 'disappear' | 'none';
   particleLifetime: number | null;
   inflationEnabled: boolean;
   inflationThreshold: number;
@@ -21,6 +21,8 @@ export interface InflationEvent {
   expansionFactor: number;
   particlesBeforeInflation?: number;
   particleCountAfter?: number;
+  fieldEnergyBefore?: number;
+  fieldEnergyAfter?: number;
 }
 
 export interface ParticleCreationOptions {

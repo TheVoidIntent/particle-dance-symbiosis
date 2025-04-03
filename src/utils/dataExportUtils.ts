@@ -82,3 +82,25 @@ export function formatStatsForCsv(stats: SimulationStats[]): string {
   // Combine headers and rows
   return [headers, ...rows].join('\n');
 }
+
+/**
+ * Clear all simulation data
+ */
+export function clearSimulationData(): void {
+  console.log("🗑️ Clearing all simulation data");
+  // In a real application, this would clear stored data
+}
+
+/**
+ * Export data as CSV
+ */
+export function exportDataAsCsv(data?: SimulationStats[]): string {
+  const dataToExport = data || [];
+  return formatStatsForCsv(dataToExport);
+}
+
+// Add functions for compatibility with existing code
+export const exportSimulationData = exportDataAsJson;
+export function getStoredDataPoints(): SimulationStats[] {
+  return [];
+}

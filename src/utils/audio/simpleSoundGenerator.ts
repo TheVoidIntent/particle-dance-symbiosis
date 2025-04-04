@@ -1,13 +1,17 @@
 
 /**
- * Simple Sound Generator for the Universe Simulator
- * Creates cosmic bell-like tones from particle interactions
+ * Cosmic Sonata Sound Generator for the Universe Simulator
+ * Creates harmonious, bell-like tones that reflect the information density,
+ * intent, and emergent properties of particles in the simulation
  */
 
 // Audio context and master gain
 let audioContext: AudioContext | null = null;
 let masterGain: GainNode | null = null;
 let isAudioEnabled = false;
+
+// Reverb for cosmic ambience
+let reverbNode: ConvolverNode | null = null;
 
 /**
  * Initialize the audio system
@@ -18,13 +22,49 @@ export function initAudio(): void {
       audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
       masterGain = audioContext.createGain();
       masterGain.gain.value = 0.3; // Default volume
-      masterGain.connect(audioContext.destination);
+      
+      // Create reverb for spacious sound
+      createReverb().then(reverb => {
+        if (audioContext && masterGain) {
+          reverbNode = reverb;
+          masterGain.connect(reverbNode);
+          reverbNode.connect(audioContext.destination);
+        }
+      });
+      
       isAudioEnabled = true;
-      console.log("Audio system initialized");
+      console.log("Cosmic Sonata audio system initialized");
     }
   } catch (error) {
     console.error("Failed to initialize audio:", error);
   }
+}
+
+/**
+ * Create a reverb effect for spatial dimension
+ */
+async function createReverb(): Promise<ConvolverNode> {
+  if (!audioContext) throw new Error("Audio context not initialized");
+  
+  const reverb = audioContext.createConvolver();
+  const reverbTime = 2.5; // seconds
+  const sampleRate = audioContext.sampleRate;
+  const length = reverbTime * sampleRate;
+  const impulse = audioContext.createBuffer(2, length, sampleRate);
+  
+  // Create impulse response for left and right channels
+  for (let channel = 0; channel < 2; channel++) {
+    const impulseData = impulse.getChannelData(channel);
+    for (let i = 0; i < length; i++) {
+      // Exponential decay
+      const decay = Math.exp(-i / (sampleRate * reverbTime * 0.5));
+      // Random reflection pattern for cosmic ambience
+      impulseData[i] = (Math.random() * 2 - 1) * decay;
+    }
+  }
+  
+  reverb.buffer = impulse;
+  return reverb;
 }
 
 /**
@@ -48,82 +88,110 @@ export function setAudioEnabled(enabled: boolean): void {
 }
 
 /**
- * Generate a harmonious tone based on particle charge
+ * Generate harmonious chord progressions based on particle properties
+ * @param charge The charge type of the particle
+ * @returns Array of frequencies representing a harmonic chord
  */
 function chargeToHarmony(charge: string): number[] {
-  // Return frequency sets (musical chords) based on charge
+  // Return frequency sets (musical chords) based on charge type
+  // Using more harmonious intervals for a pleasing cosmic sound
   switch (charge) {
     case 'positive': 
-      return [261.63, 329.63, 392.00]; // C major chord (C E G)
+      return [261.63, 329.63, 392.00, 523.25]; // C major 7 chord (C E G C')
     case 'negative': 
-      return [293.66, 349.23, 440.00]; // D minor chord (D F A)
+      return [293.66, 349.23, 440.00, 523.25]; // D minor 7 chord (D F A C)
     case 'neutral': 
-      return [293.66, 370.00, 440.00]; // D major chord (D F# A)
+      return [293.66, 370.00, 440.00, 587.33]; // D major 7 chord (D F# A D')
     default: 
-      return [261.63, 329.63, 392.00]; // Default to C major
+      return [261.63, 329.63, 392.00, 523.25]; // Default to C major 7
   }
 }
 
 /**
- * Generate a bell-like tone
+ * Generate a bell-like tone with harmonics for a celestial sound
+ * @param frequency The fundamental frequency
+ * @param duration Duration in seconds
+ * @param volume Volume level (0-1)
+ * @param harmonic Optional harmonic ratio
  */
-function generateBellTone(frequency: number, duration: number, volume: number = 0.1): void {
+function generateCelestialTone(
+  frequency: number, 
+  duration: number, 
+  volume: number = 0.1,
+  harmonic: number = 1
+): void {
   if (!audioContext || !masterGain || !isAudioEnabled) return;
   
   try {
-    // Create oscillator for the main tone
-    const oscillator = audioContext.createOscillator();
-    // Create gain node for envelope shaping
-    const gainNode = audioContext.createGain();
+    // Create a bell's complexity using multiple oscillators
+    const oscillators: OscillatorNode[] = [];
+    const gainNodes: GainNode[] = [];
     
-    // Bell-like tones often use sine waves
-    oscillator.type = 'sine';
-    oscillator.frequency.value = frequency;
+    // Bell-like tones use multiple sine waves at harmonic frequencies
+    const harmonics = [1, 2, 2.76, 3.51, 4.1];
     
-    // Create a gentle attack and long release for bell-like sound
-    gainNode.gain.value = 0;
-    gainNode.gain.setValueAtTime(0, audioContext.currentTime);
-    // Quick attack
-    gainNode.gain.linearRampToValueAtTime(volume, audioContext.currentTime + 0.02);
-    // Long release with slight curve for natural decay
-    gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + duration);
-    
-    // Connect nodes
-    oscillator.connect(gainNode);
-    gainNode.connect(masterGain);
-    
-    // Start and stop
-    oscillator.start();
-    oscillator.stop(audioContext.currentTime + duration + 0.1);
+    harmonics.forEach((harmonicRatio, i) => {
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      
+      // Adjust frequency based on harmonic ratio
+      oscillator.type = i === 0 ? 'sine' : 'sine';
+      oscillator.frequency.value = frequency * harmonicRatio * harmonic;
+      
+      // Each harmonic has diminishing volume
+      const harmonicVolume = volume * (1 / (i + 1)) * 0.5;
+      
+      // Create a gentle attack and long release for bell-like sound
+      gainNode.gain.value = 0;
+      gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+      // Gentle attack
+      gainNode.gain.linearRampToValueAtTime(harmonicVolume, audioContext.currentTime + 0.01 * (i + 1));
+      // Long release with exponential curve for natural bell decay
+      gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + duration * (1 - (i * 0.1)));
+      
+      // Connect nodes
+      oscillator.connect(gainNode);
+      gainNode.connect(masterGain);
+      
+      // Start and stop
+      oscillator.start();
+      oscillator.stop(audioContext.currentTime + duration + 0.1);
+      
+      oscillators.push(oscillator);
+      gainNodes.push(gainNode);
+    });
     
     // Clean up
     setTimeout(() => {
-      oscillator.disconnect();
-      gainNode.disconnect();
+      oscillators.forEach(osc => osc.disconnect());
+      gainNodes.forEach(gain => gain.disconnect());
     }, (duration + 0.2) * 1000);
   } catch (error) {
-    console.error("Error generating bell tone:", error);
+    console.error("Error generating celestial tone:", error);
   }
 }
 
 /**
- * Play a harmonic chord for particle creation
+ * Play a harmonic chord for particle creation - representing new information entering the universe
+ * @param charge The charge type of the particle
  */
 export function playParticleCreationSound(charge: string): void {
   if (!isAudioEnabled) return;
   
   const harmonics = chargeToHarmony(charge);
   
-  // Play a gentle chord with staggered timing
+  // Play a gentle ascending arpeggio for creation
   harmonics.forEach((freq, index) => {
     setTimeout(() => {
-      generateBellTone(freq, 1.2 - (index * 0.2), 0.06);
-    }, index * 100);
+      generateCelestialTone(freq, 1.5 - (index * 0.1), 0.07);
+    }, index * 120);
   });
 }
 
 /**
- * Play a harmonious interaction sound
+ * Play an interaction sound representing information exchange between particles
+ * @param charge1 Charge of first particle
+ * @param charge2 Charge of second particle
  */
 export function playInteractionSound(charge1: string, charge2: string): void {
   if (!isAudioEnabled) return;
@@ -131,64 +199,92 @@ export function playInteractionSound(charge1: string, charge2: string): void {
   const harmony1 = chargeToHarmony(charge1);
   const harmony2 = chargeToHarmony(charge2);
   
-  // Pick one note from each harmony to create an interesting interval
+  // Create a chord progression based on interacting particles
+  // First play a note from first particle
   const note1 = harmony1[Math.floor(Math.random() * harmony1.length)];
+  
+  // Then a note from second particle to create an interval relationship
   const note2 = harmony2[Math.floor(Math.random() * harmony2.length)];
   
-  // Play both notes with slight delay
-  generateBellTone(note1, 0.8, 0.05);
+  // Calculate information exchange "weight" by the interval relationship
+  const intervalRatio = Math.max(note1, note2) / Math.min(note1, note2);
+  
+  // Play both notes with slight delay for call and response effect
+  generateCelestialTone(note1, 0.9, 0.05, 1);
   setTimeout(() => {
-    generateBellTone(note2, 0.6, 0.03);
-  }, 150);
+    generateCelestialTone(note2, 0.8, 0.04, intervalRatio);
+  }, 180);
 }
 
 /**
- * Play a cosmic resonance sound for field fluctuation
+ * Play a fluctuation sound representing intent field energy
+ * @param intensity The intensity of the fluctuation
  */
 export function playFluctuationSound(intensity: number): void {
   if (!isAudioEnabled) return;
   
-  // Create a cosmic shimmer effect with multiple tones
-  // Base frequency varies with intensity
-  const baseFreq = 150 + (intensity * 200);
+  // Create a cosmic shimmer effect reflecting the intent field
+  // Base frequency varies with intensity - higher intensity = higher pitch
+  const baseFreq = 150 + (intensity * 250);
   
-  // Play a series of harmonically related tones
+  // Play a series of harmonically related tones creating a celestial shimmer
   const harmonics = [1, 1.5, 2, 2.5, 3];
   harmonics.forEach((harmonic, index) => {
     setTimeout(() => {
-      generateBellTone(
+      generateCelestialTone(
         baseFreq * harmonic, 
-        1.5 - (index * 0.2), 
-        0.02 * (1 - (index * 0.1))
+        1.8 - (index * 0.15), 
+        0.025 * (1 - (index * 0.15)),
+        1 + (intensity * 0.5)
       );
-    }, index * 80);
+    }, index * 100);
   });
 }
 
 /**
- * Play a celestial emergence sound
+ * Play an emergence sound representing new complex structures forming
+ * @param complexity Level of complexity (0-1)
  */
 export function playEmergenceSound(complexity: number): void {
   if (!isAudioEnabled) return;
   
-  // Create an ascending cosmic sequence
-  const baseNote = 200 + (complexity * 100);
+  // Create an ascending celestial sequence representing emergence
+  // Higher complexity = more complex, complete scale (information richness)
+  const baseNote = 190 + (complexity * 120);
   
-  // Higher complexity = more complex/complete scale
+  // Higher complexity = more notes in the scale
   const scaleLength = 3 + Math.floor(complexity * 5);
   
-  // Major scale frequency ratios (whole and half steps)
-  const majorScaleRatios = [1, 9/8, 5/4, 4/3, 3/2, 5/3, 15/8, 2];
+  // Pentatonic scale for more harmonious cosmic sound (works well in any combination)
+  const pentatonicRatios = [1, 9/8, 5/4, 3/2, 5/3, 2];
   
-  // Play ascending scale notes in sequence
-  for (let i = 0; i < scaleLength; i++) {
+  // Play ascending scale notes in sequence - representing emergent order
+  for (let i = 0; i < Math.min(scaleLength, pentatonicRatios.length); i++) {
     setTimeout(() => {
-      generateBellTone(
-        baseNote * majorScaleRatios[i], 
-        0.7 + (i * 0.1), 
-        0.07 - (i * 0.005)
+      generateCelestialTone(
+        baseNote * pentatonicRatios[i], 
+        0.9 + (i * 0.15), 
+        0.06 - (i * 0.004),
+        1 + (complexity * 0.2)
       );
-    }, i * 150);
+    }, i * 180);
+  }
+  
+  // For higher complexity, add a chord at the end representing the complete structure
+  if (complexity > 0.7) {
+    setTimeout(() => {
+      // Play final "resolution" chord
+      [0, 2, 4].forEach((idx, i) => {
+        setTimeout(() => {
+          const noteIdx = Math.min(idx, pentatonicRatios.length - 1);
+          generateCelestialTone(
+            baseNote * pentatonicRatios[noteIdx], 
+            2.0, 
+            0.08 - (i * 0.01)
+          );
+        }, i * 80);
+      });
+    }, scaleLength * 180 + 100);
   }
 }
 
@@ -200,5 +296,6 @@ export function cleanupAudio(): void {
     audioContext.close().catch(e => console.error("Error closing audio context:", e));
     audioContext = null;
     masterGain = null;
+    reverbNode = null;
   }
 }

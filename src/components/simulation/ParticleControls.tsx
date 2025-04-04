@@ -1,9 +1,10 @@
+
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
-import { Clock, Maximize, Play, Pause, RotateCw, ZapOff, Zap } from "lucide-react";
+import { Clock, Maximize, Play, Pause, RotateCw, ZapOff, Zap, Volume2, VolumeX } from "lucide-react";
 import { SimulationStats, Particle } from '@/types/simulation';
 import SimulationAudioControls from './SimulationAudioControls';
 
@@ -26,6 +27,7 @@ interface ParticleControlsProps {
   setAudioEnabled?: (enabled: boolean) => void;
   particles?: Particle[];
   stats?: SimulationStats;
+  onTestSound?: (type: string) => void;
 }
 
 const ParticleControls: React.FC<ParticleControlsProps> = ({
@@ -46,9 +48,17 @@ const ParticleControls: React.FC<ParticleControlsProps> = ({
   audioEnabled = true,
   setAudioEnabled = () => {},
   particles = [],
-  stats = { particleCount: 0, positiveParticles: 0, negativeParticles: 0, neutralParticles: 0, totalInteractions: 0 }
+  stats = { particleCount: 0, positiveParticles: 0, negativeParticles: 0, neutralParticles: 0, totalInteractions: 0 },
+  onTestSound
 }) => {
   const [audioVolume, setAudioVolume] = useState(70);
+  
+  // Handler to test different sound types
+  const handleTestSound = (type: string) => {
+    if (onTestSound) {
+      onTestSound(type);
+    }
+  };
   
   return (
     <div className="space-y-6">
@@ -154,6 +164,18 @@ const ParticleControls: React.FC<ParticleControlsProps> = ({
             <Switch checked={fieldEnabled} onCheckedChange={onToggleField} />
           </div>
         )}
+        
+        <div className="flex items-center justify-between">
+          <div className="flex items-center">
+            {audioEnabled ? (
+              <Volume2 className="h-4 w-4 text-blue-400 mr-2" />
+            ) : (
+              <VolumeX className="h-4 w-4 text-gray-400 mr-2" />
+            )}
+            <span className="text-sm text-gray-300">Cosmic Sonata</span>
+          </div>
+          <Switch checked={audioEnabled} onCheckedChange={setAudioEnabled} />
+        </div>
       </div>
       
       <SimulationAudioControls 
@@ -162,7 +184,48 @@ const ParticleControls: React.FC<ParticleControlsProps> = ({
         audioVolume={audioVolume}
         onVolumeChange={setAudioVolume}
         isRunning={running}
+        onTestSound={handleTestSound}
       />
+      
+      {onTestSound && (
+        <div className="pt-2 space-y-2 border-t border-gray-700">
+          <Label className="text-sm text-gray-300">Test Cosmic Sounds</Label>
+          <div className="flex flex-wrap gap-2">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => handleTestSound('creation')}
+              className="text-xs"
+            >
+              Particle Creation
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => handleTestSound('interaction')}
+              className="text-xs"
+            >
+              Interaction
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => handleTestSound('fluctuation')}
+              className="text-xs"
+            >
+              Field Fluctuation
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => handleTestSound('emergence')}
+              className="text-xs"
+            >
+              Emergence
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

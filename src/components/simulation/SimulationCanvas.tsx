@@ -3,7 +3,6 @@ import React, { useRef, useEffect, useState } from 'react';
 import { useSimulationState } from '@/hooks/simulation';
 import { Particle, SimulationStats } from '@/types/simulation';
 import { detectStableClusters, evolveClusterIntelligence, generateClusterNarratives, identifyRobotClusters } from '@/utils/clusterIntelligence';
-import { playSimulationEventSound } from '@/utils/audio/simulationAudioUtils';
 
 export interface SimulationCanvasProps {
   width?: number;
@@ -25,6 +24,9 @@ export interface SimulationCanvasProps {
   onAnomalyDetected?: (anomaly: any) => void;
   onClusterNarrative?: (narrative: { clusterId: number, narrative: string, timestamp: number }) => void;
   onRobotEvolution?: (robot: any) => void;
+  onParticleInteraction?: (particle1: Particle, particle2: Particle) => void;
+  onFieldFluctuation?: (intensity: number, x: number, y: number) => void;
+  onEmergenceEvent?: (complexity: number) => void;
 }
 
 const SimulationCanvas: React.FC<SimulationCanvasProps> = ({
@@ -46,7 +48,10 @@ const SimulationCanvas: React.FC<SimulationCanvasProps> = ({
   running = true,
   onAnomalyDetected = () => {},
   onClusterNarrative = () => {},
-  onRobotEvolution = () => {}
+  onRobotEvolution = () => {},
+  onParticleInteraction = () => {},
+  onFieldFluctuation = () => {},
+  onEmergenceEvent = () => {}
 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [simulationStats, setSimulationStats] = useState<SimulationStats>({
@@ -59,6 +64,13 @@ const SimulationCanvas: React.FC<SimulationCanvasProps> = ({
   });
   const [narratives, setNarratives] = useState<Array<{ clusterId: number, narrative: string, timestamp: number }>>([]);
   const [robots, setRobots] = useState<Array<any>>([]);
+  const [interactionEvents, setInteractionEvents] = useState<number>(0);
+  const [fluctuationEvents, setFluctuationEvents] = useState<number>(0);
+  
+  // Track last audio event times to prevent overcalling
+  const lastInteractionAudio = useRef<number>(0);
+  const lastFluctuationAudio = useRef<number>(0);
+  const lastEmergenceAudio = useRef<number>(0);
   
   // Get simulation state or use provided particles
   const simulationState = useSimulationState({
@@ -90,9 +102,6 @@ const SimulationCanvas: React.FC<SimulationCanvasProps> = ({
         const { clusters, unclusteredParticles } = detectStableClusters(validParticles, 0.6);
         
         if (clusters.length > 0) {
-          // Play audio event for cluster formation
-          playSimulationEventSound('cluster_formation', clusters.length / 5);
-          
           // Evolve cluster intelligence
           const evolvedClusters = evolveClusterIntelligence(clusters, simulationStats, 0.1);
           
@@ -115,22 +124,83 @@ const SimulationCanvas: React.FC<SimulationCanvasProps> = ({
           if (trulyNewRobots.length > 0) {
             setRobots(prev => [...prev, ...trulyNewRobots]);
             
-            // Play special audio event for robot evolution
-            playSimulationEventSound('robot_evolution', trulyNewRobots.length);
-            
             // Notify about robot evolution
             trulyNewRobots.forEach(robot => {
               onRobotEvolution(robot);
             });
+            
+            // Trigger emergence sound event
+            const complexity = Math.min(trulyNewRobots.length * 0.2, 0.9);
+            if (Date.now() - lastEmergenceAudio.current > 10000) { // Limit to once every 10 seconds
+              onEmergenceEvent(complexity);
+              lastEmergenceAudio.current = Date.now();
+            }
           }
         }
+        
+        // Simulate particle interactions for audio
+        simulateInteractions(validParticles);
+        
+        // Simulate intent field fluctuations for audio
+        simulateFieldFluctuations();
+        
       } catch (error) {
         console.error("Error processing clusters:", error);
       }
-    }, 5000); // Process every 5 seconds to avoid performance issues
+    }, 1000); // Process every second to avoid performance issues
     
     return () => clearInterval(processInterval);
-  }, [activeParticles, activeRunning, simulationStats, onClusterNarrative, onRobotEvolution, robots]);
+  }, [activeParticles, activeRunning, simulationStats, onClusterNarrative, onRobotEvolution, robots, onEmergenceEvent]);
+  
+  // Simulate particle interactions for audio purposes
+  const simulateInteractions = (particles: Particle[]) => {
+    if (particles.length < 2) return;
+    
+    // Only trigger interaction sound occasionally to avoid overwhelming audio
+    if (Date.now() - lastInteractionAudio.current < 300) return; // Limit rate
+    
+    const interactionProbability = 0.1; // Adjust as needed
+    if (Math.random() > interactionProbability) return;
+    
+    // Select two random particles to interact
+    const index1 = Math.floor(Math.random() * particles.length);
+    let index2 = index1;
+    while (index2 === index1) {
+      index2 = Math.floor(Math.random() * particles.length);
+    }
+    
+    const p1 = particles[index1];
+    const p2 = particles[index2];
+    
+    // Calculate if they're close enough to interact (simplified)
+    const dx = p2.x - p1.x;
+    const dy = p2.y - p1.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    
+    if (distance < 100) { // Arbitrary interaction distance
+      setInteractionEvents(prev => prev + 1);
+      onParticleInteraction(p1, p2);
+      lastInteractionAudio.current = Date.now();
+    }
+  };
+  
+  // Simulate intent field fluctuations for audio purposes
+  const simulateFieldFluctuations = () => {
+    // Only trigger fluctuation sound occasionally
+    if (Date.now() - lastFluctuationAudio.current < 2000) return; // Limit to every 2 seconds
+    
+    const fluctuationProbability = intentFluctuationRate * 10;
+    if (Math.random() > fluctuationProbability) return;
+    
+    // Generate random location and intensity
+    const x = Math.random();
+    const y = Math.random();
+    const intensity = 0.2 + Math.random() * 0.8; // 0.2-1.0
+    
+    setFluctuationEvents(prev => prev + 1);
+    onFieldFluctuation(intensity, x, y);
+    lastFluctuationAudio.current = Date.now();
+  };
   
   // Update simulation stats
   useEffect(() => {
@@ -144,14 +214,15 @@ const SimulationCanvas: React.FC<SimulationCanvasProps> = ({
       totalInteractions: activeParticles.reduce((sum, p) => sum + (p.interactions || 0), 0),
       robotCount: robots.length,
       clusterCount: narratives.length > 0 ? [...new Set(narratives.map(n => n.clusterId))].length : 0,
-      timestamp: Date.now()
+      timestamp: Date.now(),
+      // Add interaction and fluctuation events to the stats
+      interactionEvents: interactionEvents,
+      fluctuationEvents: fluctuationEvents
     };
     
     setSimulationStats(stats);
     onStatsUpdate(stats);
-  }, [activeParticles, robots, narratives, onStatsUpdate]);
-  
-  // Rendering logic for canvas would go here...
+  }, [activeParticles, robots, narratives, onStatsUpdate, interactionEvents, fluctuationEvents]);
   
   return (
     <div className="relative">

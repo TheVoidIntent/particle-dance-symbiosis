@@ -29,3 +29,15 @@ export {
   generateTone,
   generateToneSequence
 } from './audioGenerationUtils';
+
+export {
+  initSimulationAudio,
+  setSimulationVolume,
+  stopSimulationAudio,
+  isSimulationAudioPlaying,
+  playInteractionSound,
+  playIntentFluctuationSound,
+  startParticleSoundscape,
+  playParticleCreationSound,
+  playEmergenceSound
+} from './simulationAudioEvents';

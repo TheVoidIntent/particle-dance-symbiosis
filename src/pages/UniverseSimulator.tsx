@@ -1,13 +1,14 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Helmet } from 'react-helmet';
 import SimulationCanvas from '@/components/simulation/SimulationCanvas';
 import SimulationControls from '@/components/simulation/SimulationControls';
 import SimulationStats from '@/components/simulation/SimulationStats';
+import SimulationAudioControls from '@/components/simulation/SimulationAudioControls';
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useParticleSimulation } from '@/hooks/simulation';
+import { useSimulationAudio } from '@/hooks/useSimulationAudio';
 import { SimulationStats as StatsType } from '@/types/simulation';
 
 const UniverseSimulator: React.FC = () => {
@@ -25,6 +26,10 @@ const UniverseSimulator: React.FC = () => {
   
   // Visualization options
   const [visualizationMode, setVisualizationMode] = useState<'particles' | 'field' | 'both'>('particles');
+  
+  // Audio state
+  const [audioEnabled, setAudioEnabled] = useState(true);
+  const [audioVolume, setAudioVolume] = useState(0.7);
   
   // Simulation stats
   const [stats, setStats] = useState<StatsType>({
@@ -59,6 +64,13 @@ const UniverseSimulator: React.FC = () => {
       inflationEnabled: true
     },
     canvasRef
+  });
+  
+  // Initialize simulation audio system
+  const simAudio = useSimulationAudio({
+    enabled: audioEnabled,
+    initialVolume: audioVolume,
+    autoInitialize: true
   });
 
   // Show welcome toast when component mounts
@@ -123,12 +135,73 @@ const UniverseSimulator: React.FC = () => {
     
     const createParticlesInterval = setInterval(() => {
       if (simulation.particles.length < maxParticles) {
-        simulation.createParticle();
+        const newParticle = simulation.createParticle();
+        
+        if (audioEnabled && simAudio.isEnabled) {
+          simAudio.playSound('particle_creation', {
+            charge: newParticle.charge,
+            x: newParticle.x / window.innerWidth,
+            y: newParticle.y / window.innerHeight
+          });
+        }
       }
     }, 1000 / particleCreationRate);
     
     return () => clearInterval(createParticlesInterval);
-  }, [running, simulation, particleCreationRate, maxParticles]);
+  }, [running, simulation, particleCreationRate, maxParticles, audioEnabled, simAudio]);
+  
+  // Start ambient soundscape when particles exist and audio is enabled
+  useEffect(() => {
+    if (running && audioEnabled && simulation.particles.length > 0) {
+      simAudio.startSoundscape(simulation.particles);
+    }
+    
+    return () => {
+      if (!running || !audioEnabled) {
+        simAudio.stopAudio();
+      }
+    };
+  }, [running, audioEnabled, simulation.particles, simAudio]);
+  
+  // Handle audio toggle
+  const handleToggleAudio = () => {
+    const newState = simAudio.toggleAudio();
+    setAudioEnabled(newState);
+    
+    toast({
+      title: newState ? "Simulation Audio Enabled" : "Simulation Audio Disabled",
+      description: newState 
+        ? "You can now hear particles interacting and field fluctuations." 
+        : "Simulation will run silently.",
+    });
+  };
+  
+  // Handle volume change
+  const handleVolumeChange = (value: number) => {
+    setAudioVolume(value / 100);
+    simAudio.updateVolume(value / 100);
+  };
+  
+  // Handle interactions for audio (this would be connected to the canvas)
+  const handleParticleInteraction = (particle1: any, particle2: any) => {
+    if (audioEnabled && simAudio.isEnabled) {
+      simAudio.playSound('particle_interaction', { particle1, particle2 });
+    }
+  };
+  
+  // Handle field fluctuations for audio
+  const handleFieldFluctuation = (intensity: number, x: number, y: number) => {
+    if (audioEnabled && simAudio.isEnabled) {
+      simAudio.playSound('intent_fluctuation', { intensity, x, y });
+    }
+  };
+  
+  // Handle emergence events
+  const handleEmergenceEvent = (complexity: number) => {
+    if (audioEnabled && simAudio.isEnabled) {
+      simAudio.playSound('emergence', { complexity });
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 text-white p-4 md:p-8">
@@ -162,6 +235,9 @@ const UniverseSimulator: React.FC = () => {
                 visualizationMode={visualizationMode}
                 running={running}
                 className="w-full h-[500px] rounded-md"
+                onParticleInteraction={handleParticleInteraction}
+                onFieldFluctuation={handleFieldFluctuation}
+                onEmergenceEvent={handleEmergenceEvent}
               />
             </CardContent>
           </Card>
@@ -194,6 +270,14 @@ const UniverseSimulator: React.FC = () => {
                     setVisualizationMode={setVisualizationMode}
                     running={running}
                     setRunning={setRunning}
+                  />
+                  
+                  <SimulationAudioControls
+                    audioEnabled={audioEnabled}
+                    onToggleAudio={handleToggleAudio}
+                    audioVolume={audioVolume * 100}
+                    onVolumeChange={handleVolumeChange}
+                    isRunning={running}
                   />
                 </TabsContent>
                 

@@ -1,228 +1,294 @@
 
-import { useState, useEffect, useCallback, useRef } from 'react';
-import {
-  initAudio,
-  setVolume,
-  setAudioEnabled,
-  playParticleCreationSound,
-  playInteractionSound,
-  playFluctuationSound,
-  playEmergenceSound,
-  playCosmicBellToll,
-  playGravitationalWaveSound,
-  exportAudioDataForNotebookLM,
-  cleanupAudio
-} from '@/utils/audio/simpleSoundGenerator';
+import { useState, useEffect, useRef, useCallback } from 'react';
 
-export function useSimpleAudio(initialEnabled = true, initialVolume = 0.5) {
-  const [isEnabled, setIsEnabled] = useState(initialEnabled);
-  const [volume, setVolumeState] = useState(initialVolume);
-  const lastSoundTimestamps = useRef({
-    creation: 0,
-    interaction: 0,
-    fluctuation: 0,
-    emergence: 0,
-    cosmicBell: 0,
-    gravitationalWave: 0
-  });
+interface SoundOptions {
+  intensity?: number;
+  complexity?: number;
+  pitch?: number;
+  duration?: number;
+  weight?: number;
+  informationDensity?: number;
+}
+
+interface AmbientSoundOptions {
+  type: 'intent_field' | 'cosmic_background' | 'quantum_fluctuations';
+  intensity: number;
+  complexity: number;
+}
+
+export function useSimpleAudio(autoInit = true, initialVolume = 0.5) {
+  const [initialized, setInitialized] = useState(false);
+  const [volume, setVolume] = useState(initialVolume);
   
-  // Cooldown times in milliseconds for different sound types
-  const soundCooldowns = {
-    creation: 300,
-    interaction: 400, 
-    fluctuation: 2000,
-    emergence: 8000,
-    cosmicBell: 10000,
-    gravitationalWave: 15000
-  };
-
-  // Initialize audio on mount
+  const audioContext = useRef<AudioContext | null>(null);
+  const masterGain = useRef<GainNode | null>(null);
+  const ambientOscillators = useRef<{osc: OscillatorNode, gain: GainNode}[]>([]);
+  
+  // Initialize the audio context
+  const initialize = useCallback(() => {
+    if (initialized) return;
+    
+    try {
+      audioContext.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+      masterGain.current = audioContext.current.createGain();
+      masterGain.current.gain.value = volume;
+      masterGain.current.connect(audioContext.current.destination);
+      setInitialized(true);
+    } catch (error) {
+      console.error("Error initializing audio context:", error);
+    }
+  }, [initialized, volume]);
+  
+  // Initialize on mount if autoInit is true
   useEffect(() => {
-    initAudio();
-    setAudioEnabled(isEnabled);
-    setVolume(volume);
+    if (autoInit) {
+      initialize();
+    }
     
     return () => {
-      cleanupAudio();
+      stopAllSounds();
+      if (audioContext.current && audioContext.current.state !== 'closed') {
+        audioContext.current.close();
+      }
     };
-  }, []);
-
-  // Toggle audio
-  const toggleAudio = useCallback(() => {
-    const newState = !isEnabled;
-    setIsEnabled(newState);
-    setAudioEnabled(newState);
-    return newState;
-  }, [isEnabled]);
-
-  // Update volume
+  }, [autoInit, initialize]);
+  
+  // Update master volume
   const updateVolume = useCallback((newVolume: number) => {
-    const clampedVolume = Math.min(Math.max(newVolume, 0), 1);
-    setVolumeState(clampedVolume);
-    setVolume(clampedVolume);
-    return clampedVolume;
+    if (!initialized || !masterGain.current) return;
+    
+    setVolume(newVolume);
+    masterGain.current.gain.value = newVolume;
+  }, [initialized]);
+  
+  // Stop all sounds
+  const stopAllSounds = useCallback(() => {
+    // Stop ambient oscillators
+    ambientOscillators.current.forEach(({ osc, gain }) => {
+      try {
+        osc.stop();
+        osc.disconnect();
+        gain.disconnect();
+      } catch (e) {
+        // Ignore disconnection errors
+      }
+    });
+    ambientOscillators.current = [];
   }, []);
-
-  // Play sounds with cooldown protection
-  const playSound = useCallback((type: 'creation' | 'interaction' | 'fluctuation' | 'emergence' | 'cosmicBell' | 'gravitationalWave', data?: any) => {
-    if (!isEnabled) return false;
-    
-    const now = Date.now();
-    const lastPlayed = lastSoundTimestamps.current[type];
-    const cooldown = soundCooldowns[type];
-    
-    // Check cooldown to prevent sound spamming
-    if (now - lastPlayed < cooldown) return false;
-    
-    lastSoundTimestamps.current[type] = now;
-    
-    switch (type) {
-      case 'creation': {
-        const chargeType = data?.charge || 'neutral';
-        playParticleCreationSound(chargeType);
-        break;
-      }
-      case 'interaction': {
-        const particle1Charge = data?.particle1?.charge || 'neutral';
-        const particle2Charge = data?.particle2?.charge || 'neutral';
-        playInteractionSound(particle1Charge, particle2Charge);
-        break;
-      }
-      case 'fluctuation': {
-        const intensity = data?.intensity || 0.5;
-        playFluctuationSound(intensity);
-        break;
-      }
-      case 'emergence': {
-        const complexity = data?.complexity || 0.5;
-        playEmergenceSound(complexity);
-        break;
-      }
-      case 'cosmicBell': {
-        const informationDensity = data?.informationDensity || 0.5;
-        const weight = data?.weight || 0.5;
-        playCosmicBellToll(informationDensity, weight);
-        break;
-      }
-      case 'gravitationalWave': {
-        const strength = data?.strength || 0.5;
-        const complexity = data?.complexity || 0.5;
-        playGravitationalWaveSound(strength, complexity);
-        break;
-      }
+  
+  // Play a specific sound effect
+  const playSound = useCallback((soundType: string, options: SoundOptions = {}) => {
+    if (!initialized || !audioContext.current || !masterGain.current) {
+      initialize();
+      if (!audioContext.current || !masterGain.current) return;
     }
     
-    return true;
-  }, [isEnabled]);
-
-  // For complex cosmic events, play a sequence of sounds
-  const playCelestialEvent = useCallback((
-    type: 'cluster_formation' | 'inflation' | 'knowledge_threshold' | 'gravity_emergence' | 'intent_field_collapse',
-    data?: any
-  ) => {
-    if (!isEnabled) return;
-    
-    switch (type) {
-      case 'cluster_formation': {
-        // Play a sequence of emergence and creation sounds
-        const complexity = data?.complexity || 0.7;
-        setTimeout(() => playSound('emergence', { complexity }), 0);
-        
-        // Add particle creation sounds with delays
-        for (let i = 0; i < 3; i++) {
-          setTimeout(() => {
-            playSound('creation', { charge: i === 0 ? 'positive' : i === 1 ? 'negative' : 'neutral' });
-          }, 400 + (i * 300));
-        }
-        break;
+    try {
+      const currentTime = audioContext.current.currentTime;
+      
+      // Configure sound based on type
+      let oscillator = audioContext.current.createOscillator();
+      let gainNode = audioContext.current.createGain();
+      
+      switch (soundType) {
+        case 'cosmicBell':
+          // Bell-like sound for events
+          oscillator.type = 'sine';
+          oscillator.frequency.value = 150 + (options.pitch || 0) * 200;
+          
+          // Bell envelope
+          gainNode.gain.setValueAtTime(0, currentTime);
+          gainNode.gain.linearRampToValueAtTime(0.4 * volume, currentTime + 0.01);
+          gainNode.gain.exponentialRampToValueAtTime(0.001, currentTime + (options.duration || 1.5));
+          
+          // Connect and play
+          oscillator.connect(gainNode);
+          gainNode.connect(masterGain.current);
+          oscillator.start();
+          oscillator.stop(currentTime + (options.duration || 1.5));
+          break;
+          
+        case 'fluctuation':
+          // Quantum fluctuation sounds
+          oscillator.type = 'sine';
+          oscillator.frequency.value = 220 + Math.random() * 880;
+          
+          // Short envelope
+          gainNode.gain.setValueAtTime(0, currentTime);
+          gainNode.gain.linearRampToValueAtTime(0.1 * volume, currentTime + 0.01);
+          gainNode.gain.exponentialRampToValueAtTime(0.001, currentTime + 0.2);
+          
+          // Connect and play
+          oscillator.connect(gainNode);
+          gainNode.connect(masterGain.current);
+          oscillator.start();
+          oscillator.stop(currentTime + 0.3);
+          break;
+          
+        default:
+          // Generic sound
+          oscillator.type = 'sine';
+          oscillator.frequency.value = 440;
+          
+          // Simple envelope
+          gainNode.gain.setValueAtTime(0, currentTime);
+          gainNode.gain.linearRampToValueAtTime(0.2 * volume, currentTime + 0.01);
+          gainNode.gain.exponentialRampToValueAtTime(0.001, currentTime + 0.5);
+          
+          // Connect and play
+          oscillator.connect(gainNode);
+          gainNode.connect(masterGain.current);
+          oscillator.start();
+          oscillator.stop(currentTime + 0.6);
       }
-      case 'inflation': {
-        // For inflation events, play fluctuation followed by multiple emergence sounds
-        const intensity = data?.intensity || 0.9;
-        setTimeout(() => playSound('fluctuation', { intensity }), 0);
-        setTimeout(() => playSound('emergence', { complexity: 0.9 }), 500);
-        setTimeout(() => playSound('emergence', { complexity: 0.7 }), 1200);
-        break;
-      }
-      case 'knowledge_threshold': {
-        // When knowledge reaches threshold, play special sequence
-        const level = data?.level || 0.8;
-        
-        // Play increasing complexity emergence sounds
-        for (let i = 0; i < 3; i++) {
-          setTimeout(() => {
-            playSound('emergence', { complexity: 0.5 + (i * 0.2) });
-          }, i * 600);
-        }
-        break;
-      }
-      case 'gravity_emergence': {
-        // Complex sequence for gravity emergence from information density
-        const informationDensity = data?.informationDensity || 0.8;
-        const weight = data?.weight || 0.7;
-        
-        // Start with a cosmic bell toll representing high information density
-        setTimeout(() => 
-          playSound('cosmicBell', { informationDensity, weight }), 0);
-        
-        // Follow with gravitational wave representing the "weight" of information
-        setTimeout(() => 
-          playSound('gravitationalWave', { 
-            strength: weight, 
-            complexity: informationDensity 
-          }), 2000);
-        
-        // Finish with emergence representing new stable structure
-        setTimeout(() => 
-          playSound('emergence', { complexity: 0.8 + (weight * 0.2) }), 5000);
-        break;
-      }
-      case 'intent_field_collapse': {
-        // Dramatic sequence for intent field collapse/restructuring
-        const intensity = data?.intensity || 0.9;
-        
-        // Start with fluctuation representing field instability
-        setTimeout(() => playSound('fluctuation', { intensity }), 0);
-        
-        // Add gravitational wave representing spacetime warping
-        setTimeout(() => 
-          playSound('gravitationalWave', { 
-            strength: intensity * 0.8, 
-            complexity: 0.7 
-          }), 1000);
-        
-        // Cosmic bell toll at peak of collapse
-        setTimeout(() => 
-          playSound('cosmicBell', { 
-            informationDensity: intensity, 
-            weight: intensity * 0.9 
-          }), 3000);
-        
-        // Multiple particle creation sounds as new structure forms
-        for (let i = 0; i < 5; i++) {
-          setTimeout(() => {
-            playSound('creation', { 
-              charge: i % 3 === 0 ? 'positive' : i % 3 === 1 ? 'negative' : 'neutral' 
-            });
-          }, 5000 + (i * 200));
-        }
-        break;
-      }
+    } catch (error) {
+      console.error(`Error playing ${soundType} sound:`, error);
     }
-  }, [isEnabled, playSound]);
-
-  // Export audio analysis data for NotebookLM
+  }, [initialize, initialized, volume]);
+  
+  // Play a celestial event sound
+  const playCelestialEvent = useCallback((eventType: string, options: SoundOptions = {}) => {
+    if (!initialized || !audioContext.current || !masterGain.current) {
+      initialize();
+      if (!audioContext.current || !masterGain.current) return;
+    }
+    
+    try {
+      const currentTime = audioContext.current.currentTime;
+      const intensity = options.intensity || 0.5;
+      
+      switch (eventType) {
+        case 'inflation':
+          // Cosmic inflation - rising sweep
+          const sweepOsc = audioContext.current.createOscillator();
+          const sweepGain = audioContext.current.createGain();
+          
+          sweepOsc.type = 'sine';
+          sweepOsc.frequency.setValueAtTime(100, currentTime);
+          sweepOsc.frequency.exponentialRampToValueAtTime(800, currentTime + 2 * intensity);
+          
+          sweepGain.gain.setValueAtTime(0, currentTime);
+          sweepGain.gain.linearRampToValueAtTime(0.2 * volume * intensity, currentTime + 0.1);
+          sweepGain.gain.exponentialRampToValueAtTime(0.001, currentTime + 2.5 * intensity);
+          
+          sweepOsc.connect(sweepGain);
+          sweepGain.connect(masterGain.current);
+          sweepOsc.start();
+          sweepOsc.stop(currentTime + 3 * intensity);
+          break;
+          
+        case 'intent_field_collapse':
+          // Intent field collapse - falling tone
+          const collapseOsc = audioContext.current.createOscillator();
+          const collapseGain = audioContext.current.createGain();
+          
+          collapseOsc.type = 'sine';
+          collapseOsc.frequency.setValueAtTime(600, currentTime);
+          collapseOsc.frequency.exponentialRampToValueAtTime(100, currentTime + 1.5 * intensity);
+          
+          collapseGain.gain.setValueAtTime(0, currentTime);
+          collapseGain.gain.linearRampToValueAtTime(0.15 * volume * intensity, currentTime + 0.1);
+          collapseGain.gain.exponentialRampToValueAtTime(0.001, currentTime + 2 * intensity);
+          
+          collapseOsc.connect(collapseGain);
+          collapseGain.connect(masterGain.current);
+          collapseOsc.start();
+          collapseOsc.stop(currentTime + 2.5 * intensity);
+          break;
+          
+        default:
+          // Generic celestial event
+          playSound('cosmicBell', { intensity, duration: 1 });
+      }
+    } catch (error) {
+      console.error(`Error playing celestial event ${eventType}:`, error);
+    }
+  }, [initialize, initialized, playSound, volume]);
+  
+  // Play ambient background sound
+  const playAmbientSound = useCallback((options: AmbientSoundOptions) => {
+    if (!initialized || !audioContext.current || !masterGain.current) {
+      initialize();
+      if (!audioContext.current || !masterGain.current) return;
+    }
+    
+    // Clear any existing ambient sounds
+    stopAllSounds();
+    
+    try {
+      const { type, intensity, complexity } = options;
+      const layerCount = Math.floor(2 + complexity * 4); // 2-6 layers based on complexity
+      
+      for (let i = 0; i < layerCount; i++) {
+        const layerIntensity = intensity * (0.7 + Math.random() * 0.3); // Slight intensity variation
+        const baseFreq = 
+          type === 'intent_field' ? 100 + i * 50 :
+          type === 'cosmic_background' ? 50 + i * 30 :
+          150 + i * 80; // For quantum_fluctuations
+          
+        const osc = audioContext.current.createOscillator();
+        const gain = audioContext.current.createGain();
+        
+        // Set oscillator type and frequency
+        osc.type = i % 2 === 0 ? 'sine' : 'triangle';
+        osc.frequency.value = baseFreq * (0.9 + Math.random() * 0.2); // Slight frequency variation
+        
+        // Add slight detuning for complexity
+        osc.detune.value = (i - layerCount/2) * 10 * complexity;
+        
+        // Set gain value based on layer and intensity
+        const layerVolume = (0.08 / layerCount) * volume * layerIntensity * (1 - i/layerCount * 0.5);
+        gain.gain.value = layerVolume;
+        
+        // If this is an intent field, add subtle pulsing
+        if (type === 'intent_field') {
+          const pulseRate = 0.05 + Math.random() * 0.1; // Different pulse rate for each layer
+          gain.gain.setValueAtTime(layerVolume, audioContext.current.currentTime);
+          
+          // Create a repeating pulse effect using a waveshaper
+          setInterval(() => {
+            if (gain.gain) {
+              const time = audioContext.current?.currentTime || 0;
+              gain.gain.cancelScheduledValues(time);
+              gain.gain.setValueAtTime(gain.gain.value, time);
+              gain.gain.linearRampToValueAtTime(
+                layerVolume * (0.85 + Math.random() * 0.3), 
+                time + pulseRate
+              );
+            }
+          }, 2000);
+        }
+        
+        // Connect and start
+        osc.connect(gain);
+        gain.connect(masterGain.current);
+        osc.start();
+        
+        // Store for later cleanup
+        ambientOscillators.current.push({ osc, gain });
+      }
+    } catch (error) {
+      console.error("Error playing ambient sound:", error);
+    }
+  }, [initialize, initialized, stopAllSounds, volume]);
+  
+  // Export audio data for saving
   const exportAudioData = useCallback(() => {
-    return exportAudioDataForNotebookLM();
-  }, []);
-
+    return {
+      volume,
+      ambientOscillatorCount: ambientOscillators.current.length,
+      timestamp: new Date().toISOString()
+    };
+  }, [volume]);
+  
   return {
-    isEnabled,
-    volume,
-    toggleAudio,
+    initialized,
+    initialize,
     updateVolume,
     playSound,
     playCelestialEvent,
+    playAmbientSound,
+    stopAllSounds,
     exportAudioData
   };
 }

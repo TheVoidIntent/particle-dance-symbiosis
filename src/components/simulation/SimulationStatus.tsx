@@ -27,7 +27,7 @@ const SimulationStatus: React.FC<SimulationStatusProps> = ({ className }) => {
         const stats = getSimulationStats();
         setStats({
           particleCount: stats.particleCount,
-          interactionCount: stats.interactionCount,
+          interactionCount: stats.interactionsCount, // Changed from interactionCount to interactionsCount
           knowledgeLevel: stats.knowledgeAverage * 100
         });
       }

@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { getIntentWaveValues } from '@/utils/simulation/motherSimulation';
 
@@ -393,6 +394,17 @@ export function useSimpleAudio(initialEnabled = true, initialVolume = 0.5) {
     setEnabled(prev => !prev);
     return !enabled;
   }, [enabled]);
+  
+  // Add exportAudioData function to fix missing property errors
+  const exportAudioData = useCallback(() => {
+    return {
+      averageFrequency: intentWaveMetrics.averageFrequency,
+      totalEnergy: intentWaveMetrics.totalEnergy,
+      harmonicRatio: intentWaveMetrics.harmonicRatio,
+      resonanceScore: intentWaveMetrics.resonanceScore,
+      timestamp: Date.now()
+    };
+  }, [intentWaveMetrics]);
 
   // Set up regular updates for intent wave audio
   useEffect(() => {
@@ -442,6 +454,7 @@ export function useSimpleAudio(initialEnabled = true, initialVolume = 0.5) {
     stopAllSounds,
     toggleAudio,
     intentWaveMetrics,
+    exportAudioData, // Add the missing function
     exposedData: {
       intentWaveMetrics,
       isEnabled: enabled,

@@ -18,7 +18,7 @@ const DataAnalysis: React.FC = () => {
   const [particleData, setParticleData] = useState<DataPoint[]>([]);
   const [interactionData, setInteractionData] = useState<DataPoint[]>([]);
   const [timeSeriesData, setTimeSeriesData] = useState<any[]>([]);
-  const [simulationStats, setSimulationStats] = useState({
+  const [stats, setStats] = useState({
     particleCount: 0,
     interactionCount: 0,
     knowledgeAverage: 0,
@@ -26,55 +26,48 @@ const DataAnalysis: React.FC = () => {
     frameCount: 0
   });
 
-  // Colors for charts
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#FF5733'];
 
-  // Initialize and update data
   useEffect(() => {
-    // Initial data load
-    updateChartData(chartDataType);
-    
-    // Setup interval for real-time updates
-    const dataInterval = setInterval(() => {
+    const updateInterval = setInterval(() => {
       if (isMotherSimulationRunning()) {
-        updateChartData(chartDataType);
-        updateSimulationStats();
+        const currentStats = getSimulationStats();
+        setStats({
+          particleCount: currentStats.particleCount,
+          interactionCount: currentStats.interactionsCount,
+          knowledgeAverage: currentStats.knowledgeAverage || 0,
+          isRunning: isMotherSimulationRunning(),
+          frameCount: currentStats.frameCount
+        });
       }
-    }, 3000);
+    }, 1000);
     
-    return () => clearInterval(dataInterval);
-  }, [chartDataType]);
+    return () => clearInterval(updateInterval);
+  }, []);
 
-  // Update simulation statistics
   const updateSimulationStats = () => {
     const stats = getSimulationStats();
-    // Add isRunning and frameCount properties if they're not provided by getSimulationStats
-    setSimulationStats({
-      ...stats, 
-      isRunning: isMotherSimulationRunning(), 
-      frameCount: stats.interactionCount // use interaction count as a proxy for frame count
+    setStats({
+      ...stats,
+      isRunning: isMotherSimulationRunning(),
+      frameCount: stats.interactionsCount
     });
   };
 
-  // Update chart data based on selected type
   const updateChartData = (dataType: string) => {
-    // Sample data - in a real app, this would come from your simulation
     if (dataType === 'charge') {
-      // Particle distribution by charge
       setParticleData([
         { name: 'Positive', value: Math.floor(Math.random() * 50) + 30 },
         { name: 'Negative', value: Math.floor(Math.random() * 40) + 20 },
         { name: 'Neutral', value: Math.floor(Math.random() * 30) + 10 },
       ]);
     } else if (dataType === 'knowledge') {
-      // Particle distribution by knowledge level
       setParticleData([
         { name: 'High', value: Math.floor(Math.random() * 30) + 10 },
         { name: 'Medium', value: Math.floor(Math.random() * 40) + 30 },
         { name: 'Low', value: Math.floor(Math.random() * 30) + 20 },
       ]);
     } else if (dataType === 'type') {
-      // Particle distribution by type
       setParticleData([
         { name: 'Standard', value: Math.floor(Math.random() * 60) + 40 },
         { name: 'Quantum', value: Math.floor(Math.random() * 20) + 10 },
@@ -82,7 +75,6 @@ const DataAnalysis: React.FC = () => {
       ]);
     }
     
-    // Interaction data
     setInteractionData([
       { name: 'Knowledge Exchange', value: Math.floor(Math.random() * 100) + 200 },
       { name: 'Repulsion', value: Math.floor(Math.random() * 50) + 100 },
@@ -90,7 +82,6 @@ const DataAnalysis: React.FC = () => {
       { name: 'Neutral', value: Math.floor(Math.random() * 40) + 80 },
     ]);
     
-    // Time series data - add a new point
     const newTimePoint = {
       time: new Date().toLocaleTimeString(),
       particles: Math.floor(Math.random() * 20) + 80,
@@ -100,7 +91,6 @@ const DataAnalysis: React.FC = () => {
     
     setTimeSeriesData(prev => {
       const newData = [...prev, newTimePoint];
-      // Keep only the last 20 data points
       if (newData.length > 20) {
         return newData.slice(newData.length - 20);
       }
@@ -108,7 +98,6 @@ const DataAnalysis: React.FC = () => {
     });
   };
 
-  // Handler for data type change
   const handleDataTypeChange = (value: string) => {
     setChartDataType(value);
     updateChartData(value);
@@ -124,7 +113,7 @@ const DataAnalysis: React.FC = () => {
             <CardTitle className="text-lg">Particles</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">{simulationStats.particleCount}</div>
+            <div className="text-3xl font-bold">{stats.particleCount}</div>
             <p className="text-gray-500 text-sm">Active in simulation</p>
           </CardContent>
         </Card>
@@ -134,7 +123,7 @@ const DataAnalysis: React.FC = () => {
             <CardTitle className="text-lg">Interactions</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">{simulationStats.interactionCount.toLocaleString()}</div>
+            <div className="text-3xl font-bold">{stats.interactionCount.toLocaleString()}</div>
             <p className="text-gray-500 text-sm">Total processed</p>
           </CardContent>
         </Card>
@@ -145,9 +134,9 @@ const DataAnalysis: React.FC = () => {
           </CardHeader>
           <CardContent>
             <div className="flex items-center space-x-2">
-              <div className="text-3xl font-bold">{(simulationStats.knowledgeAverage * 100).toFixed(1)}%</div>
+              <div className="text-3xl font-bold">{(stats.knowledgeAverage * 100).toFixed(1)}%</div>
             </div>
-            <Progress value={simulationStats.knowledgeAverage * 100} className="h-2 mt-2" />
+            <Progress value={stats.knowledgeAverage * 100} className="h-2 mt-2" />
             <p className="text-gray-500 text-sm">Average across particles</p>
           </CardContent>
         </Card>
@@ -159,12 +148,12 @@ const DataAnalysis: React.FC = () => {
             <CardTitle>Simulation Analytics</CardTitle>
             <div className="flex items-center space-x-4">
               <div className="text-sm text-gray-500">
-                Status: <span className={simulationStats.isRunning ? "text-green-500" : "text-red-500"}>
-                  {simulationStats.isRunning ? "Running" : "Stopped"}
+                Status: <span className={stats.isRunning ? "text-green-500" : "text-red-500"}>
+                  {stats.isRunning ? "Running" : "Stopped"}
                 </span>
               </div>
               <div className="text-sm text-gray-500">
-                Frame: <span className="font-medium">{simulationStats.frameCount.toLocaleString()}</span>
+                Frame: <span className="font-medium">{stats.frameCount.toLocaleString()}</span>
               </div>
               <Select value={chartDataType} onValueChange={handleDataTypeChange}>
                 <SelectTrigger className="w-[180px]">

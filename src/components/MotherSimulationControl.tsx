@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Play, Pause, RotateCcw, Zap } from "lucide-react";
@@ -26,7 +27,7 @@ const MotherSimulationControl: React.FC = () => {
       const currentStats = getSimulationStats();
       setStats({
         particleCount: currentStats.particleCount || 0,
-        interactionCount: currentStats.interactionCount || 0,
+        interactionCount: currentStats.interactionsCount || 0, // Changed from interactionCount to interactionsCount
         knowledgeLevel: currentStats.knowledgeAverage * 100
       });
     };

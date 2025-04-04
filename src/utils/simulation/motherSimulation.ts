@@ -1,9 +1,5 @@
-
-// Remove the canvas dependency and use browser canvas
-// import { createCanvas, loadImage } from 'canvas';
-
-// Particle interface
-interface Particle {
+// Export the Particle interface for use in other modules
+export interface Particle {
   id: string;
   x: number;
   y: number;

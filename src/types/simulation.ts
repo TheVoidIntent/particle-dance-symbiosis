@@ -5,23 +5,33 @@ export interface Particle {
   id: string;
   x: number;
   y: number;
-  z?: number;
+  z: number;
   vx: number;
   vy: number;
-  vz?: number;
+  vz: number;
   charge: 'positive' | 'negative' | 'neutral';
-  size: number;
-  radius?: number;
   color: string;
   knowledge: number;
   intent: number;
   age: number;
   type: string;
-  isHighEnergy?: boolean;
+  interactions: number;
+  radius: number;
+  mass: number;
+  size: number;
+  complexity: number;
+  energy: number;
+  interactionTendency: number;
+  lastInteraction: number;
+  interactionCount: number;
+  created: number;
+  creationTime: number;
   isPostInflation?: boolean;
-  scale?: number;
-  complexity?: number;
-  interactions?: number;
+  scale: number;
+  adaptiveScore: number;
+  intentDecayRate: number;
+  energyCapacity: number;
+  isHighEnergy?: boolean;
 }
 
 export interface SimulationStats {
@@ -34,6 +44,8 @@ export interface SimulationStats {
   frame?: number;
   time?: number;
   interactions?: number;
+  interactionsCount?: number;
+  interactionCount?: number;
   robotCount?: number;
   clusterCount?: number;
   highEnergyParticles?: number;
@@ -47,9 +59,15 @@ export interface SimulationStats {
   systemEntropy?: number;
   intentFieldComplexity?: number;
   knowledgeAverage?: number;
-  interactionCount?: number;
   frameCount?: number;
   isRunning?: boolean;
+  // Adding missing properties from errors
+  shannonEntropy?: number;
+  spatialEntropy?: number;
+  fieldOrderParameter?: number;
+  kolmogorovComplexity?: number;
+  informationDensity?: number;
+  clusterLifetime?: number;
 }
 
 export interface ClusterData {

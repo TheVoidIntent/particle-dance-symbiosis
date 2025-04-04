@@ -1,4 +1,3 @@
-
 // Change the import to get Particle from types instead of particleUtils
 import { Particle } from '@/types/simulation';
 import { fieldConfig } from './config';
@@ -52,6 +51,25 @@ export function saveState(): void {
     }
   } catch (error) {
     console.error("Failed to save mother simulation state:", error);
+  }
+}
+
+// Load state from localStorage
+export function loadState(): SimulationState | null {
+  try {
+    const savedState = localStorage.getItem('motherSimulationState');
+    if (!savedState) return null;
+    
+    const parsedState = JSON.parse(savedState);
+    return {
+      ...createInitialState(),
+      ...parsedState,
+      isRunning: false,
+      intervalId: null
+    };
+  } catch (error) {
+    console.error("Failed to load mother simulation state:", error);
+    return null;
   }
 }
 

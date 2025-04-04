@@ -1,51 +1,86 @@
+
 import { playLoopingAudio, stopLoopingAudio, setLoopingAudioVolume } from './audioPlaybackUtils';
 
-// Audio tracks playlist - focused on verified working audio tracks only
+// Audio tracks playlist - using generated tones instead of WAV files
 const audioTracks = [
-  "The Nexus",
-  "From The Heart",
-  "In Deep Waters", 
-  "The Source",
-  "Intent Field Fluctuations"
+  "Gentle Ambience",
+  "Cosmic Flow",
+  "Quantum Harmony",
+  "Intent Waves",
+  "Digital Serenity"
 ];
 
-// Map track names to actual file numbers that exist and work in the public/audio folder
-// Based on console logs, these files are confirmed to work well
-const trackFileMap: Record<string, number> = {
-  "The Nexus": 5,
-  "From The Heart": 283,
-  "In Deep Waters": 87,
-  "The Source": 283,
-  "Intent Field Fluctuations": 101
-};
+// We'll use the Web Audio API to generate tones instead of using the problematic files
+let audioContext: AudioContext | null = null;
+let oscillator: OscillatorNode | null = null;
+let gainNode: GainNode | null = null;
 
 let currentTrackIndex = 0;
 let isPlaying = false;
-let audioElement: HTMLAudioElement | null = null;
 let lastPlayAttemptTime = 0;
 const MIN_PLAY_INTERVAL_MS = 5000; // Minimum time between play attempts
+
+/**
+ * Initialize Web Audio API components
+ */
+function initAudio() {
+  try {
+    if (!audioContext) {
+      audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      gainNode = audioContext.createGain();
+      gainNode.connect(audioContext.destination);
+    }
+  } catch (error) {
+    console.error("Error initializing audio context:", error);
+  }
+}
+
+/**
+ * Generate a tone with the given parameters
+ * @param type Type of oscillator
+ * @param frequency Base frequency
+ * @param detune Detune amount
+ */
+function generateTone(type: OscillatorType = 'sine', frequency: number = 220, detune: number = 0) {
+  try {
+    if (!audioContext || !gainNode) {
+      initAudio();
+    }
+    
+    // Stop any existing oscillator
+    if (oscillator) {
+      oscillator.stop();
+      oscillator.disconnect();
+    }
+    
+    if (!audioContext || !gainNode) return;
+    
+    // Create and configure new oscillator
+    oscillator = audioContext.createOscillator();
+    oscillator.type = type;
+    oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
+    oscillator.detune.setValueAtTime(detune, audioContext.currentTime);
+    
+    // Apply smooth fade-in
+    gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+    gainNode.gain.linearRampToValueAtTime(0.2, audioContext.currentTime + 2);
+    
+    // Connect and start
+    oscillator.connect(gainNode);
+    oscillator.start();
+  } catch (error) {
+    console.error("Error generating tone:", error);
+  }
+}
 
 /**
  * Start playing the audio playlist continuously
  */
 export function startAudioPlaylist(volume: number = 0.5): void {
   try {
-    if (!audioElement) {
-      audioElement = new Audio();
-      audioElement.volume = volume;
-      
-      // When one audio track ends, play the next one
-      audioElement.addEventListener('ended', playNextTrack);
-      
-      // Handle errors
-      audioElement.addEventListener('error', (e) => {
-        console.error('Audio playback error:', e);
-        // Try the next track if there's an error
-        setTimeout(playNextTrack, 3000);
-      });
-    }
-    
+    initAudio();
     isPlaying = true;
+    setVolumeDirectly(volume);
     playCurrentTrack();
   } catch (error) {
     console.error("Error starting audio playlist:", error);
@@ -57,12 +92,37 @@ export function startAudioPlaylist(volume: number = 0.5): void {
  */
 export function stopAudioPlaylist(): void {
   try {
-    if (audioElement) {
-      audioElement.pause();
-      isPlaying = false;
+    if (oscillator) {
+      // Fade out before stopping
+      if (gainNode && audioContext) {
+        gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + 1);
+        
+        setTimeout(() => {
+          if (oscillator) {
+            oscillator.stop();
+            oscillator.disconnect();
+            oscillator = null;
+          }
+        }, 1000);
+      }
     }
+    isPlaying = false;
   } catch (error) {
     console.error("Error stopping audio playlist:", error);
+  }
+}
+
+/**
+ * Set the volume directly through gain node
+ */
+function setVolumeDirectly(volume: number): void {
+  try {
+    if (gainNode && audioContext) {
+      const clampedVolume = Math.min(Math.max(volume, 0), 1);
+      gainNode.gain.linearRampToValueAtTime(clampedVolume * 0.2, audioContext.currentTime + 0.5);
+    }
+  } catch (error) {
+    console.error("Error setting audio volume directly:", error);
   }
 }
 
@@ -71,9 +131,7 @@ export function stopAudioPlaylist(): void {
  */
 export function setAudioPlaylistVolume(volume: number): void {
   try {
-    if (audioElement) {
-      audioElement.volume = Math.min(Math.max(volume, 0), 1);
-    }
+    setVolumeDirectly(volume);
   } catch (error) {
     console.error("Error setting audio volume:", error);
   }
@@ -98,11 +156,11 @@ function playNextTrack(): void {
 }
 
 /**
- * Play the current track
+ * Play the current track (generates appropriate tone pattern)
  */
 function playCurrentTrack(): void {
   try {
-    if (!audioElement || !isPlaying) return;
+    if (!isPlaying) return;
     
     const now = Date.now();
     if (now - lastPlayAttemptTime < MIN_PLAY_INTERVAL_MS) {
@@ -114,25 +172,31 @@ function playCurrentTrack(): void {
     lastPlayAttemptTime = now;
     const trackName = audioTracks[currentTrackIndex];
     
-    // Get the correct file number from our mapping
-    const fileNumber = trackFileMap[trackName] || 5; // Default to file 5 (The Nexus) if mapping not found
-    const audioUrl = `/audio/qfplS_${fileNumber}.wav`;
+    console.log("Now playing:", trackName);
     
-    console.log("Attempting to play:", trackName, "from", audioUrl);
+    // Generate different tones based on track name
+    switch (trackName) {
+      case "Gentle Ambience":
+        generateTone('sine', 220, 0);
+        break;
+      case "Cosmic Flow":
+        generateTone('sine', 294, 10);
+        break;
+      case "Quantum Harmony":
+        generateTone('triangle', 330, 5);
+        break;
+      case "Intent Waves":
+        generateTone('sine', 392, 15);
+        break;
+      case "Digital Serenity":
+        generateTone('sine', 440, 0);
+        break;
+      default:
+        generateTone('sine', 220, 0);
+    }
     
-    // Stop any existing audio before loading the new one
-    audioElement.pause();
-    audioElement.currentTime = 0;
-    audioElement.src = audioUrl;
-    
-    // Use a promise to handle playback errors more gracefully
-    audioElement.play().then(() => {
-      console.log("Now playing:", trackName);
-    }).catch(e => {
-      console.error("Error playing track:", trackName, e);
-      // Try the next track if there's an error
-      setTimeout(playNextTrack, 3000);
-    });
+    // Schedule switching to the next track after some time
+    setTimeout(playNextTrack, 30000); // 30 seconds per track
   } catch (error) {
     console.error("Error playing current track:", error);
     // Attempt recovery by trying the next track

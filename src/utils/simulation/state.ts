@@ -12,6 +12,7 @@ export interface SimulationState {
   simulationTime: number;
   isRunning: boolean;
   intervalId: number | null;
+  knowledgeAverage?: number;
 }
 
 // Create the initial simulation state
@@ -23,6 +24,7 @@ export const createInitialState = (): SimulationState => ({
   simulationTime: 0,
   isRunning: false,
   intervalId: null,
+  knowledgeAverage: 0
 });
 
 // Current simulation state (singleton)
@@ -53,66 +55,20 @@ export function saveState(): void {
   }
 }
 
-// Load state from localStorage
-export function loadState(): boolean {
-  const savedState = localStorage.getItem('motherSimulationState');
-  if (savedState) {
-    try {
-      const state = JSON.parse(savedState);
-      simulationState.particles = state.particles;
-      simulationState.intentField = state.intentField;
-      simulationState.interactionsCount = state.interactionsCount;
-      simulationState.frameCount = state.frameCount;
-      simulationState.simulationTime = state.simulationTime;
-      
-      console.log(`✅ Loaded mother simulation with ${simulationState.particles.length} particles and ${simulationState.interactionsCount} interactions`);
-      return true;
-    } catch (error) {
-      console.error("Failed to restore mother simulation state:", error);
-      return false;
-    }
-  }
-  return false;
-}
-
-// Get current simulation stats
+// Get the current simulation statistics
 export function getSimulationStats() {
-  if (simulationState.particles.length === 0) {
-    return {
-      isRunning: simulationState.isRunning,
-      particleCount: 0,
-      interactionsCount: 0,
-      frameCount: 0,
-      simulationTime: 0,
-      lastSaved: localStorage.getItem('motherSimulationLastSaved') || 'Never'
-    };
-  }
-  
-  // Get basic stats
-  const positiveParticles = simulationState.particles.filter(p => p.charge === 'positive').length;
-  const negativeParticles = simulationState.particles.filter(p => p.charge === 'negative').length;
-  const neutralParticles = simulationState.particles.filter(p => p.charge === 'neutral').length;
-  const highEnergyParticles = simulationState.particles.filter(p => p.type === 'high-energy').length;
-  const quantumParticles = simulationState.particles.filter(p => p.type === 'quantum').length;
-  const compositeParticles = simulationState.particles.filter(p => p.type === 'composite').length;
-  const adaptiveParticles = simulationState.particles.filter(p => p.type === 'adaptive').length;
-  
-  return {
-    isRunning: simulationState.isRunning,
-    particleCount: simulationState.particles.length,
-    particleTypes: {
-      positive: positiveParticles,
-      negative: negativeParticles,
-      neutral: neutralParticles,
-      highEnergy: highEnergyParticles,
-      quantum: quantumParticles,
-      composite: compositeParticles,
-      adaptive: adaptiveParticles
-    },
+  const stats = {
+    particles: simulationState.particles,
+    intentField: simulationState.intentField,
     interactionsCount: simulationState.interactionsCount,
     frameCount: simulationState.frameCount,
-    simulationTime: simulationState.simulationTime,
-    lastSaved: localStorage.getItem('motherSimulationLastSaved') || 'Never'
+    emergenceIndex: 0, // Calculated in motherSimulation
+    particleCount: simulationState.particles.length,
+    positiveParticles: simulationState.particles.filter(p => p.charge === 'positive').length,
+    negativeParticles: simulationState.particles.filter(p => p.charge === 'negative').length,
+    neutralParticles: simulationState.particles.filter(p => p.charge === 'neutral').length,
+    intentFieldComplexity: 0 // Calculated in motherSimulation
   };
+  
+  return stats;
 }
-

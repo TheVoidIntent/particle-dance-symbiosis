@@ -5,5 +5,6 @@ export {
   stopMotherSimulation,
   isMotherSimulationRunning,
   initializeMotherSimulation,
-  getSimulationStats
+  getSimulationStats,
+  getIntentWaveValues
 } from './simulation/motherSimulation';

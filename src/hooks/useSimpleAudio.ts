@@ -1,377 +1,437 @@
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { getIntentWaveValues } from '@/utils/simulation/motherSimulation';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
-
-interface SoundOptions {
+export interface SoundOptions {
   intensity?: number;
   complexity?: number;
-  pitch?: number;
-  duration?: number;
-  weight?: number;
   informationDensity?: number;
-  // Add missing properties needed by components
+  weight?: number;
+  // Add all the properties that caused TypeScript errors
   strength?: number;
   charge?: string;
   particle1?: any;
   particle2?: any;
 }
 
-interface AmbientSoundOptions {
-  type: 'intent_field' | 'cosmic_background' | 'quantum_fluctuations';
-  intensity: number;
-  complexity: number;
+export interface AmbientSoundOptions {
+  type: string;
+  intensity?: number;
+  complexity?: number;
 }
 
-export function useSimpleAudio(autoInit = true, initialVolume = 0.5) {
+export function useSimpleAudio(initialEnabled = true, initialVolume = 0.5) {
   const [initialized, setInitialized] = useState(false);
+  const [enabled, setEnabled] = useState(initialEnabled);
   const [volume, setVolume] = useState(initialVolume);
-  const [isEnabled, setIsEnabled] = useState(true);
-  
   const audioContext = useRef<AudioContext | null>(null);
-  const masterGain = useRef<GainNode | null>(null);
-  const ambientOscillators = useRef<{osc: OscillatorNode, gain: GainNode}[]>([]);
-  
-  // Initialize the audio context
+  const oscillators = useRef<OscillatorNode[]>([]);
+  const gains = useRef<GainNode[]>([]);
+  const ambientOscillator = useRef<OscillatorNode | null>(null);
+  const ambientGain = useRef<GainNode | null>(null);
+  const intentWaveOscillators = useRef<OscillatorNode[]>([]);
+  const intentWaveGains = useRef<GainNode[]>([]);
+
+  // Quantifiable intent wave metrics
+  const [intentWaveMetrics, setIntentWaveMetrics] = useState({
+    averageFrequency: 0,
+    totalEnergy: 0,
+    harmonicRatio: 0,
+    resonanceScore: 0
+  });
+
+  // Initialize the audio context and oscillators
   const initialize = useCallback(() => {
     if (initialized) return;
     
     try {
+      // Create audio context
       audioContext.current = new (window.AudioContext || (window as any).webkitAudioContext)();
-      masterGain.current = audioContext.current.createGain();
-      masterGain.current.gain.value = volume;
-      masterGain.current.connect(audioContext.current.destination);
+      
+      // Create oscillators for various sound types
+      for (let i = 0; i < 5; i++) {
+        const oscillator = audioContext.current.createOscillator();
+        const gainNode = audioContext.current.createGain();
+        
+        oscillator.type = i % 2 === 0 ? 'sine' : 'triangle';
+        oscillator.frequency.value = 220 + (i * 110); // Different base frequencies
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.current.destination);
+        
+        gainNode.gain.value = 0; // Start silent
+        
+        oscillator.start();
+        
+        oscillators.current.push(oscillator);
+        gains.current.push(gainNode);
+      }
+      
+      // Create ambient oscillator
+      ambientOscillator.current = audioContext.current.createOscillator();
+      ambientGain.current = audioContext.current.createGain();
+      
+      ambientOscillator.current.type = 'sine';
+      ambientOscillator.current.frequency.value = 55; // Low base frequency
+      
+      ambientOscillator.current.connect(ambientGain.current);
+      ambientGain.current.connect(audioContext.current.destination);
+      
+      ambientGain.current.gain.value = 0; // Start silent
+      ambientOscillator.current.start();
+      
+      // Create intent wave oscillators for audio representation
+      for (let i = 0; i < 3; i++) {
+        const oscillator = audioContext.current.createOscillator();
+        const gainNode = audioContext.current.createGain();
+        
+        // Different waveform types for richer sound
+        oscillator.type = i === 0 ? 'sine' : i === 1 ? 'triangle' : 'sawtooth';
+        oscillator.frequency.value = 110 + (i * 55); // Different base frequencies
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.current.destination);
+        
+        gainNode.gain.value = 0; // Start silent
+        
+        oscillator.start();
+        
+        intentWaveOscillators.current.push(oscillator);
+        intentWaveGains.current.push(gainNode);
+      }
+      
       setInitialized(true);
     } catch (error) {
-      console.error("Error initializing audio context:", error);
+      console.error("Error initializing audio:", error);
     }
-  }, [initialized, volume]);
-  
-  // Initialize on mount if autoInit is true
-  useEffect(() => {
-    if (autoInit) {
-      initialize();
-    }
-    
-    return () => {
-      stopAllSounds();
-      if (audioContext.current && audioContext.current.state !== 'closed') {
-        audioContext.current.close();
-      }
-    };
-  }, [autoInit, initialize]);
-  
-  // Update master volume
-  const updateVolume = useCallback((newVolume: number) => {
-    if (!initialized || !masterGain.current) return;
-    
-    setVolume(newVolume);
-    masterGain.current.gain.value = newVolume;
   }, [initialized]);
-  
-  // Toggle audio on/off
-  const toggleAudio = useCallback(() => {
-    const newState = !isEnabled;
-    setIsEnabled(newState);
-    
-    if (!newState && initialized) {
-      stopAllSounds();
-    }
-    
-    return newState;
-  }, [isEnabled, initialized]);
-  
-  // Stop all sounds
-  const stopAllSounds = useCallback(() => {
-    // Stop ambient oscillators
-    ambientOscillators.current.forEach(({ osc, gain }) => {
-      try {
-        osc.stop();
-        osc.disconnect();
-        gain.disconnect();
-      } catch (e) {
-        // Ignore disconnection errors
-      }
-    });
-    ambientOscillators.current = [];
-  }, []);
-  
-  // Play a specific sound effect
-  const playSound = useCallback((soundType: string, options: SoundOptions = {}) => {
-    if (!initialized || !audioContext.current || !masterGain.current) {
-      initialize();
-      if (!audioContext.current || !masterGain.current) return;
-    }
+
+  // Update the audio based on the simulation state
+  const updateIntentWaveAudio = useCallback(() => {
+    if (!initialized || !enabled || !audioContext.current) return;
     
     try {
-      const currentTime = audioContext.current.currentTime;
+      // Get the intent wave values from the simulation
+      const waveValues = getIntentWaveValues();
       
-      // Configure sound based on type
-      let oscillator = audioContext.current.createOscillator();
-      let gainNode = audioContext.current.createGain();
+      if (waveValues.length === 0) return;
+      
+      // Use the last few values for audio representation
+      const recentValues = waveValues.slice(-3);
+      
+      // Calculate metrics for quantifiable intent data
+      const avgValue = recentValues.reduce((sum, val) => sum + val, 0) / recentValues.length;
+      const variance = recentValues.reduce((sum, val) => sum + Math.pow(val - avgValue, 2), 0) / recentValues.length;
+      const maxValue = Math.max(...recentValues);
+      
+      const averageFrequency = 220 + (avgValue * 880); // Map to 220-1100Hz range
+      const totalEnergy = Math.min(1, avgValue * 2) * volume;
+      const harmonicRatio = Math.min(1, variance * 10);
+      const resonanceScore = Math.min(1, maxValue * 0.8);
+      
+      // Update metrics for external use
+      setIntentWaveMetrics({
+        averageFrequency: Math.round(averageFrequency),
+        totalEnergy: Math.round(totalEnergy * 100) / 100,
+        harmonicRatio: Math.round(harmonicRatio * 100) / 100,
+        resonanceScore: Math.round(resonanceScore * 100) / 100
+      });
+      
+      // Update audio oscillators with these values
+      intentWaveOscillators.current.forEach((osc, index) => {
+        const value = recentValues[index % recentValues.length];
+        
+        // Adjust frequency based on the intent wave value
+        const baseFreq = 110 + (index * 55);
+        const targetFreq = baseFreq * (1 + value);
+        
+        // Smooth transition to new frequency
+        osc.frequency.setTargetAtTime(targetFreq, audioContext.current!.currentTime, 0.1);
+        
+        // Adjust volume based on intent value and master volume
+        const targetGain = Math.min(0.2, value * 0.4) * volume;
+        intentWaveGains.current[index].gain.setTargetAtTime(
+          enabled ? targetGain : 0,
+          audioContext.current!.currentTime,
+          0.1
+        );
+      });
+    } catch (error) {
+      console.error("Error updating intent wave audio:", error);
+    }
+  }, [initialized, enabled, volume]);
+
+  // Update volume for all gains
+  const updateVolume = useCallback((newVolume: number) => {
+    setVolume(newVolume);
+    
+    if (!initialized) return;
+    
+    // Update all gain nodes
+    gains.current.forEach(gain => {
+      gain.gain.setTargetAtTime(0, audioContext.current!.currentTime, 0.1);
+    });
+    
+    if (ambientGain.current) {
+      // Keep ambient sound going at the new volume if it was already playing
+      const currentAmbientVolume = ambientGain.current.gain.value;
+      if (currentAmbientVolume > 0) {
+        ambientGain.current.gain.setTargetAtTime(
+          newVolume * 0.15, // Keep ambient sound subtle
+          audioContext.current!.currentTime,
+          0.2
+        );
+      }
+    }
+    
+    // Update intent wave gains
+    intentWaveGains.current.forEach(gain => {
+      const currentValue = gain.gain.value;
+      if (currentValue > 0) {
+        gain.gain.setTargetAtTime(
+          currentValue * (newVolume / volume), // Scale by ratio of new to old volume
+          audioContext.current!.currentTime,
+          0.1
+        );
+      }
+    });
+  }, [initialized, volume]);
+
+  // Play a specific sound effect
+  const playSound = useCallback((soundType: string, options: SoundOptions = {}) => {
+    if (!initialized || !enabled) return;
+    
+    const { intensity = 0.5, complexity = 0.5 } = options;
+    
+    try {
+      // Select oscillator based on sound type
+      let oscillatorIndex = 0;
+      let frequency = 440;
+      let duration = 0.3;
+      let maxGain = 0.3 * volume;
       
       switch (soundType) {
-        case 'cosmicBell':
-          // Bell-like sound for events
-          oscillator.type = 'sine';
-          oscillator.frequency.value = 150 + (options.pitch || 0) * 200;
-          
-          // Bell envelope
-          gainNode.gain.setValueAtTime(0, currentTime);
-          gainNode.gain.linearRampToValueAtTime(0.4 * volume, currentTime + 0.01);
-          gainNode.gain.exponentialRampToValueAtTime(0.001, currentTime + (options.duration || 1.5));
-          
-          // Connect and play
-          oscillator.connect(gainNode);
-          gainNode.connect(masterGain.current);
-          oscillator.start();
-          oscillator.stop(currentTime + (options.duration || 1.5));
-          break;
-          
-        case 'fluctuation':
-          // Quantum fluctuation sounds
-          oscillator.type = 'sine';
-          oscillator.frequency.value = 220 + Math.random() * 880;
-          
-          // Short envelope
-          gainNode.gain.setValueAtTime(0, currentTime);
-          gainNode.gain.linearRampToValueAtTime(0.1 * volume, currentTime + 0.01);
-          gainNode.gain.exponentialRampToValueAtTime(0.001, currentTime + 0.2);
-          
-          // Connect and play
-          oscillator.connect(gainNode);
-          gainNode.connect(masterGain.current);
-          oscillator.start();
-          oscillator.stop(currentTime + 0.3);
-          break;
-          
         case 'creation':
-          // Particle creation sound - vary based on charge
-          oscillator.type = 'sine';
-          const charge = options.charge || 'neutral';
-          const baseFreq = charge === 'positive' ? 440 : charge === 'negative' ? 330 : 385;
-          oscillator.frequency.value = baseFreq;
-          
-          // Creation envelope
-          gainNode.gain.setValueAtTime(0, currentTime);
-          gainNode.gain.linearRampToValueAtTime(0.15 * volume, currentTime + 0.05);
-          gainNode.gain.exponentialRampToValueAtTime(0.001, currentTime + 0.4);
-          
-          // Connect and play
-          oscillator.connect(gainNode);
-          gainNode.connect(masterGain.current);
-          oscillator.start();
-          oscillator.stop(currentTime + 0.5);
+          oscillatorIndex = 0;
+          frequency = 880 + (Math.random() * 220);
+          duration = 0.2;
+          maxGain = 0.2 * volume;
           break;
           
         case 'interaction':
-          // Interaction sound when particles meet
-          if (options.particle1 && options.particle2) {
-            oscillator.type = 'triangle';
-            oscillator.frequency.value = 300 + Math.random() * 200;
-            
-            // Interaction envelope
-            gainNode.gain.setValueAtTime(0, currentTime);
-            gainNode.gain.linearRampToValueAtTime(0.07 * volume, currentTime + 0.01);
-            gainNode.gain.exponentialRampToValueAtTime(0.001, currentTime + 0.2);
-            
-            // Connect and play
-            oscillator.connect(gainNode);
-            gainNode.connect(masterGain.current);
-            oscillator.start();
-            oscillator.stop(currentTime + 0.25);
-          }
+          oscillatorIndex = 1;
+          frequency = 330 + (intensity * 220);
+          duration = 0.3;
+          maxGain = 0.15 * volume;
           break;
           
-        case 'gravitationalWave':
-          // Gravity wave simulation
-          oscillator.type = 'sine';
-          oscillator.frequency.value = 80 + (options.strength || 0.5) * 40;
-          
-          // Gravity wave envelope - slow attack, slow decay
-          gainNode.gain.setValueAtTime(0, currentTime);
-          gainNode.gain.linearRampToValueAtTime(0.2 * volume, currentTime + 0.5);
-          gainNode.gain.exponentialRampToValueAtTime(0.001, currentTime + 2.0);
-          
-          // Connect and play
-          oscillator.connect(gainNode);
-          gainNode.connect(masterGain.current);
-          oscillator.start();
-          oscillator.stop(currentTime + 2.5);
+        case 'fluctuation':
+          oscillatorIndex = 2;
+          frequency = 220 + (intensity * 110);
+          duration = 0.5;
+          maxGain = 0.1 * volume;
           break;
           
         case 'emergence':
-          // Complex emergence patterns
-          oscillator.type = 'sine';
-          const complexity = options.complexity || 0.5;
-          oscillator.frequency.value = 220 + complexity * 440;
-          
-          // Emergence envelope
-          gainNode.gain.setValueAtTime(0, currentTime);
-          gainNode.gain.linearRampToValueAtTime(0.15 * volume, currentTime + 0.2);
-          gainNode.gain.exponentialRampToValueAtTime(0.001, currentTime + 1.0 + complexity);
-          
-          // Connect and play
-          oscillator.connect(gainNode);
-          gainNode.connect(masterGain.current);
-          oscillator.start();
-          oscillator.stop(currentTime + 1.5 + complexity);
+          oscillatorIndex = 3;
+          frequency = 165 + (complexity * 440);
+          duration = 0.8;
+          maxGain = 0.25 * volume;
           break;
           
-        default:
-          // Generic sound
-          oscillator.type = 'sine';
-          oscillator.frequency.value = 440;
+        case 'cosmicBell':
+          oscillatorIndex = 4;
+          frequency = 220 + (intensity * 440);
+          duration = 1.2;
+          maxGain = 0.3 * volume;
+          break;
           
-          // Simple envelope
-          gainNode.gain.setValueAtTime(0, currentTime);
-          gainNode.gain.linearRampToValueAtTime(0.2 * volume, currentTime + 0.01);
-          gainNode.gain.exponentialRampToValueAtTime(0.001, currentTime + 0.5);
-          
-          // Connect and play
-          oscillator.connect(gainNode);
-          gainNode.connect(masterGain.current);
-          oscillator.start();
-          oscillator.stop(currentTime + 0.6);
+        case 'gravitationalWave':
+          oscillatorIndex = 0;
+          frequency = 110 + (intensity * 110);
+          duration = 2.0;
+          maxGain = 0.2 * volume;
+          break;
       }
-    } catch (error) {
-      console.error(`Error playing ${soundType} sound:`, error);
-    }
-  }, [initialize, initialized, volume]);
-  
-  // Play a celestial event sound
-  const playCelestialEvent = useCallback((eventType: string, options: SoundOptions = {}) => {
-    if (!initialized || !audioContext.current || !masterGain.current) {
-      initialize();
-      if (!audioContext.current || !masterGain.current) return;
-    }
-    
-    try {
-      const currentTime = audioContext.current.currentTime;
-      const intensity = options.intensity || 0.5;
       
-      switch (eventType) {
-        case 'inflation':
-          // Cosmic inflation - rising sweep
-          const sweepOsc = audioContext.current.createOscillator();
-          const sweepGain = audioContext.current.createGain();
-          
-          sweepOsc.type = 'sine';
-          sweepOsc.frequency.setValueAtTime(100, currentTime);
-          sweepOsc.frequency.exponentialRampToValueAtTime(800, currentTime + 2 * intensity);
-          
-          sweepGain.gain.setValueAtTime(0, currentTime);
-          sweepGain.gain.linearRampToValueAtTime(0.2 * volume * intensity, currentTime + 0.1);
-          sweepGain.gain.exponentialRampToValueAtTime(0.001, currentTime + 2.5 * intensity);
-          
-          sweepOsc.connect(sweepGain);
-          sweepGain.connect(masterGain.current);
-          sweepOsc.start();
-          sweepOsc.stop(currentTime + 3 * intensity);
-          break;
-          
-        case 'intent_field_collapse':
-          // Intent field collapse - falling tone
-          const collapseOsc = audioContext.current.createOscillator();
-          const collapseGain = audioContext.current.createGain();
-          
-          collapseOsc.type = 'sine';
-          collapseOsc.frequency.setValueAtTime(600, currentTime);
-          collapseOsc.frequency.exponentialRampToValueAtTime(100, currentTime + 1.5 * intensity);
-          
-          collapseGain.gain.setValueAtTime(0, currentTime);
-          collapseGain.gain.linearRampToValueAtTime(0.15 * volume * intensity, currentTime + 0.1);
-          collapseGain.gain.exponentialRampToValueAtTime(0.001, currentTime + 2 * intensity);
-          
-          collapseOsc.connect(collapseGain);
-          collapseGain.connect(masterGain.current);
-          collapseOsc.start();
-          collapseOsc.stop(currentTime + 2.5 * intensity);
-          break;
-          
-        default:
-          // Generic celestial event
-          playSound('cosmicBell', { intensity, duration: 1 });
-      }
+      // Apply the sound
+      const oscillator = oscillators.current[oscillatorIndex];
+      const gain = gains.current[oscillatorIndex];
+      
+      oscillator.frequency.setValueAtTime(frequency, audioContext.current!.currentTime);
+      
+      // Attack
+      gain.gain.setValueAtTime(0, audioContext.current!.currentTime);
+      gain.gain.linearRampToValueAtTime(maxGain, audioContext.current!.currentTime + 0.01);
+      
+      // Decay
+      gain.gain.setTargetAtTime(0, audioContext.current!.currentTime + duration, 0.1);
     } catch (error) {
-      console.error(`Error playing celestial event ${eventType}:`, error);
+      console.error("Error playing sound:", error);
     }
-  }, [initialize, initialized, playSound, volume]);
-  
-  // Play ambient background sound
+  }, [initialized, enabled, volume]);
+
+  // Play ambient sounds (continuous)
   const playAmbientSound = useCallback((options: AmbientSoundOptions) => {
-    if (!initialized || !audioContext.current || !masterGain.current) {
-      initialize();
-      if (!audioContext.current || !masterGain.current) return;
-    }
+    if (!initialized || !enabled || !ambientOscillator.current || !ambientGain.current) return;
     
-    // Clear any existing ambient sounds
-    stopAllSounds();
+    const { type, intensity = 0.5, complexity = 0.5 } = options;
     
     try {
-      const { type, intensity, complexity } = options;
-      const layerCount = Math.floor(2 + complexity * 4); // 2-6 layers based on complexity
+      let frequency = 55;
+      let gainValue = 0.15 * volume;
       
-      for (let i = 0; i < layerCount; i++) {
-        const layerIntensity = intensity * (0.7 + Math.random() * 0.3); // Slight intensity variation
-        const baseFreq = 
-          type === 'intent_field' ? 100 + i * 50 :
-          type === 'cosmic_background' ? 50 + i * 30 :
-          150 + i * 80; // For quantum_fluctuations
-          
-        const osc = audioContext.current.createOscillator();
-        const gain = audioContext.current.createGain();
-        
-        // Set oscillator type and frequency
-        osc.type = i % 2 === 0 ? 'sine' : 'triangle';
-        osc.frequency.value = baseFreq * (0.9 + Math.random() * 0.2); // Slight frequency variation
-        
-        // Add slight detuning for complexity
-        osc.detune.value = (i - layerCount/2) * 10 * complexity;
-        
-        // Set gain value based on layer and intensity
-        const layerVolume = (0.08 / layerCount) * volume * layerIntensity * (1 - i/layerCount * 0.5);
-        gain.gain.value = layerVolume;
-        
-        // If this is an intent field, add subtle pulsing
-        if (type === 'intent_field') {
-          const pulseRate = 0.05 + Math.random() * 0.1; // Different pulse rate for each layer
-          gain.gain.setValueAtTime(layerVolume, audioContext.current.currentTime);
-          
-          // Create a repeating pulse effect using a waveshaper
-          setInterval(() => {
-            if (gain.gain) {
-              const time = audioContext.current?.currentTime || 0;
-              gain.gain.cancelScheduledValues(time);
-              gain.gain.setValueAtTime(gain.gain.value, time);
-              gain.gain.linearRampToValueAtTime(
-                layerVolume * (0.85 + Math.random() * 0.3), 
-                time + pulseRate
-              );
-            }
-          }, 2000);
-        }
-        
-        // Connect and start
-        osc.connect(gain);
-        gain.connect(masterGain.current);
-        osc.start();
-        
-        // Store for later cleanup
-        ambientOscillators.current.push({ osc, gain });
+      switch (type) {
+        case 'intent_field':
+          frequency = 55 + (complexity * 15);
+          gainValue = 0.1 * volume;
+          break;
+        case 'cosmic_background':
+          frequency = 65 + (intensity * 20);
+          gainValue = 0.12 * volume;
+          break;
+        default:
+          frequency = 55;
+          gainValue = 0.1 * volume;
       }
+      
+      // Gradually transition to new frequency and volume
+      ambientOscillator.current.frequency.setTargetAtTime(
+        frequency,
+        audioContext.current!.currentTime,
+        0.5
+      );
+      
+      ambientGain.current.gain.setTargetAtTime(
+        gainValue,
+        audioContext.current!.currentTime,
+        0.5
+      );
     } catch (error) {
       console.error("Error playing ambient sound:", error);
     }
-  }, [initialize, initialized, stopAllSounds, volume]);
-  
-  // Export audio data for saving
-  const exportAudioData = useCallback(() => {
-    return {
-      volume,
-      ambientOscillatorCount: ambientOscillators.current.length,
-      timestamp: new Date().toISOString()
+  }, [initialized, enabled, volume]);
+
+  // Play special celestial events
+  const playCelestialEvent = useCallback((eventType: string, options: SoundOptions = {}) => {
+    if (!initialized || !enabled) return;
+    
+    const { intensity = 0.5 } = options;
+    
+    try {
+      switch (eventType) {
+        case 'inflation':
+          // Use multiple oscillators for a complex sound
+          oscillators.current.forEach((osc, index) => {
+            osc.frequency.setValueAtTime(
+              220 * (index + 1) * (1 + Math.random() * 0.1),
+              audioContext.current!.currentTime
+            );
+            
+            const gain = gains.current[index];
+            gain.gain.setValueAtTime(0, audioContext.current!.currentTime);
+            gain.gain.linearRampToValueAtTime(
+              0.1 * volume * (1 - index * 0.15),
+              audioContext.current!.currentTime + 0.05
+            );
+            
+            // Stagger the decay
+            gain.gain.setTargetAtTime(
+              0,
+              audioContext.current!.currentTime + 0.2 + (index * 0.1),
+              0.3
+            );
+          });
+          break;
+          
+        case 'intent_field_collapse':
+          // Downward sweep
+          oscillators.current.slice(0, 3).forEach((osc, index) => {
+            const startFreq = 880 - (index * 220);
+            const endFreq = 110;
+            
+            osc.frequency.setValueAtTime(startFreq, audioContext.current!.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(
+              endFreq,
+              audioContext.current!.currentTime + 1.5
+            );
+            
+            const gain = gains.current[index];
+            gain.gain.setValueAtTime(0, audioContext.current!.currentTime);
+            gain.gain.linearRampToValueAtTime(
+              0.15 * volume,
+              audioContext.current!.currentTime + 0.1
+            );
+            gain.gain.setTargetAtTime(0, audioContext.current!.currentTime + 1.2, 0.3);
+          });
+          break;
+      }
+    } catch (error) {
+      console.error("Error playing celestial event:", error);
+    }
+  }, [initialized, enabled, volume]);
+
+  // Stop all sounds
+  const stopAllSounds = useCallback(() => {
+    if (!initialized) return;
+    
+    // Silence all oscillators
+    gains.current.forEach(gain => {
+      gain.gain.setTargetAtTime(0, audioContext.current!.currentTime, 0.1);
+    });
+    
+    if (ambientGain.current) {
+      ambientGain.current.gain.setTargetAtTime(0, audioContext.current!.currentTime, 0.1);
+    }
+    
+    intentWaveGains.current.forEach(gain => {
+      gain.gain.setTargetAtTime(0, audioContext.current!.currentTime, 0.1);
+    });
+  }, [initialized]);
+
+  // Toggle audio on/off
+  const toggleAudio = useCallback(() => {
+    setEnabled(prev => !prev);
+    return !enabled;
+  }, [enabled]);
+
+  // Set up regular updates for intent wave audio
+  useEffect(() => {
+    if (!initialized || !enabled) return;
+    
+    const intervalId = setInterval(() => {
+      updateIntentWaveAudio();
+    }, 100);
+    
+    return () => clearInterval(intervalId);
+  }, [initialized, enabled, updateIntentWaveAudio]);
+
+  // Clean up audio resources on unmount
+  useEffect(() => {
+    return () => {
+      // Disconnect and stop all oscillators
+      oscillators.current.forEach(osc => {
+        try {
+          osc.stop();
+          osc.disconnect();
+        } catch (e) {}
+      });
+      
+      if (ambientOscillator.current) {
+        try {
+          ambientOscillator.current.stop();
+          ambientOscillator.current.disconnect();
+        } catch (e) {}
+      }
+      
+      intentWaveOscillators.current.forEach(osc => {
+        try {
+          osc.stop();
+          osc.disconnect();
+        } catch (e) {}
+      });
     };
-  }, [volume]);
-  
+  }, []);
+
   return {
     initialized,
     initialize,
@@ -380,8 +440,14 @@ export function useSimpleAudio(autoInit = true, initialVolume = 0.5) {
     playCelestialEvent,
     playAmbientSound,
     stopAllSounds,
-    exportAudioData,
     toggleAudio,
-    isEnabled
+    intentWaveMetrics,
+    exposedData: {
+      intentWaveMetrics,
+      isEnabled: enabled,
+      volume
+    }
   };
 }
+
+export default useSimpleAudio;

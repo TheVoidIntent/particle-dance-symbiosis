@@ -1,5 +1,6 @@
 
-import { createCanvas, loadImage } from 'canvas';
+// Remove the canvas dependency and use browser canvas
+// import { createCanvas, loadImage } from 'canvas';
 
 // Particle interface
 interface Particle {
@@ -15,6 +16,9 @@ interface Particle {
   intent: number;
   age: number;
   type: string;
+  interactions?: number;
+  z?: number;
+  radius?: number;
 }
 
 // Simulation state
@@ -30,6 +34,8 @@ let interactionsCount = 0;
 let frameCount = 0;
 let emergenceIndex = 0;
 let intentFieldComplexity = 0;
+let lastAudioUpdate = 0;
+let intentWaveValues: number[] = [];
 
 // Create and initialize a particle with random properties
 function createParticle(): Particle {
@@ -73,7 +79,8 @@ function createParticle(): Particle {
       charge === 'negative' ? 0.1 + Math.random() * 0.2 :
       0.4 + Math.random() * 0.3,
     age: 0,
-    type: 'standard'
+    type: 'standard',
+    interactions: 0
   };
 }
 
@@ -89,10 +96,13 @@ function initializeIntentField() {
       intentField[i][j] = Math.random() * 0.2 - 0.1;
     }
   }
+  
+  // Initialize the intent wave values array
+  intentWaveValues = Array(10).fill(0);
 }
 
 // Initialize the simulation
-function initializeMotherSimulation(canvasElement?: HTMLCanvasElement) {
+export function initializeMotherSimulation(canvasElement?: HTMLCanvasElement) {
   if (canvasElement) {
     canvas = canvasElement;
     ctx = canvas.getContext('2d');
@@ -178,6 +188,13 @@ function updateParticle(particle: Particle) {
         // Count this interaction
         interactionsCount++;
         
+        // Update individual particle interaction count
+        if (particle.interactions !== undefined) {
+          particle.interactions++;
+        } else {
+          particle.interactions = 1;
+        }
+        
         // Knowledge/information exchange based on particle properties
         const knowledgeTransferRate = 
           particle.charge === 'positive' ? 0.05 : 
@@ -238,6 +255,14 @@ function updateIntentField() {
   }
   
   intentFieldComplexity = gradientCount > 0 ? complexitySum / gradientCount : 0;
+  
+  // Update intent wave values for audio visualization
+  if (frameCount % 10 === 0) {
+    // Shift values to make room for new one
+    intentWaveValues.shift();
+    // Add new value based on current field complexity
+    intentWaveValues.push(intentFieldComplexity * 10);
+  }
 }
 
 // Calculate emergence index (a measure of system complexity)
@@ -266,6 +291,127 @@ function calculateVariance(array: number[]): number {
   return squareDiffs.reduce((sum, val) => sum + val, 0) / array.length;
 }
 
+// Calculate average knowledge of all particles
+function calculateAverageKnowledge(): number {
+  if (particles.length === 0) return 0;
+  return particles.reduce((sum, p) => sum + p.knowledge, 0) / particles.length;
+}
+
+// Draw connections between interacting particles
+function drawConnections() {
+  if (!ctx) return;
+  
+  particles.forEach((particle, i) => {
+    for (let j = i + 1; j < particles.length; j++) {
+      const other = particles[j];
+      const dx = other.x - particle.x;
+      const dy = other.y - particle.y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+      
+      // Only draw connections for particles that are close enough
+      if (distance < 80) {
+        // Opacity based on distance (closer = more opaque)
+        const opacity = Math.max(0, 0.3 - distance / 300);
+        
+        // Color based on particle charges
+        let connectionColor;
+        if (particle.charge === other.charge) {
+          // Same charge: blue for positive, red for negative, yellow for neutral
+          connectionColor = particle.charge === 'positive' ? 'rgba(64, 196, 255, ' + opacity + ')' :
+                           particle.charge === 'negative' ? 'rgba(255, 64, 129, ' + opacity + ')' :
+                           'rgba(241, 196, 15, ' + opacity + ')';
+        } else {
+          // Different charges: purple
+          connectionColor = 'rgba(186, 104, 200, ' + opacity + ')';
+        }
+        
+        ctx.beginPath();
+        ctx.moveTo(particle.x, particle.y);
+        ctx.lineTo(other.x, other.y);
+        ctx.strokeStyle = connectionColor;
+        ctx.lineWidth = 0.5;
+        ctx.stroke();
+      }
+    }
+  });
+}
+
+// Draw intent field visualization
+function drawIntentField() {
+  if (!ctx || !canvas) return;
+  
+  // Draw intent field as subtle background gradient
+  for (let i = 0; i < intentField.length; i++) {
+    for (let j = 0; j < intentField[0].length; j++) {
+      const fieldValue = intentField[i][j];
+      // Only draw significant field values
+      if (Math.abs(fieldValue) > 0.05) {
+        const x = i * 10;
+        const y = j * 10;
+        
+        // Field color based on value
+        const fieldColor = 
+          fieldValue > 0 ? `rgba(64, 196, 255, ${Math.min(0.1, Math.abs(fieldValue))})` :
+          fieldValue < 0 ? `rgba(255, 64, 129, ${Math.min(0.1, Math.abs(fieldValue))})` :
+          'rgba(241, 196, 15, 0.05)';
+        
+        ctx.fillStyle = fieldColor;
+        ctx.fillRect(x, y, 10, 10);
+      }
+    }
+  }
+}
+
+// Draw intent wave visualization
+function drawIntentWaves() {
+  if (!ctx || !canvas) return;
+  
+  const height = canvas.height;
+  const width = canvas.width;
+  
+  // Draw the intent wave values at the bottom of the screen
+  ctx.beginPath();
+  
+  // Start at the bottom-left
+  ctx.moveTo(0, height - 30);
+  
+  // Draw the wave
+  const segmentWidth = width / (intentWaveValues.length - 1);
+  intentWaveValues.forEach((value, index) => {
+    // Map the value to a height (higher value = higher wave)
+    const waveHeight = Math.min(100, value * 50);
+    ctx.lineTo(index * segmentWidth, height - 30 - waveHeight);
+  });
+  
+  // Close the path to the bottom-right
+  ctx.lineTo(width, height - 30);
+  ctx.lineTo(0, height - 30);
+  
+  // Fill with a gradient
+  const gradient = ctx.createLinearGradient(0, height - 130, 0, height - 30);
+  gradient.addColorStop(0, 'rgba(64, 196, 255, 0.3)');
+  gradient.addColorStop(1, 'rgba(64, 196, 255, 0.1)');
+  ctx.fillStyle = gradient;
+  ctx.fill();
+  
+  // Draw a line on top of the wave
+  ctx.beginPath();
+  ctx.moveTo(0, height - 30);
+  intentWaveValues.forEach((value, index) => {
+    const waveHeight = Math.min(100, value * 50);
+    ctx.lineTo(index * segmentWidth, height - 30 - waveHeight);
+  });
+  ctx.strokeStyle = 'rgba(64, 196, 255, 0.8)';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  
+  // Draw metrics text
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+  ctx.font = '12px Arial';
+  ctx.fillText(`Intent Wave Intensity: ${Math.round(intentWaveValues[intentWaveValues.length - 1] * 100)}`, 10, height - 40);
+  ctx.fillText(`Complexity: ${Math.round(intentFieldComplexity * 100)}`, width - 150, height - 40);
+}
+
 // Main animation/simulation loop
 function animateMotherSimulation() {
   if (!isRunning) return;
@@ -275,53 +421,41 @@ function animateMotherSimulation() {
     ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
-    // Draw intent field as subtle background gradient
-    for (let i = 0; i < intentField.length; i++) {
-      for (let j = 0; j < intentField[i].length; j++) {
-        const fieldValue = intentField[i][j];
-        // Only draw significant field values
-        if (Math.abs(fieldValue) > 0.05) {
-          const x = i * 10;
-          const y = j * 10;
-          
-          // Field color based on value
-          const fieldColor = 
-            fieldValue > 0 ? `rgba(64, 196, 255, ${Math.min(0.1, Math.abs(fieldValue))})` :
-            fieldValue < 0 ? `rgba(255, 64, 129, ${Math.min(0.1, Math.abs(fieldValue))})` :
-            'rgba(241, 196, 15, 0.05)';
-          
-          ctx.fillStyle = fieldColor;
-          ctx.fillRect(x, y, 10, 10);
-        }
-      }
-    }
+    // Draw intent field as background
+    drawIntentField();
+    
+    // Draw connections between particles
+    drawConnections();
     
     // Update and draw particles
     particles.forEach(particle => {
       updateParticle(particle);
       
       // Draw particle
-      ctx!.beginPath();
-      ctx!.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
-      ctx!.fillStyle = particle.color;
-      ctx!.fill();
+      ctx.beginPath();
+      ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+      ctx.fillStyle = particle.color;
+      ctx.fill();
       
       // Optional - draw a glow effect for particles with high knowledge
       if (particle.knowledge > 0.5) {
         const glowSize = particle.size * (1 + particle.knowledge);
-        const gradient = ctx!.createRadialGradient(
+        const gradient = ctx.createRadialGradient(
           particle.x, particle.y, particle.size,
           particle.x, particle.y, glowSize
         );
         gradient.addColorStop(0, particle.color);
         gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
         
-        ctx!.beginPath();
-        ctx!.arc(particle.x, particle.y, glowSize, 0, Math.PI * 2);
-        ctx!.fillStyle = gradient;
-        ctx!.fill();
+        ctx.beginPath();
+        ctx.arc(particle.x, particle.y, glowSize, 0, Math.PI * 2);
+        ctx.fillStyle = gradient;
+        ctx.fill();
       }
     });
+    
+    // Draw the intent wave visualization
+    drawIntentWaves();
   }
   
   // Occasionally add new particles (about 1 every 2 seconds)
@@ -375,6 +509,8 @@ export function getParticles() {
 
 // Get current simulation statistics
 export function getSimulationStats() {
+  const knowledgeAverage = calculateAverageKnowledge();
+  
   return {
     particles: [...particles],
     intentField: [...intentField],
@@ -385,6 +521,13 @@ export function getSimulationStats() {
     positiveParticles: particles.filter(p => p.charge === 'positive').length,
     negativeParticles: particles.filter(p => p.charge === 'negative').length,
     neutralParticles: particles.filter(p => p.charge === 'neutral').length,
-    intentFieldComplexity
+    intentFieldComplexity,
+    knowledgeAverage,
+    intentWaveValues: [...intentWaveValues]
   };
+}
+
+// Get intent wave values for audio visualization
+export function getIntentWaveValues() {
+  return [...intentWaveValues];
 }

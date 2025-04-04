@@ -40,12 +40,11 @@ let isPlaying = false;
 let audioElement: HTMLAudioElement | null = null;
 
 /**
- * Start playing the audio playlist in loop
+ * Start playing the audio playlist continuously
  */
 export function startAudioPlaylist(volume: number = 0.5): void {
   if (!audioElement) {
     audioElement = new Audio();
-    audioElement.id = 'audio-playlist';
     audioElement.volume = volume;
     
     // When one audio track ends, play the next one
@@ -57,8 +56,6 @@ export function startAudioPlaylist(volume: number = 0.5): void {
       // Try the next track if there's an error
       setTimeout(playNextTrack, 1000);
     });
-    
-    document.body.appendChild(audioElement);
   }
   
   isPlaying = true;

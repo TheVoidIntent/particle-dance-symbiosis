@@ -2,8 +2,9 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { X, Send, Info, Database, FileText } from 'lucide-react';
+import { X, Send, Info, Database, FileText, Brain, Globe } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { knowledgeBase } from '@/utils/knowledge/intentKnowledgeBase';
 
 interface IntentSimonAdvisorProps {
   onClose?: () => void;
@@ -48,36 +49,52 @@ const IntentSimonAdvisor: React.FC<IntentSimonAdvisorProps> = ({ onClose }) => {
   };
   
   const generateResponse = (query: string) => {
+    // Get response from knowledge base
+    const { response } = knowledgeBase.generateResponse(query);
+    
     // Sample responses based on common intent-related questions
-    let response = "I'm still learning about the intent universe model. Can you be more specific about what aspect you'd like to know about?";
+    let finalResponse = response;
     
-    const lowerQuery = query.toLowerCase();
+    if (!finalResponse || finalResponse.includes("I don't have specific information")) {
+      const lowerQuery = query.toLowerCase();
+      
+      if (lowerQuery.includes('intent field') || lowerQuery.includes('what is intent')) {
+        finalResponse = "The Intent Field is the foundational conceptual space of our universe model. It represents fluctuations that give rise to particles. Positive fluctuations create positive charges, negative fluctuations create negative charges, and neutral areas create neutral particles. These fluctuations are the source of all matter and energy in the model.";
+      } 
+      else if (lowerQuery.includes('charge') || lowerQuery.includes('positive') || lowerQuery.includes('negative')) {
+        finalResponse = "In our model, particle charge determines interaction behavior. Positive-charged particles have greater intent to interact and exchange information. Negative-charged particles are less inclined to interact. Neutral particles fall somewhere in between. This asymmetry in interaction intent drives complexity in the system.";
+      }
+      else if (lowerQuery.includes('interaction') || lowerQuery.includes('exchange')) {
+        finalResponse = "Particle interactions are fundamental to complexity emergence. When particles interact, they exchange information based on their charge properties. Positively-charged particles readily share and receive information, while negatively-charged ones are more reluctant. These interactions follow specific probabilistic rules derived from the intent field.";
+      }
+      else if (lowerQuery.includes('simulation') || lowerQuery.includes('model')) {
+        finalResponse = "Our simulation models the emergence of complexity from simple intent-based particles. We start with a quantum field of intent fluctuations, which gives rise to particles with varying charges. These particles follow interaction rules based on their intent values, leading to emergent patterns and eventually complex structures.";
+      }
+      else if (lowerQuery.includes('complex') || lowerQuery.includes('emergence')) {
+        finalResponse = "Complexity in our model emerges through interactions and information exchange between particles. Simple rules at the particle level lead to unforeseen patterns and structures at higher levels. We observe how different initial conditions in the intent field lead to different emergent properties, similar to how fundamental forces in our universe lead to the emergence of stars, planets, and eventually life.";
+      }
+      else if (lowerQuery.includes('nexus') || lowerQuery.includes('information')) {
+        finalResponse = "The Information-Intent Nexus is the foundational theory behind our model. It suggests that the universe did not emerge from randomness or fixed physical constants—but from a primordial field of intent interacting with and shaping information. This theory positions intent not as an abstract concept, but as a driving force capable of organizing matter, energy, and meaning.";
+      }
+      else if (lowerQuery.includes('filter') || lowerQuery.includes('how intent filters')) {
+        finalResponse = "Intent acts as a universal information filter by biasing which interactions are more likely to occur between particles. Positive-intent particles are more likely to exchange information, creating information-rich clusters. This filtering mechanism creates patterns in the noise, allowing complexity to emerge from chaos. The way intent filters information is fundamental to the emergence of structure in our model.";
+      }
+      else {
+        finalResponse = "I'm still learning about the intent universe model. Can you be more specific about what aspect you'd like to know about?";
+      }
+    }
     
-    if (lowerQuery.includes('intent field') || lowerQuery.includes('what is intent')) {
-      response = "The Intent Field is the foundational conceptual space of our universe model. It represents fluctuations that give rise to particles. Positive fluctuations create positive charges, negative fluctuations create negative charges, and neutral areas create neutral particles. These fluctuations are the source of all matter and energy in the model.";
-    } 
-    else if (lowerQuery.includes('charge') || lowerQuery.includes('positive') || lowerQuery.includes('negative')) {
-      response = "In our model, particle charge determines interaction behavior. Positive-charged particles have greater intent to interact and exchange information. Negative-charged particles are less inclined to interact. Neutral particles fall somewhere in between. This asymmetry in interaction intent drives complexity in the system.";
-    }
-    else if (lowerQuery.includes('interaction') || lowerQuery.includes('exchange')) {
-      response = "Particle interactions are fundamental to complexity emergence. When particles interact, they exchange information based on their charge properties. Positively-charged particles readily share and receive information, while negatively-charged ones are more reluctant. These interactions follow specific probabilistic rules derived from the intent field.";
-    }
-    else if (lowerQuery.includes('simulation') || lowerQuery.includes('model')) {
-      response = "Our simulation models the emergence of complexity from simple intent-based particles. We start with a quantum field of intent fluctuations, which gives rise to particles with varying charges. These particles follow interaction rules based on their intent values, leading to emergent patterns and eventually complex structures.";
-    }
-    else if (lowerQuery.includes('complex') || lowerQuery.includes('emergence')) {
-      response = "Complexity in our model emerges through interactions and information exchange between particles. Simple rules at the particle level lead to unforeseen patterns and structures at higher levels. We observe how different initial conditions in the intent field lead to different emergent properties, similar to how fundamental forces in our universe lead to the emergence of stars, planets, and eventually life.";
-    }
-    
-    setConversation(prev => [...prev, {type: 'bot', text: response}]);
+    setConversation(prev => [...prev, {type: 'bot', text: finalResponse}]);
   };
   
   return (
     <Card className="h-full overflow-hidden shadow-xl border border-indigo-800/50 bg-gray-900/90 backdrop-blur-sm">
       <CardHeader className="bg-indigo-950 px-4 py-2 flex flex-row items-center justify-between space-y-0">
         <div className="flex items-center space-x-2">
-          <img src="/intent-simon-brain.svg" alt="IntentSim(on)" className="w-8 h-8" />
-          <CardTitle className="text-indigo-100 text-lg">IntentSim(on) Advisor</CardTitle>
+          <div className="w-8 h-8 rounded-full bg-purple-500 flex items-center justify-center overflow-hidden">
+            <Globe className="h-5 w-5 text-white" />
+          </div>
+          <CardTitle className="text-indigo-100 text-lg">IntentSim(on)</CardTitle>
         </div>
         <Button variant="ghost" size="icon" onClick={onClose} className="text-indigo-200 hover:text-white hover:bg-indigo-800/50">
           <X className="h-4 w-4" />
@@ -85,20 +102,10 @@ const IntentSimonAdvisor: React.FC<IntentSimonAdvisorProps> = ({ onClose }) => {
       </CardHeader>
       
       <div className="grid grid-cols-4 h-[calc(100%-48px)]">
-        {/* Left sidebar with brain visualization */}
-        <div className="col-span-1 bg-gray-950 p-4 border-r border-gray-800/50 flex flex-col items-center">
-          <div className="relative mb-8 mt-4">
-            <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 h-2 w-px bg-emerald-400"></div>
-            <img src="/intent-simon-brain.svg" alt="IntentSim(on) Brain" className="w-36 h-36" />
-            <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 h-2 w-px bg-pink-400"></div>
-            <div className="absolute -left-8 top-1/2 transform -translate-y-1/2 w-2 h-px bg-orange-400"></div>
-            <div className="absolute -right-8 top-1/2 transform -translate-y-1/2 w-2 h-px bg-teal-400"></div>
-          </div>
-          
-          <div className="mt-8 w-full space-y-4">
-            <div className="text-sm text-indigo-200 font-semibold">
-              Knowledge Status <span className="text-xs ml-2 text-green-400">Online</span>
-            </div>
+        {/* Left sidebar with knowledge statistics */}
+        <div className="col-span-1 bg-gray-950 p-4 border-r border-gray-800/50 flex flex-col">
+          <div className="mb-6">
+            <div className="text-sm text-indigo-300 font-semibold mb-2">Knowledge Status <span className="text-xs ml-2 text-green-400">Online</span></div>
             
             <div className="text-xs text-gray-400 space-y-1">
               <div className="flex justify-between">
@@ -114,26 +121,26 @@ const IntentSimonAdvisor: React.FC<IntentSimonAdvisorProps> = ({ onClose }) => {
                 <span className="text-blue-400">20</span>
               </div>
             </div>
+          </div>
+          
+          <div className="flex-grow">
+            <div className="text-sm text-indigo-300 font-semibold mb-2">Active Knowledge:</div>
             
-            <div className="mt-4 text-sm text-indigo-200 font-semibold">
-              Active Knowledge:
-            </div>
-            
-            <div className="text-xs text-gray-300 space-y-2 overflow-y-auto h-40 pr-2">
+            <div className="space-y-3 overflow-y-auto pr-2">
               <div>
-                <div className="font-medium">Intent Field:</div>
-                <div className="text-gray-400">The foundational conceptual space of our universe model representing fluctuations that give rise to ...</div>
+                <div className="font-medium text-sm text-indigo-200">Intent Field:</div>
+                <div className="text-xs text-gray-400">The foundational conceptual space of our universe model representing fluctuations that give rise to ...</div>
               </div>
               
               <div>
-                <div className="font-medium">Particle:</div>
-                <div className="text-gray-400">Entities in our model that arise from intent field fluctuations, carrying properties including charg...</div>
+                <div className="font-medium text-sm text-indigo-200">Particle:</div>
+                <div className="text-xs text-gray-400">Entities in our model that arise from intent field fluctuations, carrying properties including charg...</div>
               </div>
             </div>
           </div>
         </div>
         
-        {/* Right side with tabs */}
+        {/* Right side with chat */}
         <div className="col-span-3 flex flex-col h-full">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
             <TabsList className="mx-4 mt-2 justify-start bg-gray-800/50">
@@ -161,7 +168,9 @@ const IntentSimonAdvisor: React.FC<IntentSimonAdvisorProps> = ({ onClose }) => {
                     >
                       {item.type === 'bot' && (
                         <div className="flex items-center mb-1">
-                          <img src="/intent-simon-brain.svg" alt="IntentSim(on)" className="w-5 h-5 mr-2" />
+                          <div className="w-5 h-5 rounded-full bg-purple-500 flex items-center justify-center mr-2">
+                            <span className="text-white text-xs">IS</span>
+                          </div>
                           <span className="text-indigo-300 text-xs">IntentSim(on)</span>
                         </div>
                       )}
@@ -188,18 +197,18 @@ const IntentSimonAdvisor: React.FC<IntentSimonAdvisorProps> = ({ onClose }) => {
               </div>
               
               <div className="flex items-center space-x-2">
-                <textarea
-                  className="flex-1 bg-gray-800 text-white border border-gray-700 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none h-10 min-h-[40px] max-h-32"
+                <input
+                  type="text"
+                  className="flex-1 bg-gray-800 text-white border border-gray-700 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   placeholder="Ask about the intent universe model..."
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
                   onKeyDown={handleKeyDown}
-                  rows={1}
                 />
                 <Button 
                   onClick={handleSendMessage} 
                   size="icon" 
-                  className="bg-indigo-600 hover:bg-indigo-700 text-white"
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg"
                 >
                   <Send className="h-4 w-4" />
                 </Button>

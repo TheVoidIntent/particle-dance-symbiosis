@@ -1,6 +1,6 @@
 import { MutableRefObject } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import { Particle } from '@/types/simulation';
+import { Particle, ParticleType } from '@/types/simulation';
 import { ParticleCreationOptions } from './types';
 
 /**

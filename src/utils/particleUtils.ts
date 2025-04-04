@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
-import { Particle } from '@/types/simulation';
+import { Particle, ParticleType } from '@/types/simulation';
 
 export interface AnomalyEvent {
   type: string;

@@ -1,4 +1,3 @@
-
 export type ParticleCharge = 'positive' | 'negative' | 'neutral';
 export type ParticleType = 'regular' | 'high-energy' | 'quantum' | 'composite' | 'adaptive';
 
@@ -68,6 +67,7 @@ export interface SimulationStats {
   quantumParticles?: number;
   compositeParticles?: number;
   adaptiveParticles?: number;
+  maxComplexity?: number;
 }
 
 export interface IntentField {

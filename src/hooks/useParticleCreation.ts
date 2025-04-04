@@ -1,10 +1,10 @@
 
 import { MutableRefObject } from 'react';
-import { Particle } from '@/types/simulation';
+import { Particle, ParticleType } from '@/types/simulation';
 import useAudioEvents from './useAudioEvents';
 
 export interface ParticleCreationOptions {
-  type?: string;
+  type?: ParticleType;
   charge?: string;
   maxVelocity?: number;
   maxIntent?: number;
@@ -30,7 +30,7 @@ export function useParticleCreation(
    */
   const createParticle = (options: ParticleCreationOptions = {}): Particle => {
     const {
-      type = 'normal',
+      type = 'regular' as ParticleType,
       charge = Math.random() > 0.6 ? 'positive' : Math.random() > 0.5 ? 'negative' : 'neutral',
       maxVelocity = 2,
       maxIntent = 10,

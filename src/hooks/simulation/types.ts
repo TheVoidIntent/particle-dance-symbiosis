@@ -1,5 +1,5 @@
 
-import { Particle } from '@/types/simulation';
+import { Particle, ParticleType } from '@/types/simulation';
 
 /**
  * Simulation configuration type
@@ -28,7 +28,7 @@ export interface ParticleCreationOptions {
   vy?: number;
   vz?: number;
   charge?: 'positive' | 'negative' | 'neutral';
-  type?: string;
+  type?: ParticleType;
   energy?: number;
   knowledge?: number;
   complexity?: number;

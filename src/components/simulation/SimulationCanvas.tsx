@@ -64,7 +64,6 @@ const SimulationCanvas: React.FC<SimulationCanvasProps> = ({
   const [narratives, setNarratives] = useState<Array<{ clusterId: number, narrative: string, timestamp: number }>>([]);
   const [robots, setRobots] = useState<Array<any>>([]);
   const [interactionEvents, setInteractionEvents] = useState<number>(0);
-  const [fluctuationEvents, setFluctuationEvents] = useState<number>(0);
   
   const lastInteractionAudio = useRef<number>(0);
   const lastFluctuationAudio = useRef<number>(0);
@@ -172,7 +171,6 @@ const SimulationCanvas: React.FC<SimulationCanvasProps> = ({
     const y = Math.random();
     const intensity = 0.2 + Math.random() * 0.8;
     
-    setFluctuationEvents(prev => prev + 1);
     onFieldFluctuation(intensity, x, y);
     lastFluctuationAudio.current = Date.now();
   };

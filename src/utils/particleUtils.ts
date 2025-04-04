@@ -1,33 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
-
-// Define types
-export interface Particle {
-  id: string;
-  x: number;
-  y: number;
-  z: number;
-  vx: number;
-  vy: number;
-  vz: number;
-  charge: 'positive' | 'negative' | 'neutral';
-  radius: number;
-  color: string;
-  intent: number;
-  interactionTendency: number;
-  knowledge?: number;
-  complexity?: number;
-  energy?: number;
-  energyCapacity?: number;
-  intentDecayRate?: number;
-  adaptiveScore?: number;
-  type?: string;
-  lastInteraction?: number;
-  interactionCount?: number;
-  interactions?: number;
-  isPostInflation?: boolean;
-  age?: number;
-  creationTime: number;
-}
+import { Particle } from '@/types/simulation';
 
 export interface AnomalyEvent {
   type: string;
@@ -96,7 +68,17 @@ export function createParticleFromField(
     energy: 1 + Math.abs(fieldValue), // Energy based on field intensity
     type,
     age: 0,
-    creationTime: timestamp
+    mass: 1, // Add required property
+    scale: 1, // Add required property
+    created: timestamp,
+    creationTime: timestamp,
+    interactions: 0,
+    intentDecayRate: 0.001,
+    adaptiveScore: 0,
+    energyCapacity: 1 + Math.abs(fieldValue) * 1.2,
+    isPostInflation: false,
+    lastInteraction: 0,
+    interactionCount: 0
   };
 }
 
@@ -439,6 +421,16 @@ export function createParticle(
     energy: 1 + Math.random(),
     type: type as any,
     age: 0,
-    creationTime: timestamp
+    mass: 1, // Add required property
+    scale: 1, // Add required property
+    created: timestamp,
+    creationTime: timestamp,
+    interactions: 0,
+    intentDecayRate: 0.001,
+    adaptiveScore: 0,
+    energyCapacity: (1 + Math.random()) * 1.2,
+    isPostInflation: false,
+    lastInteraction: 0,
+    interactionCount: 0
   };
 }

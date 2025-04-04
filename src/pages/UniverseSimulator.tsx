@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Helmet } from 'react-helmet';
 import SimulationCanvas from '@/components/simulation/SimulationCanvas';
@@ -153,6 +154,7 @@ const UniverseSimulator: React.FC = () => {
   // Start ambient soundscape when particles exist and audio is enabled
   useEffect(() => {
     if (running && audioEnabled && simulation.particles.length > 0) {
+      // Create properly typed particles with all required properties
       const convertedParticles = simulation.particles.map(p => ({
         id: p.id,
         x: p.x,
@@ -162,9 +164,10 @@ const UniverseSimulator: React.FC = () => {
         vy: p.vy,
         vz: p.vz || 0,
         radius: p.radius,
-        mass: p.mass || 1,
+        mass: 1, // Set a default value since it's required by the type
         charge: p.charge,
         color: p.color,
+        type: p.type || 'normal',
         intent: p.intent,
         energy: p.energy || 100,
         knowledge: p.knowledge || 0,
@@ -174,13 +177,13 @@ const UniverseSimulator: React.FC = () => {
         interactionCount: p.interactionCount || 0,
         interactions: p.interactions || 0,
         intentDecayRate: p.intentDecayRate || 0.001,
-        created: p.creationTime || Date.now(),
-        scale: p.scale || 1,
+        created: Date.now(),
+        scale: 1, // Set a default value since it's required by the type
         adaptiveScore: p.adaptiveScore || 0,
         energyCapacity: p.energyCapacity || (p.energy || 100) * 1.2,
         age: p.age || 0,
         isPostInflation: p.isPostInflation || false,
-        creationTime: p.creationTime
+        creationTime: p.creationTime || Date.now()
       }));
       
       if (simAudio.startSoundscape) {

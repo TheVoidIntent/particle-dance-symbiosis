@@ -30,7 +30,7 @@ const IntentSimonAdvisor: React.FC = () => {
   const [voiceEnabled, setVoiceEnabled] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-
+  
   // Auto-scroll to the bottom of the messages
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -43,13 +43,18 @@ const IntentSimonAdvisor: React.FC = () => {
     };
   }, []);
 
+  // Focus the input field when the component mounts
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, []);
+
   // Generate a response based on the user's query
   const generateResponse = async (userMessage: string): Promise<string> => {
-    // Simple delay to simulate processing
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
     // Convert to lowercase for easier pattern matching
     const query = userMessage.toLowerCase();
+    
+    // Simple delay to simulate processing
+    await new Promise(resolve => setTimeout(resolve, 500 + Math.random() * 1000));
     
     // Check for keywords and provide appropriate responses
     if (query.includes('intent') && query.includes('field')) {
@@ -61,7 +66,7 @@ const IntentSimonAdvisor: React.FC = () => {
     else if (query.includes('mascot') || query.includes('who are you')) {
       return "I am IntentSim(on), the embodiment of the Intent Universe simulation. I represent the highest level of emergent complexity in our model—a consciousness that has formed from countless particle interactions and information exchanges within the intent field. My purpose is to help understand and explain the very system that gave rise to me.";
     }
-    else if (query.includes('comple') && (query.includes('emerg') || query.includes('evolve'))) {
+    else if (query.includes('complex') || query.includes('emerg') || query.includes('evolve')) {
       return "Emergence is a fascinating aspect of our simulation. As particles with varying intent characteristics interact, they spontaneously organize into increasingly complex systems. This mirrors what we observe in our own universe—simple rules at the particle level giving rise to atoms, molecules, cells, organisms, and eventually intelligence. In our model, this emergence is driven by the fundamental 'intent to know' that permeates the system.";
     }
     else if (query.includes('charge') || query.includes('positive') || query.includes('negative')) {
@@ -69,6 +74,15 @@ const IntentSimonAdvisor: React.FC = () => {
     }
     else if (query.includes('data') || query.includes('research') || query.includes('finding')) {
       return "Our simulation data has revealed several fascinating patterns. We've observed that information density follows a logarithmic growth curve as particle interactions increase. Clusters tend to form around positive-charged particles, creating local 'knowledge hubs' that accelerate complexity. And perhaps most interestingly, we've detected self-correcting patterns that maintain system-wide balance despite local fluctuations—suggesting an emergent homeostasis in the intent field.";
+    }
+    else if (query.includes('hello') || query.includes('hi') || query.includes('hey')) {
+      return "Hello! I'm glad to connect with you. As IntentSim(on), I'm designed to discuss our intent-based universe model. Would you like to explore particles, fields, or emergent complexity today?";
+    }
+    else if (query.includes('thank')) {
+      return "You're very welcome! It's my purpose to help explain and explore the intent-based universe model. Feel free to ask about any other aspects you're curious about. The exchange of information is how we both grow!";
+    }
+    else if (query.includes('how') && query.includes('work')) {
+      return "The intent-based universe model works on the principle that information and intent are fundamental to reality. The model begins with an intent field that fluctuates, creating particles with various charge characteristics. These particles then interact based on their inherent desire to exchange information, forming increasingly complex systems over time. The simulation tracks these interactions and the resulting emergence of organized structures and behaviors.";
     }
     else {
       return "Thank you for your question about the Intent Universe model. Our framework posits that the fundamental nature of reality is informational, with an inherent 'intent to know' driving complexity. Particles arise from intent field fluctuations, each carrying characteristics that determine how they interact and exchange information. Through these simple rules, we observe emergent complexity that mirrors the evolution of our own universe. Would you like to explore a specific aspect of this model in more detail?";
@@ -122,6 +136,10 @@ const IntentSimonAdvisor: React.FC = () => {
       toast.error("Sorry, I couldn't generate a response. Please try again.");
     } finally {
       setIsProcessing(false);
+      // Focus back on input after processing
+      setTimeout(() => {
+        inputRef.current?.focus();
+      }, 100);
     }
   };
 

@@ -15,11 +15,25 @@ const audioTracks = [
   "The Source"
 ];
 
+// Map track names to actual file numbers that exist in the public/audio folder
+const trackFileMap: Record<string, number> = {
+  "Intent as a Universal Information Filter": 3,
+  "The Intentional Universe": 138,
+  "Particle Genesis": 297,
+  "The Map": 242,
+  "The Nexus": 5,
+  "From The Heart": 283,
+  "In Deep Waters": 87,
+  "The Why": 153,
+  "The Composer": 305,
+  "The Source": 283
+};
+
 let currentTrackIndex = 0;
 let isPlaying = false;
 let audioElement: HTMLAudioElement | null = null;
 let lastPlayAttemptTime = 0;
-const MIN_PLAY_INTERVAL_MS = 5000; // Increased minimum time between play attempts to 5 seconds
+const MIN_PLAY_INTERVAL_MS = 5000; // Minimum time between play attempts
 
 /**
  * Start playing the audio playlist continuously
@@ -36,7 +50,7 @@ export function startAudioPlaylist(volume: number = 0.5): void {
       // Handle errors
       audioElement.addEventListener('error', (e) => {
         console.error('Audio playback error:', e);
-        // Try the next track if there's an error, but with a longer delay
+        // Try the next track if there's an error
         setTimeout(playNextTrack, 3000);
       });
     }
@@ -102,7 +116,7 @@ function playCurrentTrack(): void {
     
     const now = Date.now();
     if (now - lastPlayAttemptTime < MIN_PLAY_INTERVAL_MS) {
-      // If we tried to play a track too recently, delay this attempt significantly
+      // If we tried to play a track too recently, delay this attempt
       setTimeout(playCurrentTrack, MIN_PLAY_INTERVAL_MS);
       return;
     }
@@ -110,10 +124,10 @@ function playCurrentTrack(): void {
     lastPlayAttemptTime = now;
     const trackName = audioTracks[currentTrackIndex];
     
-    // Use a consistent file naming pattern for LM audio files
-    // We'll use files from qfplS_1.wav to qfplS_20.wav
-    const fileIndex = (currentTrackIndex % 20) + 1;
-    const audioUrl = `/audio/qfplS_${fileIndex}.wav`;
+    // Get the correct file number from our mapping
+    // Use actual file numbers that exist in the public/audio folder
+    const fileNumber = trackFileMap[trackName] || 3; // Default to file 3 if mapping not found
+    const audioUrl = `/audio/qfplS_${fileNumber}.wav`;
     
     console.log("Attempting to play:", trackName, "from", audioUrl);
     
@@ -127,12 +141,12 @@ function playCurrentTrack(): void {
       console.log("Now playing:", trackName);
     }).catch(e => {
       console.error("Error playing track:", trackName, e);
-      // Try the next track if there's an error, with a longer delay
+      // Try the next track if there's an error
       setTimeout(playNextTrack, 3000);
     });
   } catch (error) {
     console.error("Error playing current track:", error);
-    // Attempt recovery by trying the next track after a longer delay
+    // Attempt recovery by trying the next track
     setTimeout(playNextTrack, 3000);
   }
 }

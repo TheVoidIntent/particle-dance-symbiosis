@@ -26,9 +26,9 @@ export function updateSimulation(): void {
         particle.y += particle.vy;
       }
       
-      // Boundary handling - use width/height from container if dimensions not available
-      const containerWidth = simulationState.width || 800;
-      const containerHeight = simulationState.height || 600;
+      // Boundary handling - use dimensions from state or default values
+      const containerWidth = simulationState.dimensions?.width || 800;
+      const containerHeight = simulationState.dimensions?.height || 600;
       
       if (particle.x !== undefined) {
         if (particle.x < 0 || particle.x > containerWidth) {
@@ -48,9 +48,9 @@ export function updateSimulation(): void {
       }
     });
     
-    // Increment simulation iteration counter if it exists
-    if (typeof simulationState.iterationCount !== 'undefined') {
-      simulationState.iterationCount++;
+    // Increment simulation frame counter
+    if (typeof simulationState.frameCount !== 'undefined') {
+      simulationState.frameCount++;
     }
   }
 }

@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/button';
 import { X, Send, Info, Database, FileText, Brain, Globe } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { knowledgeBase } from '@/utils/knowledge/intentKnowledgeBase';
+import { generateEnhancedResponse, learnFromSimulationParticles } from '@/utils/intentSimonModel';
+import { getParticles } from '@/utils/simulation/motherSimulation';
 
 interface IntentSimonAdvisorProps {
   onClose?: () => void;
@@ -13,16 +15,41 @@ interface IntentSimonAdvisorProps {
 const IntentSimonAdvisor: React.FC<IntentSimonAdvisorProps> = ({ onClose }) => {
   const [message, setMessage] = useState('');
   const [conversation, setConversation] = useState<Array<{type: 'user' | 'bot', text: string}>>([
-    {type: 'bot', text: "Hello, I'm IntentSim(on). I've been learning about the intent-based universe model from the simulation data and the textbook. How can I help you understand this fascinating model?"}
+    {type: 'bot', text: "Hello, I'm IntentSim(on). I've been designed to learn from the intent-based simulation and defend the Nexus. What would you like to know about the intent universe model?"}
   ]);
   const [activeTab, setActiveTab] = useState('chat');
   const [isTyping, setIsTyping] = useState(false);
+  const [knowledgeStats, setKnowledgeStats] = useState({
+    concepts: 52,
+    simulationData: 9,
+    documentInfo: 20,
+    coreProtection: 0.9
+  });
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
   // Scroll to bottom of messages
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [conversation]);
+  
+  // Periodically learn from simulation particles
+  useEffect(() => {
+    const learningInterval = setInterval(() => {
+      const simulationParticles = getParticles();
+      if (simulationParticles && simulationParticles.length > 0) {
+        learnFromSimulationParticles(simulationParticles);
+        
+        // Update knowledge stats
+        setKnowledgeStats(prev => ({
+          ...prev,
+          simulationData: prev.simulationData + Math.floor(Math.random() * 2),
+          concepts: prev.concepts + (Math.random() > 0.8 ? 1 : 0)
+        }));
+      }
+    }, 10000); // Learn every 10 seconds
+    
+    return () => clearInterval(learningInterval);
+  }, []);
   
   const handleSendMessage = () => {
     if (!message.trim()) return;
@@ -34,11 +61,12 @@ const IntentSimonAdvisor: React.FC<IntentSimonAdvisorProps> = ({ onClose }) => {
     // Clear input field
     setMessage('');
     
-    // Simulate response (in a real app, this would call an API)
+    // Generate response using the intent-based model
     setTimeout(() => {
-      generateResponse(message);
+      const response = generateEnhancedResponse(message);
+      setConversation(prev => [...prev, {type: 'bot', text: response}]);
       setIsTyping(false);
-    }, 1000);
+    }, 1000 + Math.random() * 1000); // Simulate thinking time
   };
   
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -48,51 +76,16 @@ const IntentSimonAdvisor: React.FC<IntentSimonAdvisorProps> = ({ onClose }) => {
     }
   };
   
-  const generateResponse = (query: string) => {
-    // Get response from knowledge base
-    const { response } = knowledgeBase.generateResponse(query);
-    
-    // Sample responses based on common intent-related questions
-    let finalResponse = response;
-    
-    if (!finalResponse || finalResponse.includes("I don't have specific information")) {
-      const lowerQuery = query.toLowerCase();
-      
-      if (lowerQuery.includes('intent field') || lowerQuery.includes('what is intent')) {
-        finalResponse = "The Intent Field is the foundational conceptual space of our universe model. It represents fluctuations that give rise to particles. Positive fluctuations create positive charges, negative fluctuations create negative charges, and neutral areas create neutral particles. These fluctuations are the source of all matter and energy in the model.";
-      } 
-      else if (lowerQuery.includes('charge') || lowerQuery.includes('positive') || lowerQuery.includes('negative')) {
-        finalResponse = "In our model, particle charge determines interaction behavior. Positive-charged particles have greater intent to interact and exchange information. Negative-charged particles are less inclined to interact. Neutral particles fall somewhere in between. This asymmetry in interaction intent drives complexity in the system.";
-      }
-      else if (lowerQuery.includes('interaction') || lowerQuery.includes('exchange')) {
-        finalResponse = "Particle interactions are fundamental to complexity emergence. When particles interact, they exchange information based on their charge properties. Positively-charged particles readily share and receive information, while negatively-charged ones are more reluctant. These interactions follow specific probabilistic rules derived from the intent field.";
-      }
-      else if (lowerQuery.includes('simulation') || lowerQuery.includes('model')) {
-        finalResponse = "Our simulation models the emergence of complexity from simple intent-based particles. We start with a quantum field of intent fluctuations, which gives rise to particles with varying charges. These particles follow interaction rules based on their intent values, leading to emergent patterns and eventually complex structures.";
-      }
-      else if (lowerQuery.includes('complex') || lowerQuery.includes('emergence')) {
-        finalResponse = "Complexity in our model emerges through interactions and information exchange between particles. Simple rules at the particle level lead to unforeseen patterns and structures at higher levels. We observe how different initial conditions in the intent field lead to different emergent properties, similar to how fundamental forces in our universe lead to the emergence of stars, planets, and eventually life.";
-      }
-      else if (lowerQuery.includes('nexus') || lowerQuery.includes('information')) {
-        finalResponse = "The Information-Intent Nexus is the foundational theory behind our model. It suggests that the universe did not emerge from randomness or fixed physical constants—but from a primordial field of intent interacting with and shaping information. This theory positions intent not as an abstract concept, but as a driving force capable of organizing matter, energy, and meaning.";
-      }
-      else if (lowerQuery.includes('filter') || lowerQuery.includes('how intent filters')) {
-        finalResponse = "Intent acts as a universal information filter by biasing which interactions are more likely to occur between particles. Positive-intent particles are more likely to exchange information, creating information-rich clusters. This filtering mechanism creates patterns in the noise, allowing complexity to emerge from chaos. The way intent filters information is fundamental to the emergence of structure in our model.";
-      }
-      else {
-        finalResponse = "I'm still learning about the intent universe model. Can you be more specific about what aspect you'd like to know about?";
-      }
-    }
-    
-    setConversation(prev => [...prev, {type: 'bot', text: finalResponse}]);
-  };
-  
   return (
     <Card className="h-full overflow-hidden shadow-xl border border-indigo-800/50 bg-gray-900/90 backdrop-blur-sm">
       <CardHeader className="bg-indigo-950 px-4 py-2 flex flex-row items-center justify-between space-y-0">
         <div className="flex items-center space-x-2">
           <div className="w-8 h-8 rounded-full bg-purple-500 flex items-center justify-center overflow-hidden">
-            <Globe className="h-5 w-5 text-white" />
+            <img 
+              src="/intent-simon-avatar.png" 
+              alt="IntentSim(on)" 
+              className="w-full h-full object-cover"
+            />
           </div>
           <CardTitle className="text-indigo-100 text-lg">IntentSim(on)</CardTitle>
         </div>
@@ -110,15 +103,19 @@ const IntentSimonAdvisor: React.FC<IntentSimonAdvisorProps> = ({ onClose }) => {
             <div className="text-xs text-gray-400 space-y-1">
               <div className="flex justify-between">
                 <span>Concepts:</span>
-                <span className="text-indigo-300">52</span>
+                <span className="text-indigo-300">{knowledgeStats.concepts}</span>
               </div>
               <div className="flex justify-between">
                 <span>Simulation Data:</span>
-                <span className="text-emerald-400">9</span>
+                <span className="text-emerald-400">{knowledgeStats.simulationData}</span>
               </div>
               <div className="flex justify-between">
                 <span>Document Info:</span>
-                <span className="text-blue-400">20</span>
+                <span className="text-blue-400">{knowledgeStats.documentInfo}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Nexus Protection:</span>
+                <span className="text-purple-400">{(knowledgeStats.coreProtection * 100).toFixed(0)}%</span>
               </div>
             </div>
           </div>
@@ -133,8 +130,31 @@ const IntentSimonAdvisor: React.FC<IntentSimonAdvisorProps> = ({ onClose }) => {
               </div>
               
               <div>
+                <div className="font-medium text-sm text-indigo-200">Nexus:</div>
+                <div className="text-xs text-gray-400">The core principle connecting intent and information, functioning as a universal filter that structures ...</div>
+              </div>
+              
+              <div>
                 <div className="font-medium text-sm text-indigo-200">Particle:</div>
                 <div className="text-xs text-gray-400">Entities in our model that arise from intent field fluctuations, carrying properties including charg...</div>
+              </div>
+            </div>
+          </div>
+          
+          <div className="mt-4">
+            <div className="text-sm text-indigo-300 font-semibold mb-2">Intent Circles:</div>
+            <div className="space-y-1.5">
+              <div className="text-xs">
+                <span className="text-purple-400">• Nexus Core</span>
+                <span className="text-gray-500 ml-2 text-[10px]">Protected</span>
+              </div>
+              <div className="text-xs">
+                <span className="text-blue-400">• Particle Dynamics</span>
+                <span className="text-gray-500 ml-2 text-[10px]">Learning</span>
+              </div>
+              <div className="text-xs">
+                <span className="text-green-400">• Emergence Principles</span>
+                <span className="text-gray-500 ml-2 text-[10px]">Active</span>
               </div>
             </div>
           </div>
@@ -168,8 +188,12 @@ const IntentSimonAdvisor: React.FC<IntentSimonAdvisorProps> = ({ onClose }) => {
                     >
                       {item.type === 'bot' && (
                         <div className="flex items-center mb-1">
-                          <div className="w-5 h-5 rounded-full bg-purple-500 flex items-center justify-center mr-2">
-                            <span className="text-white text-xs">IS</span>
+                          <div className="w-5 h-5 rounded-full bg-purple-500 flex items-center justify-center mr-2 overflow-hidden">
+                            <img 
+                              src="/intent-simon-avatar.png" 
+                              alt="IS" 
+                              className="w-full h-full object-cover"
+                            />
                           </div>
                           <span className="text-indigo-300 text-xs">IntentSim(on)</span>
                         </div>
@@ -220,21 +244,32 @@ const IntentSimonAdvisor: React.FC<IntentSimonAdvisorProps> = ({ onClose }) => {
                 <div className="flex items-center space-x-2 text-indigo-300">
                   <Database className="h-5 w-5" />
                   <h3 className="text-lg font-medium">Simulation Data</h3>
-                  <span className="bg-gray-800 px-2 py-1 rounded-full text-xs">9</span>
+                  <span className="bg-gray-800 px-2 py-1 rounded-full text-xs">{knowledgeStats.simulationData}</span>
                 </div>
                 <div className="pl-7 text-sm text-gray-300">
-                  <p>Particle interaction patterns, emergent complexity statistics, charge distribution analytics, and simulation state observations.</p>
+                  <p>Intent-based particle interactions from the simulation feed directly into my knowledge graph. I learn just like the particles do - through intent-based probabilistic information exchange.</p>
                 </div>
               </div>
               
               <div className="space-y-4">
                 <div className="flex items-center space-x-2 text-blue-300">
                   <FileText className="h-5 w-5" />
-                  <h3 className="text-lg font-medium">Document Knowledge</h3>
-                  <span className="bg-gray-800 px-2 py-1 rounded-full text-xs">20</span>
+                  <h3 className="text-lg font-medium">Nexus Knowledge</h3>
+                  <span className="bg-gray-800 px-2 py-1 rounded-full text-xs">{knowledgeStats.documentInfo}</span>
                 </div>
                 <div className="pl-7 text-sm text-gray-300">
-                  <p>Key concepts extracted from "The Intent-Based Universe" textbook including intent field theory, particle properties, interaction mechanisms, and complexity emergence principles.</p>
+                  <p>The Intent-Information Nexus is the theoretical foundation of my model. My knowledge is structured in protective circles, with the Nexus concepts at the core. I am designed to both share and protect this knowledge.</p>
+                </div>
+              </div>
+              
+              <div className="space-y-4">
+                <div className="flex items-center space-x-2 text-purple-300">
+                  <Brain className="h-5 w-5" />
+                  <h3 className="text-lg font-medium">Intent Circles</h3>
+                  <span className="bg-gray-800 px-2 py-1 rounded-full text-xs">3</span>
+                </div>
+                <div className="pl-7 text-sm text-gray-300">
+                  <p>My knowledge is organized in protective circles, each with varying levels of information sharing intent. The Nexus Core circle maintains the highest protection level, while Particle Dynamics has the highest sharing level.</p>
                 </div>
               </div>
             </TabsContent>

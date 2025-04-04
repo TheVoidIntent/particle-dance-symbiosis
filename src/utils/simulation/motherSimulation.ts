@@ -28,7 +28,7 @@ const canvas = document.createElement('canvas');
 const ctx = canvas.getContext('2d');
 
 // Initialize the simulation
-function initSimulation() {
+export function initializeMotherSimulation() {
   // Reset simulation data
   particles.length = 0;
   particleCount = 0;
@@ -137,7 +137,7 @@ function updateSimulation() {
           const p2Knowledge = p2.knowledge;
           
           p1.knowledge = Math.min(1, p1.knowledge + p2Knowledge * p2Share);
-          p2.knowledge = Math.min(1, p2.knowledge + p1Knowledge * p1Share);
+          p2.knowledge = Math.min(1, p2.knowledge + p2Knowledge * p1Share);
           
           // Knowledge affects size (growth)
           p1.size = 3 + (p1.knowledge * 5);
@@ -220,7 +220,7 @@ export function startMotherSimulation(): void {
   isRunning = true;
   
   // Initialize
-  initSimulation();
+  initializeMotherSimulation();
   
   // Start update loop
   simulationInterval = window.setInterval(updateSimulation, 1000 / 30); // 30 FPS
@@ -246,7 +246,7 @@ export function isMotherSimulationRunning(): boolean {
 }
 
 // Get simulation metrics
-export function getSimulationMetrics(): {
+export function getSimulationStats(): {
   particleCount: number;
   interactionCount: number;
   knowledgeAverage: number;

@@ -32,12 +32,13 @@ const DataAnalysis: React.FC = () => {
     const updateInterval = setInterval(() => {
       if (isMotherSimulationRunning()) {
         const currentStats = getSimulationStats();
+        
         setStats({
           particleCount: currentStats.particleCount,
-          interactionCount: currentStats.interactionsCount,
+          interactionCount: currentStats.interactionsCount || 0,
           knowledgeAverage: currentStats.knowledgeAverage || 0,
           isRunning: isMotherSimulationRunning(),
-          frameCount: currentStats.frameCount
+          frameCount: currentStats.frameCount || 0
         });
       }
     }, 1000);

@@ -66,6 +66,10 @@ export function useParticleCreation(
       interactionTendency *= 0.5; // negative charges less likely to interact
     }
     
+    // Generate radius and set size based on it
+    const radius = 3 + Math.random() * 3;
+    const size = radius * 2; // Size is diameter
+    
     // Generate a particle with all required fields
     return {
       id: uuidv4(),
@@ -75,8 +79,9 @@ export function useParticleCreation(
       vx: velocityX,
       vy: velocityY,
       vz: velocityZ,
-      radius: 3 + Math.random() * 3,
+      radius,
       mass: 1 + Math.random() * 4,
+      size, // Adding required size property
       charge: charge as 'positive' | 'negative' | 'neutral',
       color,
       type,

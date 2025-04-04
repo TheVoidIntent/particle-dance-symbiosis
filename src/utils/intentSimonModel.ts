@@ -1,6 +1,5 @@
-
 import { knowledgeBase } from './knowledge/intentKnowledgeBase';
-import { Particle } from './simulation/motherSimulation';
+import { Particle } from '@/types/simulation';
 
 // Intent Model internal state
 let contextMemory: string[] = [];
@@ -309,4 +308,21 @@ export function getModelStats() {
     knowledgeSecurity: Math.floor(knowledgeSecurity * 100),
     interactionsAnalyzed: Object.values(interactionData).reduce((sum, val) => sum + val, 0)
   };
+}
+
+/**
+ * Calculate intent strength based on a string or number
+ */
+export function calculateIntentStrength(intent: string | number): number {
+  // Convert intent to number if it's a string
+  const intentValue = typeof intent === 'string' ? parseFloat(intent) : intent;
+  
+  // Now we can safely use comparison operators
+  if (intentValue > 0.7) {
+    return 1.0;
+  } else if (intentValue < 0.3) {
+    return 0.2;
+  } else {
+    return Math.sin(intentValue * Math.PI); // Smooth sine curve between 0.3 and 0.7
+  }
 }

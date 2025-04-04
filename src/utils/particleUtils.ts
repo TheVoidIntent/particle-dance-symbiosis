@@ -49,6 +49,10 @@ export function createParticleFromField(
     type = Math.random() < 0.5 ? 'quantum' : 'composite';
   }
   
+  // Calculate radius and size
+  const radius = 3 + Math.random() * 2;
+  const size = radius * 2; // Size is diameter
+  
   // Create the particle with physics properties
   return {
     id: uuidv4(),
@@ -59,7 +63,8 @@ export function createParticleFromField(
     vy: (Math.random() - 0.5) * 2,
     vz: (Math.random() - 0.5) * 0.5,
     charge,
-    radius: 3 + Math.random() * 2, // Random size
+    radius,
+    size, // Add the size property
     color,
     intent: fieldValue,
     interactionTendency,
@@ -399,6 +404,10 @@ export function createParticle(
   type: string,
   timestamp: number
 ): Particle {
+  // Calculate radius and size
+  const radius = 3 + Math.random() * 2;
+  const size = radius * 2; // Size is diameter
+  
   return {
     id: uuidv4(),
     x,
@@ -408,7 +417,8 @@ export function createParticle(
     vy: (Math.random() - 0.5) * 2,
     vz: (Math.random() - 0.5) * 0.5,
     charge,
-    radius: 3 + Math.random() * 2,
+    radius,
+    size, // Add the size property
     color: charge === 'positive' 
       ? 'rgba(239, 68, 68, 0.8)' 
       : charge === 'negative' 
@@ -419,10 +429,10 @@ export function createParticle(
     knowledge: 0.1 + Math.random() * 0.2,
     complexity: 1,
     energy: 1 + Math.random(),
-    type: type as any,
+    type,
     age: 0,
-    mass: 1, // Add required property
-    scale: 1, // Add required property
+    mass: 1,
+    scale: 1,
     created: timestamp,
     creationTime: timestamp,
     interactions: 0,

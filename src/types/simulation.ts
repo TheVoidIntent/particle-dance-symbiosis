@@ -1,4 +1,3 @@
-
 // Simulation types
 
 export interface Particle {
@@ -68,6 +67,7 @@ export interface SimulationStats {
   kolmogorovComplexity?: number;
   informationDensity?: number;
   clusterLifetime?: number;
+  clusterEntropyDelta?: number;
 }
 
 export interface ClusterData {

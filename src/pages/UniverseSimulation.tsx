@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet';
 import ParticleCanvas from '@/components/ParticleCanvas';
@@ -75,14 +74,14 @@ const UniverseSimulation: React.FC = () => {
       if (motherStats && motherStats.particleCount > 0) {
         setStats(prevStats => ({
           ...prevStats,
-          positiveParticles: motherStats.particleTypes.positive,
-          negativeParticles: motherStats.particleTypes.negative,
-          neutralParticles: motherStats.particleTypes.neutral,
-          highEnergyParticles: motherStats.particleTypes.highEnergy,
-          quantumParticles: motherStats.particleTypes.quantum,
-          compositeParticles: motherStats.particleTypes.composite,
-          adaptiveParticles: motherStats.particleTypes.adaptive,
-          totalInteractions: motherStats.interactionsCount
+          positiveParticles: motherStats.positiveParticles || 0,
+          negativeParticles: motherStats.negativeParticles || 0,
+          neutralParticles: motherStats.neutralParticles || 0,
+          highEnergyParticles: motherStats.highEnergyParticles || 0,
+          quantumParticles: motherStats.quantumParticles || 0,
+          compositeParticles: motherStats.compositeParticles || 0,
+          adaptiveParticles: motherStats.adaptiveParticles || 0,
+          totalInteractions: motherStats.interactionsCount || 0
         }));
       }
     }, 1000);

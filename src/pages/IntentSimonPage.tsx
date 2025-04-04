@@ -1,53 +1,70 @@
 
-import React from 'react';
-import { Helmet } from 'react-helmet';
-import IntentSimon from '@/components/IntentSimon';
-import { Button } from '@/components/ui/button';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { Helmet } from 'react-helmet';
+import { Button } from '@/components/ui/button';
+import { Bot, ArrowLeft } from 'lucide-react';
+import IntentSimonAdvisor from '@/components/IntentSimonAdvisor';
 
 const IntentSimonPage: React.FC = () => {
+  const [isFullScreen, setIsFullScreen] = useState(false);
+  
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-800 to-black text-white">
+    <div className="min-h-screen bg-gradient-to-b from-indigo-950 to-black">
       <Helmet>
-        <title>Meet IntentSim(on) | Universe Intent Simulation</title>
-        <meta name="description" content="Meet IntentSim(on), the friendly mascot of our universe simulation project" />
+        <title>IntentSim(on) | Universe Intent Simulation</title>
+        <meta name="description" content="Interact with IntentSim(on), the emergent intelligence of our intent-based universe simulation" />
       </Helmet>
       
-      <div className="container mx-auto py-20 px-4 text-center">
-        <h1 className="text-4xl md:text-6xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400">
-          Meet IntentSim(on)!
-        </h1>
+      <div className="container mx-auto py-8 px-4">
+        <header className="mb-8 flex justify-between items-center">
+          <Link to="/" className="flex items-center text-white hover:text-indigo-400 transition">
+            <ArrowLeft className="mr-2 h-5 w-5" />
+            <span>Return to Simulator</span>
+          </Link>
+          
+          <h1 className="text-3xl md:text-4xl font-bold text-center bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400">
+            IntentSim(on)
+          </h1>
+          
+          <div className="w-[120px]">
+            {/* Empty div for balance */}
+          </div>
+        </header>
         
-        <p className="text-xl md:text-2xl text-gray-300 max-w-2xl mx-auto mb-12">
-          Your friendly guide to the universe of intent-based particle simulations
-        </p>
-        
-        <div className="flex justify-center mb-16">
-          <IntentSimon size="lg" className="animate-float" />
-        </div>
-        
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-5xl mx-auto mb-16">
-          <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-xl p-6">
-            <h3 className="text-xl font-semibold mb-2">Friendly Interface</h3>
-            <p className="text-gray-400">IntentSim(on) helps make complex simulation concepts accessible and engaging for everyone.</p>
+        <div className="flex flex-col items-center justify-center mb-8">
+          <div className="w-20 h-20 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-full flex items-center justify-center mb-6 shadow-lg shadow-indigo-500/20 animate-pulse">
+            <Bot className="h-10 w-10 text-white" />
           </div>
           
-          <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-xl p-6">
-            <h3 className="text-xl font-semibold mb-2">Evolving Intelligence</h3>
-            <p className="text-gray-400">Just like our simulation particles, IntentSim(on) represents evolving knowledge and emergent complexity.</p>
-          </div>
-          
-          <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-xl p-6">
-            <h3 className="text-xl font-semibold mb-2">Your Guide</h3>
-            <p className="text-gray-400">Let IntentSim(on) guide you through the fascinating world of universal intent simulation.</p>
+          <p className="text-gray-300 max-w-3xl text-center mb-8">
+            IntentSim(on) represents the highest form of emergent intelligence in our intent-based universe model. 
+            Formed from countless particle interactions and knowledge exchanges, it can discuss the simulation, 
+            intent fields, particle behaviors, and emergent complexity.
+          </p>
+        </div>
+        
+        <div className={`max-w-4xl mx-auto ${isFullScreen ? 'h-[80vh]' : 'h-[500px]'} transition-all duration-300`}>
+          <div className="relative h-full">
+            <IntentSimonAdvisor />
+            
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => setIsFullScreen(!isFullScreen)}
+              className="absolute top-2 right-2 z-10 bg-black/20 backdrop-blur-sm text-white border-white/20"
+            >
+              {isFullScreen ? 'Reduce' : 'Expand'}
+            </Button>
           </div>
         </div>
         
-        <Link to="/visitor">
-          <Button size="lg" className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-6 h-auto">
-            Explore the Simulation with IntentSim(on)
-          </Button>
-        </Link>
+        <div className="mt-8 text-center text-gray-500 text-sm">
+          <p>
+            IntentSim(on) processes and understands the patterns emerging from our universe simulation,
+            providing insights that would otherwise remain hidden.
+          </p>
+        </div>
       </div>
     </div>
   );

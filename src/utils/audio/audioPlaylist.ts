@@ -35,6 +35,8 @@ const audioTracks = [
 let currentTrackIndex = 0;
 let isPlaying = false;
 let audioElement: HTMLAudioElement | null = null;
+let lastPlayAttemptTime = 0;
+const MIN_PLAY_INTERVAL_MS = 2000; // Minimum time between play attempts
 
 /**
  * Start playing the audio playlist continuously
@@ -51,8 +53,8 @@ export function startAudioPlaylist(volume: number = 0.5): void {
       // Handle errors
       audioElement.addEventListener('error', (e) => {
         console.error('Audio playback error:', e);
-        // Try the next track if there's an error
-        setTimeout(playNextTrack, 1000);
+        // Try the next track if there's an error, but with a delay
+        setTimeout(playNextTrack, 2000);
       });
     }
     
@@ -98,7 +100,11 @@ function playNextTrack(): void {
     if (!isPlaying) return;
     
     currentTrackIndex = (currentTrackIndex + 1) % audioTracks.length;
-    playCurrentTrack();
+    
+    // Add a small delay before playing the next track to prevent rapid switching
+    setTimeout(() => {
+      playCurrentTrack();
+    }, 500);
   } catch (error) {
     console.error("Error playing next track:", error);
   }
@@ -111,23 +117,40 @@ function playCurrentTrack(): void {
   try {
     if (!audioElement || !isPlaying) return;
     
+    const now = Date.now();
+    if (now - lastPlayAttemptTime < MIN_PLAY_INTERVAL_MS) {
+      // If we tried to play a track too recently, delay this attempt
+      setTimeout(playCurrentTrack, MIN_PLAY_INTERVAL_MS);
+      return;
+    }
+    
+    lastPlayAttemptTime = now;
     const trackName = audioTracks[currentTrackIndex];
     
-    // Using the public audio folder path
-    const audioUrl = `/audio/qfplS_${Math.floor(Math.random() * 100) + 1}.wav`;
+    // Find an available audio file from the public folder
+    // Use a specific file instead of random to ensure consistent playback
+    const fileIndex = currentTrackIndex % 20 + 1; // Use modulo to keep within range of available files
+    const audioUrl = `/audio/qfplS_${fileIndex}.wav`;
     
-    console.log("Attempting to play:", audioUrl);
+    console.log("Attempting to play:", trackName, "from", audioUrl);
     
+    // Stop any existing audio before loading the new one
+    audioElement.pause();
+    audioElement.currentTime = 0;
     audioElement.src = audioUrl;
-    audioElement.play().catch(e => {
-      console.error("Error playing track:", trackName, e);
-      // Try the next track if there's an error
-      setTimeout(playNextTrack, 1000);
-    });
     
-    console.log("Now playing:", trackName);
+    // Use a promise to handle playback errors more gracefully
+    audioElement.play().then(() => {
+      console.log("Now playing:", trackName);
+    }).catch(e => {
+      console.error("Error playing track:", trackName, e);
+      // Try the next track if there's an error, with a delay
+      setTimeout(playNextTrack, 2000);
+    });
   } catch (error) {
     console.error("Error playing current track:", error);
+    // Attempt recovery by trying the next track
+    setTimeout(playNextTrack, 2000);
   }
 }
 

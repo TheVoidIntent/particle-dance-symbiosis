@@ -13,6 +13,14 @@ export interface NotebookLmConfig {
   includeAudioData: boolean;
 }
 
+// Define the shape of the export data to avoid TypeScript errors
+interface ExportData {
+  simulation: any;
+  timestamp: string;
+  exportType: string;
+  audio?: any; // Make audio property optional
+}
+
 /**
  * Hook for integration with NotebookLM
  */
@@ -57,7 +65,7 @@ export function useNotebookLmIntegration() {
     console.log("Exporting data for NotebookLM");
     
     // Combine simulation data with audio data if enabled
-    const exportData = {
+    const exportData: ExportData = {
       simulation: simulationData || {},
       timestamp: new Date().toISOString(),
       exportType: "manual"

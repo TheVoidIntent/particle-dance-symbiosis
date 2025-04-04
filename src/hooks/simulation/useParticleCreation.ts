@@ -1,4 +1,3 @@
-
 import { MutableRefObject } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { Particle } from '@/types/simulation';
@@ -18,7 +17,7 @@ export function useParticleCreation(
   const createParticle = (options: ParticleCreationOptions = {}): Particle => {
     // Destructure with proper type definitions for all properties
     const {
-      type = 'normal',
+      type = 'regular' as ParticleType,
       charge = Math.random() > 0.6 ? 'positive' : Math.random() > 0.5 ? 'negative' : 'neutral',
       isPostInflation = false,
       x = Math.random() * canvasWidth,

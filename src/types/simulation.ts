@@ -54,6 +54,20 @@ export interface SimulationStats {
   interactions?: number;
   robotCount?: number;
   clusterCount?: number;
+  // Additional properties needed for EntropyAnalysisTab
+  shannonEntropy?: number;
+  spatialEntropy?: number;
+  fieldOrderParameter?: number;
+  kolmogorovComplexity?: number;
+  averageClusterSize?: number;
+  informationDensity?: number;
+  clusterLifetime?: number;
+  clusterEntropyDelta?: number;
+  // Additional properties needed for particle types
+  highEnergyParticles?: number;
+  quantumParticles?: number;
+  compositeParticles?: number;
+  adaptiveParticles?: number;
 }
 
 export interface IntentField {

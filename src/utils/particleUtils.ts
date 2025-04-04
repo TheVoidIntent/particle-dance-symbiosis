@@ -401,7 +401,7 @@ export function createParticle(
   y: number,
   z: number,
   charge: 'positive' | 'negative' | 'neutral',
-  type: string,
+  type: ParticleType,
   timestamp: number
 ): Particle {
   // Calculate radius and size

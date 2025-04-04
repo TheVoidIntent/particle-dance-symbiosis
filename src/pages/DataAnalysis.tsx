@@ -116,6 +116,33 @@ const DataAnalysis: React.FC = () => {
     }
   };
 
+  useEffect(() => {
+    const updateInterval = setInterval(() => {
+      const stats = getSimulationStats();
+      const timestamp = new Date().getTime();
+      
+      setChartData(prevData => {
+        const newData = [...prevData];
+        if (newData.length > 100) {
+          newData.shift();
+        }
+        
+        newData.push({
+          timestamp,
+          particleCount: stats.particleCount,
+          interactionCount: stats.interactionCount,
+          knowledgeLevel: stats.knowledgeAverage * 100,
+          isRunning: isMotherSimulationRunning(),
+          frameCount: prevData.length > 0 ? prevData[prevData.length - 1].frameCount + 1 : 0
+        });
+        
+        return newData;
+      });
+    }, 1000);
+    
+    return () => clearInterval(updateInterval);
+  }, []);
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-12">
       <div className="container mx-auto px-4 py-8">
@@ -175,7 +202,7 @@ const DataAnalysis: React.FC = () => {
                     <div className="grid grid-cols-2 gap-2 text-sm">
                       <div>Running: <span className="font-medium">{simulationStats.isRunning ? "Yes" : "No"}</span></div>
                       <div>Particles: <span className="font-medium">{simulationStats.particleCount}</span></div>
-                      <div>Interactions: <span className="font-medium">{simulationStats.interactionsCount}</span></div>
+                      <div>Interactions: <span className="font-medium">{simulationStats.interactionCount}</span></div>
                       <div>Frames: <span className="font-medium">{simulationStats.frameCount}</span></div>
                     </div>
                   </div>

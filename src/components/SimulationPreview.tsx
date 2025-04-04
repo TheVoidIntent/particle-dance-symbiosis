@@ -78,8 +78,8 @@ const SimulationPreview: React.FC = () => {
     const animate = () => {
       if (!canvas || !context) return;
       
-      // Clear canvas
-      context.fillStyle = 'rgba(10, 10, 35, 0.1)';
+      // Clear canvas with more transparent black for a trail effect
+      context.fillStyle = 'rgba(10, 10, 35, 0.05)';
       context.fillRect(0, 0, canvas.width, canvas.height);
       
       // Update intent field slightly
@@ -91,6 +91,51 @@ const SimulationPreview: React.FC = () => {
           })
         )
       );
+      
+      // Draw network connections between particles first
+      const currentParticles = [...particles];
+      for (let i = 0; i < currentParticles.length; i++) {
+        const p1 = currentParticles[i];
+        
+        for (let j = i + 1; j < currentParticles.length; j++) {
+          const p2 = currentParticles[j];
+          
+          // Calculate distance between particles
+          const dx = p2.x - p1.x;
+          const dy = p2.y - p1.y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+          
+          // Draw connection lines if particles are close enough
+          const maxDistance = 150; // Increased max distance for more connections
+          if (distance < maxDistance) {
+            const opacity = (1 - distance / maxDistance) * 0.5;
+            
+            // Choose connection color based on particle types
+            let connectionColor;
+            if (p1.type === p2.type) {
+              // Same type connections
+              if (p1.type === 'positive') {
+                connectionColor = `rgba(180, 220, 255, ${opacity})`; // Blue for positive-positive
+              } else if (p1.type === 'negative') {
+                connectionColor = `rgba(255, 180, 180, ${opacity})`; // Red for negative-negative
+              } else {
+                connectionColor = `rgba(180, 255, 180, ${opacity})`; // Green for neutral-neutral
+              }
+            } else {
+              // Different type connections
+              connectionColor = `rgba(220, 220, 255, ${opacity})`; // White-ish for mixed
+            }
+            
+            // Draw the connection line
+            context.beginPath();
+            context.moveTo(p1.x, p1.y);
+            context.lineTo(p2.x, p2.y);
+            context.strokeStyle = connectionColor;
+            context.lineWidth = opacity * 2; // Make lines thicker based on proximity
+            context.stroke();
+          }
+        }
+      }
       
       // Update and draw particles
       setParticles(prevParticles => {
@@ -125,13 +170,7 @@ const SimulationPreview: React.FC = () => {
             newVy = -newVy * 0.8;
           }
           
-          // Draw the particle
-          context.beginPath();
-          context.arc(newX, newY, particle.radius, 0, Math.PI * 2);
-          context.fillStyle = particle.color;
-          context.fill();
-          
-          // Draw a subtle glow
+          // Draw the particle glow/aura
           const gradient = context.createRadialGradient(
             newX, newY, 0,
             newX, newY, particle.radius * 3
@@ -142,6 +181,12 @@ const SimulationPreview: React.FC = () => {
           context.beginPath();
           context.arc(newX, newY, particle.radius * 3, 0, Math.PI * 2);
           context.fillStyle = gradient;
+          context.fill();
+          
+          // Draw the particle core
+          context.beginPath();
+          context.arc(newX, newY, particle.radius, 0, Math.PI * 2);
+          context.fillStyle = particle.color;
           context.fill();
           
           return {
@@ -220,7 +265,7 @@ const SimulationPreview: React.FC = () => {
         className="w-full h-[400px] rounded-lg bg-gray-900"
       />
       
-      <div className="absolute bottom-4 left-4 text-white text-sm z-10">
+      <div className="absolute bottom-4 left-4 text-white text-sm z-10 bg-black/50 p-2 rounded">
         <div className="flex items-center mb-1">
           <span className="h-3 w-3 rounded-full bg-[#4ECDC4] inline-block mr-2"></span>
           <span>Positive charge - High intent to interact</span>

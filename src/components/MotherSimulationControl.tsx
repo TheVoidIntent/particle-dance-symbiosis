@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Play, Pause, RotateCcw, Zap } from "lucide-react";
@@ -15,11 +14,11 @@ const MotherSimulationControl: React.FC = () => {
   const [isRunning, setIsRunning] = useState<boolean>(false);
   const [stats, setStats] = useState({
     particleCount: 0,
-    interactionsCount: 0
+    interactionCount: 0,
+    knowledgeLevel: 0
   });
   
   useEffect(() => {
-    // Initialize simulation status
     const checkSimulationStatus = () => {
       const running = isMotherSimulationRunning();
       setIsRunning(running);
@@ -27,14 +26,13 @@ const MotherSimulationControl: React.FC = () => {
       const currentStats = getSimulationStats();
       setStats({
         particleCount: currentStats.particleCount || 0,
-        interactionsCount: currentStats.interactionsCount || 0
+        interactionCount: currentStats.interactionCount || 0,
+        knowledgeLevel: currentStats.knowledgeAverage * 100
       });
     };
     
-    // Check initial status
     checkSimulationStatus();
     
-    // Start simulation automatically if not running
     if (!isMotherSimulationRunning()) {
       console.log("Auto-starting mother simulation from control component...");
       startMotherSimulation();
@@ -42,10 +40,9 @@ const MotherSimulationControl: React.FC = () => {
       setIsRunning(true);
     }
     
-    // Set up interval to check status
-    const interval = setInterval(checkSimulationStatus, 1000);
+    const statsInterval = setInterval(checkSimulationStatus, 1000);
     
-    return () => clearInterval(interval);
+    return () => clearInterval(statsInterval);
   }, []);
   
   const handleStartStop = () => {
@@ -61,14 +58,10 @@ const MotherSimulationControl: React.FC = () => {
   };
   
   const handleReset = () => {
-    // Stop first
     stopMotherSimulation();
-    
-    // Clear local storage to force a fresh initialization
     localStorage.removeItem('motherSimulationState');
     localStorage.removeItem('motherSimulationLastSaved');
     
-    // Restart
     setTimeout(() => {
       startMotherSimulation();
       toast.success("Universe simulation reset and restarted");
@@ -77,11 +70,8 @@ const MotherSimulationControl: React.FC = () => {
   };
   
   const handleBoost = () => {
-    // Trigger rapid particle creation
     for (let i = 0; i < 10; i++) {
       setTimeout(() => {
-        // This function would be implemented in the motherSimulation module
-        // to add particles on demand
         if (typeof window !== 'undefined') {
           const event = new CustomEvent('boost-simulation', { detail: { count: 5 } });
           window.dispatchEvent(event);
@@ -109,7 +99,7 @@ const MotherSimulationControl: React.FC = () => {
           {stats.particleCount} particles
         </Badge>
         <Badge variant="outline" className="bg-gray-200 dark:bg-gray-700">
-          {stats.interactionsCount.toLocaleString()} interactions
+          {stats.interactionCount.toLocaleString()} interactions
         </Badge>
       </div>
       

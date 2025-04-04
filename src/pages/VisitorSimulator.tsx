@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Helmet } from 'react-helmet';
 import { Button } from "@/components/ui/button";
@@ -163,7 +162,8 @@ const VisitorSimulator: React.FC = () => {
       const width = canvas.width;
       const height = canvas.height;
       
-      context.fillStyle = 'rgba(0, 0, 0, 0.1)';
+      // Use more transparent black for trail effect to keep particles visible longer
+      context.fillStyle = 'rgba(0, 0, 0, 0.05)';
       context.fillRect(0, 0, width, height);
       
       if (Math.random() < intentFluctuationRate) {
@@ -172,6 +172,10 @@ const VisitorSimulator: React.FC = () => {
       
       updateParticles(width, height);
       
+      // Draw network connections between particles (ALWAYS ENABLED)
+      drawNetworkConnections(context);
+      
+      // Draw particles
       drawParticles(context);
       
       if (Math.random() < 0.05 && particlesRef.current.length < 150) {
@@ -198,6 +202,57 @@ const VisitorSimulator: React.FC = () => {
       }
     };
   }, [running, intentFluctuationRate]);
+
+  // New function to draw network connections
+  const drawNetworkConnections = (context: CanvasRenderingContext2D) => {
+    const particles = particlesRef.current;
+    
+    // Draw lines between particles
+    for (let i = 0; i < particles.length; i++) {
+      const p1 = particles[i];
+      
+      for (let j = i + 1; j < particles.length; j++) {
+        const p2 = particles[j];
+        
+        // Calculate distance
+        const dx = p2.x - p1.x;
+        const dy = p2.y - p1.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        
+        // Only draw connections if particles are within a certain distance
+        // Increased from 100 to 150 for more visible connections
+        const maxDistance = 150;
+        if (distance < maxDistance) {
+          // Calculate opacity based on distance (closer = more opaque)
+          const opacity = (1 - distance / maxDistance) * 0.5;
+          
+          // Determine connection color based on particle types
+          let connectionColor;
+          if (p1.type === p2.type) {
+            // Same type connections
+            if (p1.type === 'positive') {
+              connectionColor = `rgba(180, 220, 255, ${opacity})`; // Blue for positive-positive
+            } else if (p1.type === 'negative') {
+              connectionColor = `rgba(255, 180, 180, ${opacity})`; // Red for negative-negative
+            } else {
+              connectionColor = `rgba(180, 255, 180, ${opacity})`; // Green for neutral-neutral
+            }
+          } else {
+            // Different type connections
+            connectionColor = `rgba(220, 220, 255, ${opacity})`; // White-ish for mixed
+          }
+          
+          // Draw the connection line
+          context.beginPath();
+          context.moveTo(p1.x, p1.y);
+          context.lineTo(p2.x, p2.y);
+          context.strokeStyle = connectionColor;
+          context.lineWidth = opacity * 2; // Thicker lines for closer particles
+          context.stroke();
+        }
+      }
+    }
+  };
 
   const updateIntentField = () => {
     const newField = intentFieldRef.current.map(row => 
@@ -253,6 +308,7 @@ const VisitorSimulator: React.FC = () => {
 
   const drawParticles = (context: CanvasRenderingContext2D) => {
     particlesRef.current.forEach(particle => {
+      // Draw the glow/aura
       const gradient = context.createRadialGradient(
         particle.x, particle.y, 0,
         particle.x, particle.y, particle.radius * 3
@@ -265,6 +321,7 @@ const VisitorSimulator: React.FC = () => {
       context.fillStyle = gradient;
       context.fill();
       
+      // Draw the particle core
       context.beginPath();
       context.arc(particle.x, particle.y, particle.radius, 0, Math.PI * 2);
       context.fillStyle = particle.color;

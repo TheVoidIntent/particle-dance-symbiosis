@@ -1,4 +1,3 @@
-
 // Rendering utilities for particle visualization
 
 export function renderParticles(
@@ -11,7 +10,10 @@ export function renderParticles(
   // Set up rendering context
   ctx.save();
   
-  // For each particle, draw a circle
+  // First draw connections between particles for network effect
+  drawParticleConnections(ctx, particles, dimensions, 150);
+  
+  // For each particle, draw a circle with glow effect
   particles.forEach(particle => {
     const { x, y, z, color, radius, charge, type, knowledge, complexity, isPostInflation, scale } = particle;
     
@@ -34,6 +36,25 @@ export function renderParticles(
     }
     
     const scaledRadius = radius * displayScale;
+    
+    // Draw glow/aura around particle
+    const glowRadius = scaledRadius * 2.5;
+    const gradient = ctx.createRadialGradient(
+      x, y, scaledRadius * 0.8,
+      x, y, glowRadius
+    );
+    
+    // Get particle color based on charge
+    let particleColor = getParticleColorByCharge(charge, color);
+    let glowColor = particleColor.replace(/[^,]+(?=\))/, '0.3'); // Lower opacity for glow
+    
+    gradient.addColorStop(0, particleColor);
+    gradient.addColorStop(1, 'transparent');
+    
+    ctx.beginPath();
+    ctx.arc(x, y, glowRadius, 0, Math.PI * 2);
+    ctx.fillStyle = gradient;
+    ctx.fill();
     
     // Special effects for different particle types
     switch (type) {
@@ -80,7 +101,6 @@ export function renderParticles(
 
     // Draw outer glow for post-inflation particles
     if (isPostInflation) {
-      const glowColor = color.replace(/[^,]+(?=\))/, '0.3'); // Lower opacity for glow
       const pulseTime = Date.now() * 0.001; // Time-based pulsing
       const pulseScale = 1 + 0.2 * Math.sin(pulseTime * 3); // Pulsing effect
       
@@ -89,45 +109,11 @@ export function renderParticles(
       ctx.arc(x, y, scaledRadius * 2 * pulseScale, 0, Math.PI * 2);
       ctx.fillStyle = glowColor;
       ctx.fill();
-      
-      // Draw aura
-      ctx.beginPath();
-      ctx.arc(x, y, scaledRadius * 1.5, 0, Math.PI * 2);
-      ctx.fillStyle = glowColor.replace(/[^,]+(?=\))/, '0.5');
-      ctx.fill();
-    }
-    
-    // Knowledge/complexity visualization as ring thickness
-    if (knowledge > 0.3 || complexity > 1) {
-      const ringThickness = Math.min(scaledRadius * 0.4, Math.max(1, complexity));
-      ctx.beginPath();
-      ctx.arc(x, y, scaledRadius + ringThickness, 0, Math.PI * 2);
-      ctx.strokeStyle = `rgba(255, 255, 255, ${Math.min(0.7, knowledge)})`;
-      ctx.lineWidth = ringThickness;
-      ctx.stroke();
     }
     
     // Draw main particle body
     ctx.beginPath();
     ctx.arc(x, y, scaledRadius, 0, Math.PI * 2);
-    
-    // Vary color based on charge and energy
-    let particleColor = color;
-    if (charge === 'positive') {
-      particleColor = 'rgba(239, 68, 68, 0.8)'; // Red
-    } else if (charge === 'negative') {
-      particleColor = 'rgba(147, 51, 234, 0.8)'; // Purple
-    } else {
-      particleColor = 'rgba(74, 222, 128, 0.8)'; // Green
-    }
-    
-    // If it's a post-inflation particle, add a pulsating effect
-    if (isPostInflation) {
-      const now = Date.now() * 0.003;
-      const alpha = 0.7 + 0.3 * Math.sin(now); // Pulsating alpha
-      particleColor = particleColor.replace(/[^,]+(?=\))/, alpha.toString());
-    }
-    
     ctx.fillStyle = particleColor;
     ctx.fill();
     
@@ -162,6 +148,94 @@ export function renderParticles(
   ctx.restore();
 }
 
+// Helper function to draw connections between particles for network effect
+function drawParticleConnections(
+  ctx: CanvasRenderingContext2D,
+  particles: any[],
+  dimensions: { width: number; height: number },
+  maxDistance: number = 120
+) {
+  ctx.save();
+  
+  for (let i = 0; i < particles.length; i++) {
+    const p1 = particles[i];
+    
+    for (let j = i + 1; j < particles.length; j++) {
+      const p2 = particles[j];
+      
+      // Calculate distance between particles
+      const dx = p2.x - p1.x;
+      const dy = p2.y - p1.y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+      
+      // Only draw connections if particles are within range
+      if (distance < maxDistance) {
+        // Calculate opacity based on distance (closer = more opaque)
+        const opacity = (1 - distance / maxDistance) * 0.5;
+        
+        // Determine connection color based on particle types
+        let connectionColor;
+        const p1Charge = String(p1.charge);
+        const p2Charge = String(p2.charge);
+        
+        if (p1Charge === p2Charge) {
+          // Same charge connections
+          if (p1Charge === 'positive') {
+            connectionColor = `rgba(77, 206, 196, ${opacity})`; // Teal for positive-positive
+          } else if (p1Charge === 'negative') {
+            connectionColor = `rgba(255, 107, 107, ${opacity})`; // Red for negative-negative
+          } else {
+            connectionColor = `rgba(94, 96, 206, ${opacity})`; // Purple for neutral-neutral
+          }
+        } else {
+          // Mixed charge connections
+          connectionColor = `rgba(180, 180, 255, ${opacity * 0.7})`; // Light blue for mixed
+        }
+        
+        // Draw connection line
+        ctx.beginPath();
+        ctx.moveTo(p1.x, p1.y);
+        ctx.lineTo(p2.x, p2.y);
+        ctx.strokeStyle = connectionColor;
+        ctx.lineWidth = Math.max(0.5, opacity * 1.5); // Thicker lines for closer particles
+        ctx.stroke();
+        
+        // Optional: Add small "energy pulse" along the connection line
+        if (distance < maxDistance * 0.5 && Math.random() < 0.05) {
+          const pulsePosition = Math.random(); // Position along the line (0-1)
+          const pulseX = p1.x + dx * pulsePosition;
+          const pulseY = p1.y + dy * pulsePosition;
+          
+          ctx.beginPath();
+          ctx.arc(pulseX, pulseY, 1.5, 0, Math.PI * 2);
+          ctx.fillStyle = connectionColor.replace(/[^,]+(?=\))/, '1'); // Full opacity
+          ctx.fill();
+        }
+      }
+    }
+  }
+  
+  ctx.restore();
+}
+
+// Helper function to get vibrant colors based on particle charge
+function getParticleColorByCharge(charge: string | any, defaultColor: string = '#FFFFFF'): string {
+  if (typeof charge !== 'string') {
+    charge = String(charge);
+  }
+  
+  switch (charge) {
+    case 'positive':
+      return 'rgba(77, 206, 196, 0.9)'; // Vibrant teal
+    case 'negative':
+      return 'rgba(255, 107, 107, 0.9)'; // Vibrant red
+    case 'neutral':
+      return 'rgba(94, 96, 206, 0.9)'; // Vibrant purple
+    default:
+      return defaultColor;
+  }
+}
+
 export function renderIntentField(
   ctx: CanvasRenderingContext2D,
   intentField: number[][][],
@@ -192,19 +266,19 @@ export function renderIntentField(
       const posX = x * cellWidth;
       const posY = y * cellHeight;
       
-      // Color based on value (positive = blue, negative = red, neutral = green)
+      // Color based on value (positive = teal, negative = red, neutral = purple)
       let color;
       if (value > 0.2) {
         const intensity = Math.min(255, Math.floor(value * 255));
-        color = `rgba(59, 130, 246, ${opacity * Math.min(1, value * 2)})`; // Blue for positive
+        color = `rgba(77, 206, 196, ${opacity * Math.min(1, value * 2)})`; // Teal for positive
       } else if (value < -0.2) {
         const intensity = Math.min(255, Math.floor(-value * 255));
-        color = `rgba(239, 68, 68, ${opacity * Math.min(1, -value * 2)})`; // Red for negative
+        color = `rgba(255, 107, 107, ${opacity * Math.min(1, -value * 2)})`; // Red for negative
       } else {
-        // Near-neutral values get a green tint
+        // Near-neutral values get a purple tint
         const absValue = Math.abs(value);
         const intensity = Math.min(255, Math.floor(absValue * 255));
-        color = `rgba(74, 222, 128, ${opacity * Math.min(0.5, absValue * 4)})`; // Green for neutral
+        color = `rgba(94, 96, 206, ${opacity * Math.min(0.5, absValue * 4)})`; // Purple for neutral
       }
       
       ctx.fillStyle = color;
@@ -340,20 +414,17 @@ export function renderCombined(
   dimensions: { width: number; height: number },
   viewMode: '2d' | '3d'
 ) {
-  // Render layers in order: intent field, density, particles
+  // Render layers in order: intent field, particles, connections
   
   // Render intent field with lower opacity
   renderIntentField(ctx, intentField, dimensions, 15, 0.15);
   
-  // Render particle density with lower opacity
-  renderParticleDensity(ctx, particles, dimensions, 25, 0.3);
-  
-  // Render particles on top
+  // Render particles on top (connections are drawn within the renderParticles function)
   renderParticles(ctx, particles, dimensions, viewMode, true);
   
   // Add a subtle glow effect over the entire canvas
   ctx.save();
-  ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.02)';
   ctx.fillRect(0, 0, dimensions.width, dimensions.height);
   ctx.restore();
 }

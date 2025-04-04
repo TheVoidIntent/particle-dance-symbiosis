@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Helmet } from 'react-helmet';
 import { Volume2, Info } from 'lucide-react';
@@ -20,14 +19,15 @@ const Simulator: React.FC = () => {
     interactionsCount: 0
   });
 
-  // Initialize simulation
   useEffect(() => {
-    // Start the simulation
     if (!isMotherSimulationRunning()) {
-      startMotherSimulation(canvasRef.current || undefined);
+      startMotherSimulation(canvasRef.current || undefined, {
+        enableNetworkVisuals: true,
+        particleGlowStrength: 1.5,
+        useEnhancedColors: true
+      });
     }
-    
-    // Start ambient audio
+
     simpleAudio.initialize();
     simpleAudio.playAmbientSound({
       type: 'intent_field',
@@ -35,12 +35,10 @@ const Simulator: React.FC = () => {
       complexity: 0.7
     });
 
-    // Set up animation loop
     const animate = () => {
       const particles = getParticles();
       const stats = getSimulationStats();
       
-      // Update local stats for display
       setSimulationStats({
         intentWaveIntensity: Math.round(simpleAudio.intentWaveMetrics?.averageFrequency || 0),
         complexity: Math.round(stats.intentFieldComplexity * 100),
@@ -48,8 +46,6 @@ const Simulator: React.FC = () => {
         interactionsCount: stats.interactionsCount
       });
       
-      // The actual drawing is handled by the motherSimulation
-      // but we use this loop to occasionally trigger ambient sounds
       if (Math.random() < 0.05) {
         simpleAudio.playSound('fluctuation', { intensity: 0.3 });
       }
@@ -66,7 +62,6 @@ const Simulator: React.FC = () => {
     
     animate();
     
-    // Cleanup
     return () => {
       if (animationRef.current) {
         cancelAnimationFrame(animationRef.current);
@@ -75,13 +70,11 @@ const Simulator: React.FC = () => {
       simpleAudio.stopAllSounds();
     };
   }, []);
-  
-  // Update volume when changed
+
   useEffect(() => {
     simpleAudio.updateVolume(volume / 100);
   }, [volume, simpleAudio]);
 
-  // Toggle metrics display
   const toggleMetrics = () => {
     setShowMetrics(!showMetrics);
   };
@@ -93,7 +86,6 @@ const Simulator: React.FC = () => {
         <meta name="description" content="Explore intent-driven particle simulation" />
       </Helmet>
       
-      {/* Header */}
       <div className="absolute top-4 left-4 z-10 flex items-center space-x-6">
         <h1 className="text-xl font-semibold bg-clip-text text-transparent bg-gradient-to-r from-amber-300 via-orange-400 to-amber-300">
           IntentSim Mascot
@@ -104,7 +96,6 @@ const Simulator: React.FC = () => {
         </h2>
       </div>
       
-      {/* Audio and metrics controls */}
       <div className="absolute top-4 right-4 z-10 flex items-center space-x-3">
         <button 
           onClick={toggleMetrics}
@@ -124,7 +115,6 @@ const Simulator: React.FC = () => {
         <span className="text-sm text-white/70">Gentle Ambience</span>
       </div>
       
-      {/* Intent Wave Metrics Panel */}
       {showMetrics && (
         <div className="absolute top-16 right-4 z-10 bg-black/60 backdrop-blur-sm p-4 rounded-lg border border-gray-700 text-xs space-y-2 w-64">
           <h3 className="text-sm font-medium text-amber-300">Intent Wave Metrics</h3>
@@ -165,7 +155,6 @@ const Simulator: React.FC = () => {
         </div>
       )}
       
-      {/* Full-screen canvas */}
       <canvas
         id="simulation-canvas"
         ref={canvasRef}
@@ -174,7 +163,6 @@ const Simulator: React.FC = () => {
         height={window.innerHeight}
       />
       
-      {/* Footer */}
       <div className="absolute bottom-4 w-full text-center text-sm text-white/50">
         © 2025 IntentSim.org - Universe Intent Simulation
       </div>

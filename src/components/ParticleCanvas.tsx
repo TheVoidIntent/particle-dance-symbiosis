@@ -1,8 +1,8 @@
-
 import React, { useRef, useEffect, useState } from 'react';
 import { useSimulationReset } from '@/hooks/useSimulationReset';
 import { Particle, SimulationStats } from '@/types/simulation';
 import { initializeIntentField } from '@/utils/intentFieldUtils';
+import { useCanvasRenderer } from '@/hooks/useCanvasRenderer';
 
 interface ParticleCanvasProps {
   width?: number;
@@ -16,7 +16,7 @@ interface ParticleCanvasProps {
   learningRate?: number;
   particleCreationRate?: number;
   viewMode?: '2d' | '3d';
-  renderMode?: 'particles' | 'field' | 'both';
+  renderMode?: 'particles' | 'field' | 'density' | 'combined';
   useAdaptiveParticles?: boolean;
   energyConservation?: boolean;
   probabilisticIntent?: boolean;
@@ -36,7 +36,7 @@ const ParticleCanvas: React.FC<ParticleCanvasProps> = ({
   learningRate = 0.1,
   particleCreationRate = 1,
   viewMode = '2d',
-  renderMode = 'particles',
+  renderMode = 'combined',
   useAdaptiveParticles = false,
   energyConservation = false,
   probabilisticIntent = false,
@@ -52,7 +52,8 @@ const ParticleCanvas: React.FC<ParticleCanvasProps> = ({
   const [isRunning, setIsRunning] = useState<boolean>(running);
   const [animationFrameId, setAnimationFrameId] = useState<number | null>(null);
   
-  // Process simulation data for stats
+  const { renderSimulation } = useCanvasRenderer();
+
   const processSimulationData = (
     particles: Particle[],
     intentField: number[][][],
@@ -73,21 +74,17 @@ const ParticleCanvas: React.FC<ParticleCanvasProps> = ({
       totalInteractions: interactions,
       frame: frameCount,
       time: simulationTime,
-      // Additional stats could be calculated here
     };
   };
-  
-  // Initialize the canvas and simulation
+
   useEffect(() => {
     if (canvasRef.current) {
       const canvas = canvasRef.current;
       canvas.width = width;
       canvas.height = height;
       
-      // Initialize intent field
       intentFieldRef.current = initializeIntentField(width, height);
       
-      // Initial stats update
       const stats = processSimulationData(
         particlesRef.current,
         intentFieldRef.current,
@@ -99,12 +96,10 @@ const ParticleCanvas: React.FC<ParticleCanvasProps> = ({
     }
   }, [width, height, onStatsUpdate]);
 
-  // Update particles ref when external particles change
   useEffect(() => {
     particlesRef.current = particles;
   }, [particles]);
-  
-  // Simulation reset hook
+
   const { resetSimulation } = useSimulationReset({
     particlesRef,
     intentFieldRef,
@@ -115,8 +110,7 @@ const ParticleCanvas: React.FC<ParticleCanvasProps> = ({
     processSimulationData,
     onStatsUpdate
   });
-  
-  // Handle reset button click - fixed to return Particle[] as required
+
   const handleResetSimulation = (): Particle[] => {
     if (animationFrameId !== null) {
       cancelAnimationFrame(animationFrameId);
@@ -126,18 +120,60 @@ const ParticleCanvas: React.FC<ParticleCanvasProps> = ({
     
     return resetSimulation();
   };
-  
-  // Render loop
+
   useEffect(() => {
-    // Animation and rendering code would go here
-    
-    return () => {
+    if (!isRunning) {
       if (animationFrameId !== null) {
         cancelAnimationFrame(animationFrameId);
+        setAnimationFrameId(null);
+      }
+      return;
+    }
+
+    const animate = () => {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+      
+      renderSimulation(
+        ctx, 
+        particlesRef.current, 
+        intentFieldRef.current,
+        { width: canvas.width, height: canvas.height },
+        renderMode as 'particles' | 'field' | 'density' | 'combined',
+        viewMode
+      );
+      
+      frameCountRef.current += 1;
+      simulationTimeRef.current += 1 / 60;
+      
+      if (frameCountRef.current % 10 === 0) {
+        const stats = processSimulationData(
+          particlesRef.current,
+          intentFieldRef.current,
+          interactionsRef.current,
+          frameCountRef.current,
+          simulationTimeRef.current
+        );
+        onStatsUpdate(stats);
+      }
+      
+      const newFrameId = requestAnimationFrame(animate);
+      setAnimationFrameId(newFrameId);
+    };
+    
+    const newFrameId = requestAnimationFrame(animate);
+    setAnimationFrameId(newFrameId);
+    
+    return () => {
+      if (newFrameId !== null) {
+        cancelAnimationFrame(newFrameId);
       }
     };
-  }, [isRunning]);
-  
+  }, [isRunning, renderMode, viewMode, renderSimulation, onStatsUpdate]);
+
   return (
     <div className="relative">
       <canvas

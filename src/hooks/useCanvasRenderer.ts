@@ -1,7 +1,7 @@
 
 import { useCallback } from 'react';
 import { Particle } from '@/types/simulation';
-import { renderParticles, renderIntentField, renderParticleDensity } from '@/utils/renderUtils';
+import { renderParticles, renderIntentField, renderParticleDensity, renderCombined } from '@/utils/renderUtils';
 
 type RenderMode = 'particles' | 'field' | 'density' | 'combined';
 
@@ -22,6 +22,12 @@ export function useCanvasRenderer() {
     ctx.fillRect(0, 0, dimensions.width, dimensions.height);
     
     // Render based on mode
+    if (renderMode === 'combined') {
+      // Use the combined rendering function for the best visual effect
+      renderCombined(ctx, particles, intentField, dimensions, viewMode);
+      return;
+    }
+    
     if (renderMode === 'particles' || renderMode === 'combined') {
       renderParticles(ctx, particles, dimensions, viewMode, true);
     }
@@ -32,10 +38,6 @@ export function useCanvasRenderer() {
     
     if (renderMode === 'density') {
       renderParticleDensity(ctx, particles, dimensions, 15, 0.4);
-    }
-    
-    if (renderMode === 'combined') {
-      renderIntentField(ctx, intentField, dimensions, 5, 0.1);
     }
   }, []);
 

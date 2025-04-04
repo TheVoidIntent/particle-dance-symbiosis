@@ -2,6 +2,7 @@ import React, { useRef, useEffect, useState } from 'react';
 import { useSimulationState } from '@/hooks/simulation';
 import { Particle, SimulationStats } from '@/types/simulation';
 import { detectStableClusters, evolveClusterIntelligence, generateClusterNarratives, identifyRobotClusters } from '@/utils/clusterIntelligence';
+import { useCanvasRenderer } from '@/hooks/useCanvasRenderer';
 
 export interface SimulationCanvasProps {
   width?: number;
@@ -53,6 +54,8 @@ const SimulationCanvas: React.FC<SimulationCanvasProps> = ({
   onEmergenceEvent = () => {}
 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const { renderSimulation } = useCanvasRenderer();
+  
   const [simulationStats, setSimulationStats] = useState<SimulationStats>({
     particleCount: 0,
     positiveParticles: 0,
@@ -193,6 +196,43 @@ const SimulationCanvas: React.FC<SimulationCanvasProps> = ({
     setSimulationStats(stats);
     onStatsUpdate(stats);
   }, [activeParticles, robots, narratives, onStatsUpdate, interactionEvents]);
+  
+  useEffect(() => {
+    if (!canvasRef.current || !isRunning) return;
+    
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    
+    let animationFrameId: number;
+    
+    const render = () => {
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = rect.width;
+      canvas.height = rect.height;
+      
+      const dimensions = { width: canvas.width, height: canvas.height };
+      
+      const dummyIntentField = [Array(20).fill(0).map(() => Array(20).fill(0))];
+      
+      renderSimulation(
+        ctx, 
+        particles, 
+        [dummyIntentField], 
+        dimensions, 
+        'combined', 
+        '2d'
+      );
+      
+      animationFrameId = requestAnimationFrame(render);
+    };
+    
+    render();
+    
+    return () => {
+      cancelAnimationFrame(animationFrameId);
+    };
+  }, [particles, isRunning]);
   
   return (
     <div className="relative">

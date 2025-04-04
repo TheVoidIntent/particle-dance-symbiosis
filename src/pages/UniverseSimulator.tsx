@@ -153,7 +153,20 @@ const UniverseSimulator: React.FC = () => {
   // Start ambient soundscape when particles exist and audio is enabled
   useEffect(() => {
     if (running && audioEnabled && simulation.particles.length > 0) {
-      simAudio.startSoundscape(simulation.particles);
+      const convertedParticles = simulation.particles.map(p => ({
+        ...p,
+        mass: p.mass || 1,
+        created: p.creationTime || Date.now(),
+        scale: p.scale || 1,
+        vz: p.vz || 0,
+        intentDecayRate: p.intentDecayRate || 0.001,
+        adaptiveScore: p.adaptiveScore || 0,
+        energyCapacity: p.energyCapacity || (p.energy || 100) * 1.2,
+        age: p.age || 0,
+        isPostInflation: p.isPostInflation || false
+      }));
+      
+      simAudio.startSoundscape(convertedParticles);
     }
     
     return () => {

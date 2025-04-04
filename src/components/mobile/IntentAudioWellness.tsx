@@ -111,10 +111,8 @@ const IntentAudioWellness: React.FC<IntentAudioWellnessProps> = ({
     if (session) {
       setRemainingTime(session.duration * 60); // Convert to seconds
       
-      toast({
-        title: `${session.name} selected`,
-        description: `${session.duration} minute session ready to begin`,
-      });
+      // Use the toast function correctly, passing a string message
+      toast.success(`${session.name} selected - ${session.duration} minute session ready to begin`);
     }
   };
   
@@ -201,7 +199,15 @@ const IntentAudioWellness: React.FC<IntentAudioWellnessProps> = ({
       notes: sessionNotes,
       timestamp: new Date().toISOString(),
       duration: session.duration * 60 - remainingTime,
-      audioData: simpleAudio.exportAudioData()
+      audioData: simpleAudio.exportAudioData(),
+      // Add empty properties required by SimulationState interface for compatibility
+      particles: [],
+      intentField: [],
+      interactionsCount: 0,
+      frameCount: 0,
+      simulationTime: 0,
+      isRunning: false,
+      intervalId: null
     };
     
     // Export to NotebookLM

@@ -1,67 +1,52 @@
 
-import { useState, useCallback } from 'react';
-import { SimulationStats } from '@/types/simulation';
-import { exportDataAsPDF, exportDataAsCsv, getDataPoints } from '@/utils/dataExportUtils';
+import { useState, useEffect } from 'react';
+import { isMotherSimulationRunning, getSimulationStats } from '@/utils/simulation/motherSimulation';
 
-/**
- * Hook for managing simulation data
- */
+export interface SimulationStatsData {
+  particleCount: number;
+  interactionCount: number;
+  knowledgeAverage: number;
+  isRunning: boolean;
+  frameCount: number;
+}
+
 export function useSimulationData() {
-  const [simulationData, setSimulationData] = useState<any[]>([]);
-  const [isExporting, setIsExporting] = useState(false);
+  const [stats, setStats] = useState<SimulationStatsData>({
+    particleCount: 0,
+    interactionCount: 0,
+    knowledgeAverage: 0,
+    isRunning: false,
+    frameCount: 0
+  });
 
-  /**
-   * Add a new data point
-   */
-  const addDataPoint = useCallback((dataPoint: any) => {
-    setSimulationData(prev => [...prev, { ...dataPoint, timestamp: Date.now() }]);
-  }, []);
-
-  /**
-   * Export the current simulation data
-   */
-  const exportSimulationData = useCallback((format: 'pdf' | 'csv' = 'pdf') => {
-    setIsExporting(true);
-    
-    try {
-      if (format === 'pdf') {
-        exportDataAsPDF(simulationData, `simulation-data-${Date.now()}.pdf`);
-      } else {
-        exportDataAsCsv(simulationData, `simulation-data-${Date.now()}.csv`);
+  useEffect(() => {
+    const updateInterval = setInterval(() => {
+      if (isMotherSimulationRunning()) {
+        const currentStats = getSimulationStats();
+        
+        setStats({
+          particleCount: currentStats.particleCount,
+          interactionCount: currentStats.interactionsCount || 0, // Map interactionsCount to interactionCount
+          knowledgeAverage: currentStats.knowledgeAverage || 0,
+          isRunning: isMotherSimulationRunning(),
+          frameCount: currentStats.frameCount || 0
+        });
       }
-      
-      return true;
-    } catch (error) {
-      console.error('Error exporting simulation data:', error);
-      return false;
-    } finally {
-      setIsExporting(false);
-    }
-  }, [simulationData]);
-
-  /**
-   * Clear all simulation data
-   */
-  const clearSimulationData = useCallback(() => {
-    setSimulationData([]);
+    }, 1000);
+    
+    return () => clearInterval(updateInterval);
   }, []);
 
-  /**
-   * Get data points for visualization
-   */
-  const getStoredDataPoints = useCallback(() => {
-    if (simulationData.length === 0) {
-      return getDataPoints();
-    }
-    return simulationData;
-  }, [simulationData]);
-
-  return {
-    simulationData,
-    isExporting,
-    addDataPoint,
-    exportSimulationData,
-    clearSimulationData,
-    getStoredDataPoints
+  const updateSimulationStats = () => {
+    const stats = getSimulationStats();
+    setStats({
+      particleCount: stats.particleCount,
+      interactionCount: stats.interactionsCount || 0, // Map interactionsCount to interactionCount
+      knowledgeAverage: stats.knowledgeAverage || 0,
+      isRunning: isMotherSimulationRunning(),
+      frameCount: stats.frameCount || 0
+    });
   };
+
+  return { stats, updateSimulationStats };
 }

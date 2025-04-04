@@ -1,3 +1,4 @@
+
 import React, { useRef, useEffect, useState } from 'react';
 import { useSimulationState } from '@/hooks/simulation';
 import { Particle, SimulationStats } from '@/types/simulation';
@@ -213,12 +214,13 @@ const SimulationCanvas: React.FC<SimulationCanvasProps> = ({
       
       const dimensions = { width: canvas.width, height: canvas.height };
       
-      const dummyIntentField = [Array(20).fill(0).map(() => Array(20).fill(0))];
+      // Create a properly formatted dummy intent field array (number[][][])
+      const dummyIntentField: number[][][] = [Array(20).fill(0).map(() => Array(20).fill(0))];
       
       renderSimulation(
         ctx, 
         particles, 
-        [dummyIntentField], 
+        dummyIntentField, 
         dimensions, 
         'combined', 
         '2d'

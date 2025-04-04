@@ -21,11 +21,8 @@ const Simulator: React.FC = () => {
 
   useEffect(() => {
     if (!isMotherSimulationRunning()) {
-      startMotherSimulation(canvasRef.current || undefined, {
-        enableNetworkVisuals: true,
-        particleGlowStrength: 1.5,
-        useEnhancedColors: true
-      });
+      // Fix: Pass only one argument to startMotherSimulation
+      startMotherSimulation(canvasRef.current);
     }
 
     simpleAudio.initialize();

@@ -28,7 +28,7 @@ export function useCanvasRenderer() {
       return;
     }
     
-    if (renderMode === 'particles' || renderMode === 'combined') {
+    if (renderMode === 'particles') {
       renderParticles(ctx, particles, dimensions, viewMode, true);
     }
     

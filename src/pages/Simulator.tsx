@@ -21,7 +21,6 @@ const Simulator: React.FC = () => {
 
   useEffect(() => {
     if (!isMotherSimulationRunning()) {
-      // Fix: Pass only one argument to startMotherSimulation
       startMotherSimulation(canvasRef.current);
     }
 
@@ -85,7 +84,7 @@ const Simulator: React.FC = () => {
       
       <div className="absolute top-4 left-4 z-10 flex items-center space-x-6">
         <h1 className="text-xl font-semibold bg-clip-text text-transparent bg-gradient-to-r from-amber-300 via-orange-400 to-amber-300">
-          IntentSim Mascot
+          IntentSim
         </h1>
         
         <h2 className="text-lg text-gray-300">
@@ -113,33 +112,33 @@ const Simulator: React.FC = () => {
       </div>
       
       {showMetrics && (
-        <div className="absolute top-16 right-4 z-10 bg-black/60 backdrop-blur-sm p-4 rounded-lg border border-gray-700 text-xs space-y-2 w-64">
-          <h3 className="text-sm font-medium text-amber-300">Intent Wave Metrics</h3>
+        <div className="absolute top-16 right-4 z-10 bg-black/70 backdrop-blur-lg p-4 rounded-lg border border-indigo-500/30 text-xs space-y-2 w-64 animate-fade-in shadow-lg">
+          <h3 className="text-sm font-medium text-indigo-300">Intent Wave Metrics</h3>
           
           <div className="grid grid-cols-2 gap-2">
-            <div className="bg-gray-800/50 p-2 rounded">
+            <div className="bg-gray-800/70 p-2 rounded border border-gray-700/50">
               <div className="text-gray-400">Wave Frequency</div>
               <div className="text-white">{simpleAudio.intentWaveMetrics?.averageFrequency || 0} Hz</div>
             </div>
             
-            <div className="bg-gray-800/50 p-2 rounded">
+            <div className="bg-gray-800/70 p-2 rounded border border-gray-700/50">
               <div className="text-gray-400">Energy Level</div>
               <div className="text-white">{Math.round((simpleAudio.intentWaveMetrics?.totalEnergy || 0) * 100)}%</div>
             </div>
             
-            <div className="bg-gray-800/50 p-2 rounded">
+            <div className="bg-gray-800/70 p-2 rounded border border-gray-700/50">
               <div className="text-gray-400">Harmonic Ratio</div>
               <div className="text-white">{Math.round((simpleAudio.intentWaveMetrics?.harmonicRatio || 0) * 100)}%</div>
             </div>
             
-            <div className="bg-gray-800/50 p-2 rounded">
+            <div className="bg-gray-800/70 p-2 rounded border border-gray-700/50">
               <div className="text-gray-400">Resonance Score</div>
               <div className="text-white">{Math.round((simpleAudio.intentWaveMetrics?.resonanceScore || 0) * 100)}%</div>
             </div>
           </div>
           
-          <div className="text-center mt-2 pt-2 border-t border-gray-700">
-            <div className="text-amber-300/70">Simulation Stats</div>
+          <div className="text-center mt-2 pt-2 border-t border-gray-700/50">
+            <div className="text-indigo-300/80">Simulation Stats</div>
             <div className="flex justify-between mt-1 text-gray-300">
               <span>Particles: {simulationStats.particleCount}</span>
               <span>Interactions: {simulationStats.interactionsCount}</span>
@@ -160,7 +159,7 @@ const Simulator: React.FC = () => {
         height={window.innerHeight}
       />
       
-      <div className="absolute bottom-4 w-full text-center text-sm text-white/50">
+      <div className="absolute bottom-4 w-full text-center text-sm text-white/70">
         © 2025 IntentSim.org - Universe Intent Simulation
       </div>
     </div>

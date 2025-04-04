@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -36,7 +35,7 @@ const DataAnalysis: React.FC = () => {
         
         setStats({
           particleCount: currentStats.particleCount,
-          interactionCount: currentStats.interactionsCount || 0, // Map interactionsCount to interactionCount
+          interactionCount: currentStats.interactionsCount || 0,
           knowledgeAverage: currentStats.knowledgeAverage || 0,
           isRunning: isMotherSimulationRunning(),
           frameCount: currentStats.frameCount || 0
@@ -50,9 +49,11 @@ const DataAnalysis: React.FC = () => {
   const updateSimulationStats = () => {
     const stats = getSimulationStats();
     setStats({
-      ...stats,
+      particleCount: stats.particleCount,
+      interactionCount: stats.interactionsCount || 0,
+      knowledgeAverage: stats.knowledgeAverage || 0,
       isRunning: isMotherSimulationRunning(),
-      frameCount: stats.interactionsCount
+      frameCount: stats.frameCount || 0
     });
   };
 

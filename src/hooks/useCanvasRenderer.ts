@@ -1,6 +1,6 @@
 
 import { useCallback } from 'react';
-import { Particle } from '@/utils/particleUtils';
+import { Particle } from '@/types/simulation';
 import { renderParticles, renderIntentField, renderParticleDensity } from '@/utils/renderUtils';
 
 type RenderMode = 'particles' | 'field' | 'density' | 'combined';

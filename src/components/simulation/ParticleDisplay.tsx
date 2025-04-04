@@ -1,6 +1,6 @@
 
 import React, { useRef, useEffect } from 'react';
-import { Particle } from '@/utils/particleUtils';
+import { Particle } from '@/types/simulation';
 
 type ParticleDisplayProps = {
   canvasRef: React.RefObject<HTMLCanvasElement>;

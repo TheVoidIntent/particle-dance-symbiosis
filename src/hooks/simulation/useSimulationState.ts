@@ -1,6 +1,5 @@
-
 import { useState, useRef, useCallback } from 'react';
-import { Particle } from '@/utils/particleUtils';
+import { Particle } from '@/types/simulation';
 
 export interface SimulationState {
   particles: Particle[];

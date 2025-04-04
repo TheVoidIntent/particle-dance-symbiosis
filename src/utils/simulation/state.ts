@@ -1,5 +1,6 @@
 
-import { Particle } from '../particleUtils';
+// Change the import to get Particle from types instead of particleUtils
+import { Particle } from '@/types/simulation';
 import { fieldConfig } from './config';
 
 // State for the mother simulation

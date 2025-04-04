@@ -1,6 +1,6 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Particle } from '@/utils/particleUtils';
+import { Particle } from '@/types/simulation';
 import { useParticleSimulation, InflationEvent } from '@/hooks/simulation';
 
 type ParticleManagementProps = {

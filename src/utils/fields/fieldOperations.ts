@@ -1,5 +1,5 @@
-
-import { Particle } from '@/utils/particleUtils';
+import { initializeIntentField } from '@/utils/intentFieldUtils';
+import { Particle } from '@/types/simulation';
 
 // Update the intent field with fluctuations
 export function updateIntentField(

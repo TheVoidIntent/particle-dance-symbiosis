@@ -1,50 +1,55 @@
 
 import React from 'react';
-import { Helmet } from "react-helmet";
+import { Helmet } from 'react-helmet';
 import IntentSimon from '@/components/IntentSimon';
+import { Button } from '@/components/ui/button';
+import { Link } from 'react-router-dom';
 
 const IntentSimonPage: React.FC = () => {
   return (
-    <>
+    <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-800 to-black text-white">
       <Helmet>
-        <title>IntentSimon | Intent-Based Universe Assistant | IntentSim.org</title>
-        <meta name="description" content="IntentSimon is your dedicated assistant for intent-based universe theory, simulation data, and research" />
+        <title>Meet IntentSim(on) | Universe Intent Simulation</title>
+        <meta name="description" content="Meet IntentSim(on), the friendly mascot of our universe simulation project" />
       </Helmet>
-
-      <div className="container mx-auto px-4 py-8">
-        <div className="max-w-4xl mx-auto">
-          <h1 className="text-3xl md:text-4xl font-bold mb-6 text-center bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 via-purple-600 to-blue-600">
-            IntentSimon Assistant
-          </h1>
-          
-          <p className="text-center text-gray-600 dark:text-gray-400 mb-8 max-w-2xl mx-auto">
-            Your dedicated assistant for the intent-based universe model. Ask questions, upload media for analysis, or request deep research on any aspect of IntentSim.
-          </p>
-          
-          <div className="h-[600px] mb-8">
-            <IntentSimon />
+      
+      <div className="container mx-auto py-20 px-4 text-center">
+        <h1 className="text-4xl md:text-6xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400">
+          Meet IntentSim(on)!
+        </h1>
+        
+        <p className="text-xl md:text-2xl text-gray-300 max-w-2xl mx-auto mb-12">
+          Your friendly guide to the universe of intent-based particle simulations
+        </p>
+        
+        <div className="flex justify-center mb-16">
+          <IntentSimon size="lg" className="animate-float" />
+        </div>
+        
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-5xl mx-auto mb-16">
+          <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-xl p-6">
+            <h3 className="text-xl font-semibold mb-2">Friendly Interface</h3>
+            <p className="text-gray-400">IntentSim(on) helps make complex simulation concepts accessible and engaging for everyone.</p>
           </div>
           
-          <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-6 mt-8">
-            <h2 className="text-xl font-semibold mb-3">About IntentSimon</h2>
-            <p className="mb-4">
-              IntentSimon is a specialized assistant designed to help you explore and understand the theoretical framework behind IntentSim.org's universe simulation. Key features include:
-            </p>
-            <ul className="list-disc pl-5 space-y-2 mb-4">
-              <li>Full knowledge of intent field dynamics and particle interactions</li>
-              <li>Integration with ATLAS/CERN public datasets for research correlation</li>
-              <li>Media analysis capabilities for images, audio, and video</li>
-              <li>Deep research functionality across scientific literature</li>
-              <li>Oxford professor voice synthesis for clear explanations</li>
-              <li>Neural network insights from simulation results</li>
-            </ul>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              IntentSimon continuously learns from new simulation data and research findings to provide the most accurate and up-to-date information about intent-based universe formation.
-            </p>
+          <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-xl p-6">
+            <h3 className="text-xl font-semibold mb-2">Evolving Intelligence</h3>
+            <p className="text-gray-400">Just like our simulation particles, IntentSim(on) represents evolving knowledge and emergent complexity.</p>
+          </div>
+          
+          <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-xl p-6">
+            <h3 className="text-xl font-semibold mb-2">Your Guide</h3>
+            <p className="text-gray-400">Let IntentSim(on) guide you through the fascinating world of universal intent simulation.</p>
           </div>
         </div>
+        
+        <Link to="/visitor">
+          <Button size="lg" className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-6 h-auto">
+            Explore the Simulation with IntentSim(on)
+          </Button>
+        </Link>
       </div>
-    </>
+    </div>
   );
 };
 

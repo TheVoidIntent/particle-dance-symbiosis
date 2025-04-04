@@ -1,19 +1,40 @@
 
 import React from 'react';
-import IntentAssistant from './IntentAssistant';
 
 interface IntentSimonProps {
   className?: string;
+  size?: 'sm' | 'md' | 'lg';
+  animate?: boolean;
 }
 
-const IntentSimon: React.FC<IntentSimonProps> = ({ className = "" }) => {
+const IntentSimon: React.FC<IntentSimonProps> = ({ 
+  className = '', 
+  size = 'md',
+  animate = true 
+}) => {
+  // Size mapping
+  const sizeClasses = {
+    sm: 'w-16 h-16',
+    md: 'w-32 h-32',
+    lg: 'w-64 h-64'
+  };
+  
+  // Animation classes
+  const animationClass = animate ? 'animate-pulse' : '';
+  
   return (
-    <IntentAssistant 
-      initialMessage="Hello! I'm IntentSimon, your dedicated IntentSim.org assistant. I'm fully trained on the intent-based universe model, simulation data, and ATLAS/CERN datasets. How can I help advance your understanding of intent-based universe formation today?"
-      placeholder="Ask about intent fields, particles, research findings, or upload media for analysis..."
-      className={className}
-      voiceStyle="professor"
-    />
+    <div className={`relative ${sizeClasses[size]} ${animationClass} ${className}`}>
+      <img 
+        src="/lovable-uploads/246abda5-e73b-4b1b-bbaf-2febd4548f9c.png" 
+        alt="IntentSim(on) Mascot" 
+        className="w-full h-full object-contain"
+      />
+      {animate && (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div className="w-1/4 h-1/4 bg-yellow-300 rounded-full opacity-0 animate-ping-slow"></div>
+        </div>
+      )}
+    </div>
   );
 };
 

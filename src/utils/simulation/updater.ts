@@ -26,15 +26,18 @@ export function updateSimulation(): void {
         particle.y += particle.vy;
       }
       
-      // Boundary handling
-      if (particle.x !== undefined && simulationState.dimensions) {
-        if (particle.x < 0 || particle.x > simulationState.dimensions.width) {
+      // Boundary handling - use width/height from container if dimensions not available
+      const containerWidth = simulationState.width || 800;
+      const containerHeight = simulationState.height || 600;
+      
+      if (particle.x !== undefined) {
+        if (particle.x < 0 || particle.x > containerWidth) {
           if (particle.vx !== undefined) particle.vx = -particle.vx * 0.8;
         }
       }
       
-      if (particle.y !== undefined && simulationState.dimensions) {
-        if (particle.y < 0 || particle.y > simulationState.dimensions.height) {
+      if (particle.y !== undefined) {
+        if (particle.y < 0 || particle.y > containerHeight) {
           if (particle.vy !== undefined) particle.vy = -particle.vy * 0.8;
         }
       }
@@ -43,10 +46,12 @@ export function updateSimulation(): void {
       if (particle.age !== undefined) {
         particle.age += 0.01;
       }
-      
-      // Record iteration
-      simulationState.iteration++;
     });
+    
+    // Increment simulation iteration counter if it exists
+    if (typeof simulationState.iterationCount !== 'undefined') {
+      simulationState.iterationCount++;
+    }
   }
 }
 

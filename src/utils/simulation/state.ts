@@ -94,6 +94,3 @@ export function getSimulationStats() {
   
   return stats;
 }
-
-// Export loadState explicitly
-export { loadState };

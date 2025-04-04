@@ -53,9 +53,20 @@ export function learnFromSimulationParticles(particles: Particle[]): void {
   if (!particles || particles.length === 0) return;
   
   // Analyze particle distribution
-  const positiveParticles = particles.filter(p => p.charge > 0.3);
-  const negativeParticles = particles.filter(p => p.charge < -0.3);
-  const neutralParticles = particles.filter(p => Math.abs(p.charge) <= 0.3);
+  const positiveParticles = particles.filter(p => {
+    const charge = typeof p.charge === 'string' ? p.charge : String(p.charge);
+    return charge === 'positive';
+  });
+  
+  const negativeParticles = particles.filter(p => {
+    const charge = typeof p.charge === 'string' ? p.charge : String(p.charge);
+    return charge === 'negative';
+  });
+  
+  const neutralParticles = particles.filter(p => {
+    const charge = typeof p.charge === 'string' ? p.charge : String(p.charge);
+    return charge === 'neutral';
+  });
   
   // Calculate average knowledge by charge type
   const avgPositiveKnowledge = positiveParticles.length > 0 

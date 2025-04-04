@@ -36,7 +36,7 @@ const DataAnalysis: React.FC = () => {
         
         setStats({
           particleCount: currentStats.particleCount,
-          interactionCount: currentStats.interactionsCount || 0, // Use interactionsCount from the API
+          interactionCount: currentStats.interactionsCount || 0, // Map interactionsCount to interactionCount
           knowledgeAverage: currentStats.knowledgeAverage || 0,
           isRunning: isMotherSimulationRunning(),
           frameCount: currentStats.frameCount || 0

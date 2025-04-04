@@ -1,9 +1,12 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Helmet } from 'react-helmet';
-import { Volume2, Info } from 'lucide-react';
+import { Volume2, Info, Play, Pause } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
+import { Button } from '@/components/ui/button';
 import { useSimpleAudio } from '@/hooks/useSimpleAudio';
 import { startMotherSimulation, stopMotherSimulation, isMotherSimulationRunning, getParticles, getSimulationStats } from '@/utils/simulation/motherSimulation';
+import { toast } from 'sonner';
 
 const Simulator: React.FC = () => {
   const [volume, setVolume] = useState(50);
@@ -75,6 +78,15 @@ const Simulator: React.FC = () => {
     setShowMetrics(!showMetrics);
   };
 
+  const toggleSimulation = () => {
+    setIsRunning(!isRunning);
+    if (!isRunning) {
+      toast.success("Simulation resumed");
+    } else {
+      toast.info("Simulation paused");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-black text-white overflow-hidden relative">
       <Helmet>
@@ -93,13 +105,23 @@ const Simulator: React.FC = () => {
       </div>
       
       <div className="absolute top-4 right-4 z-10 flex items-center space-x-3">
+        <Button 
+          variant="ghost"
+          size="icon"
+          onClick={toggleSimulation}
+          className="text-white/70 hover:text-white w-9 h-9 rounded-full bg-gray-800/60"
+        >
+          {isRunning ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+        </Button>
+        
         <button 
           onClick={toggleMetrics}
-          className="p-2 rounded-full bg-gray-800/50 hover:bg-gray-700/50 transition-colors"
+          className="p-2 rounded-full bg-gray-800/60 hover:bg-gray-700/60 transition-colors"
         >
           <Info className="h-5 w-5 text-white/70" />
         </button>
-        <Volume2 className="h-5 w-5 text-white/70" />
+        
+        <Volume2 className="h-5 w-5 text-white/70 ml-2" />
         <Slider
           value={[volume]}
           min={0}
@@ -118,7 +140,7 @@ const Simulator: React.FC = () => {
           <div className="grid grid-cols-2 gap-2">
             <div className="bg-gray-800/70 p-2 rounded border border-gray-700/50">
               <div className="text-gray-400">Wave Frequency</div>
-              <div className="text-white">{simpleAudio.intentWaveMetrics?.averageFrequency || 0} Hz</div>
+              <div className="text-white">{simulationStats.intentWaveIntensity} Hz</div>
             </div>
             
             <div className="bg-gray-800/70 p-2 rounded border border-gray-700/50">
@@ -159,8 +181,16 @@ const Simulator: React.FC = () => {
         height={window.innerHeight}
       />
       
-      <div className="absolute bottom-4 w-full text-center text-sm text-white/70">
-        © 2025 IntentSim.org - Universe Intent Simulation
+      <div className="absolute bottom-0 left-0 right-0 flex justify-between items-center px-4 py-2 bg-gradient-to-t from-black via-black/80 to-transparent">
+        <div className="text-white/80 text-sm">
+          Intent Wave Intensity: <span className="text-indigo-300">{simulationStats.intentWaveIntensity}</span>
+        </div>
+        <div className="text-center text-sm text-white/70">
+          © 2025 IntentSim.org - Universe Intent Simulation
+        </div>
+        <div className="text-white/80 text-sm">
+          Complexity: <span className="text-indigo-300">{simulationStats.complexity}</span>
+        </div>
       </div>
     </div>
   );

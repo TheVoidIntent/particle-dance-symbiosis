@@ -1,36 +1,38 @@
-// Simulation types
+
+export type ParticleCharge = 'positive' | 'negative' | 'neutral';
+export type ParticleType = 'regular' | 'high-energy' | 'quantum' | 'composite' | 'adaptive';
 
 export interface Particle {
   id: string;
   x: number;
   y: number;
-  z: number;
+  z?: number;
   vx: number;
   vy: number;
-  vz: number;
-  charge: 'positive' | 'negative' | 'neutral';
-  color: string;
-  knowledge: number;
-  intent: number;
-  age: number;
-  type: string;
-  interactions: number;
+  vz?: number;
+  charge: ParticleCharge;
   radius: number;
+  size?: number;
   mass: number;
-  size: number;
-  complexity: number;
-  energy: number;
-  interactionTendency: number;
-  lastInteraction: number;
-  interactionCount: number;
-  created: number;
-  creationTime: number;
+  color: string;
+  type?: ParticleType;
+  intent?: number;
+  energy?: number;
+  knowledge?: number;
+  complexity?: number;
+  adaptability?: number;
+  lastInteraction?: number;
+  interactionCount?: number;
+  age?: number;
+  intentDecayRate?: number;
+  created?: number;
+  scale?: number;
   isPostInflation?: boolean;
-  scale: number;
-  adaptiveScore: number;
-  intentDecayRate: number;
-  energyCapacity: number;
-  isHighEnergy?: boolean;
+  creationTime?: number;
+  interactions?: number;
+  interactionTendency?: number;
+  adaptiveScore?: number;
+  energyCapacity?: number;
 }
 
 export interface SimulationStats {
@@ -38,77 +40,72 @@ export interface SimulationStats {
   positiveParticles: number;
   negativeParticles: number;
   neutralParticles: number;
+  interactionRate?: number;
+  averageKnowledge?: number;
+  complexityIndex?: number;
+  systemEntropy?: number;
   totalInteractions: number;
-  timestamp?: number;
+  emergenceIndex?: number;
+  intentFieldComplexity?: number;
+  interactionEfficiency?: number;
   frame?: number;
   time?: number;
+  timestamp?: number;
   interactions?: number;
-  interactionsCount?: number;
-  interactionCount?: number;
   robotCount?: number;
   clusterCount?: number;
-  highEnergyParticles?: number;
-  quantumParticles?: number;
-  compositeParticles?: number;
-  adaptiveParticles?: number;
-  complexityIndex?: number;
-  averageKnowledge?: number;
-  maxComplexity?: number;
-  averageClusterSize?: number;
-  systemEntropy?: number;
-  intentFieldComplexity?: number;
-  knowledgeAverage?: number;
-  frameCount?: number;
-  isRunning?: boolean;
-  // Adding missing properties from errors
-  shannonEntropy?: number;
-  spatialEntropy?: number;
-  fieldOrderParameter?: number;
-  kolmogorovComplexity?: number;
-  informationDensity?: number;
-  clusterLifetime?: number;
-  clusterEntropyDelta?: number;
 }
 
-export interface ClusterData {
-  id: number;
+export interface IntentField {
+  resolution: number;
+  data: number[][][];
+  dimensions: {
+    width: number;
+    height: number;
+    depth: number;
+  };
+}
+
+export interface InteractionEvent {
+  particle1Id: string;
+  particle2Id: string;
+  timestamp: number;
+  energyExchanged: number;
+  knowledgeExchanged: number;
+  position: { x: number, y: number, z?: number };
+}
+
+export interface InflationEvent {
+  timestamp: number;
+  particleCount: number;
+  energyLevel: number;
+  description: string;
+}
+
+export interface Cluster {
+  id: string;
   particles: Particle[];
-  center: { x: number; y: number };
-  avgIntent: number;
-  avgKnowledge: number;
-  stability: number;
+  centroidX: number;
+  centroidY: number;
+  charge: ParticleCharge;
+  size: number;
   complexity: number;
-  age: number;
-  narrative?: string;
+  knowledge: number;
+  energy: number;
+  formationTime: number;
+  narratives?: Array<{ text: string, timestamp: number }>;
+  intelligenceScore?: number;
 }
 
-export interface IntentFieldCell {
-  x: number;
-  y: number;
-  z?: number;
-  value: number;
-  gradient: { x: number; y: number; z?: number };
-}
-
-export interface SimulationState {
-  particles: Particle[];
-  intentField: number[][];
-  interactionsCount: number;
-  frameCount: number;
-  simulationTime?: number;
-  isRunning?: boolean;
-  intervalId?: number | null;
-  emergenceIndex?: number;
-  particleCount?: number;
-  positiveParticles?: number;
-  negativeParticles?: number;
-  neutralParticles?: number;
-  intentFieldComplexity?: number;
-  knowledgeAverage?: number;
-  type?: string;
-  session?: any;
-  notes?: string;
-  timestamp?: string;
-  duration?: number;
-  audioData?: object;
+export interface SimulationConfig {
+  initialParticleCount: number;
+  maxParticles: number;
+  fieldResolution: number;
+  intentFluctuationRate: number;
+  interactionRadius: number;
+  boundaryCondition: 'wrap' | 'bounce' | 'disappear';
+  particleLifetime: number | null;
+  inflationEnabled: boolean;
+  inflationThreshold: number;
+  inflationMultiplier: number;
 }

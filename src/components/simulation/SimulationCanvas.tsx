@@ -1,3 +1,4 @@
+
 import React, { useRef, useEffect, useState } from 'react';
 import { useSimulationState } from '@/hooks/simulation';
 import { Particle, SimulationStats } from '@/types/simulation';
@@ -214,7 +215,7 @@ const SimulationCanvas: React.FC<SimulationCanvasProps> = ({
       const dimensions = { width: canvas.width, height: canvas.height };
       
       // Create a properly formatted intent field array with correct type
-      const dummyIntentField: number[][][] = [Array(20).fill(0).map(() => Array(20).fill(0))];
+      const dummyIntentField: number[][][] = [Array(20).fill(0).map(() => Array(20).fill(0).map(() => 0))];
       
       renderSimulation(
         ctx, 

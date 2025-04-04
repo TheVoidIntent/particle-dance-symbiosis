@@ -6,7 +6,9 @@ const config: CapacitorConfig = {
   appName: 'IntentSim',
   webDir: 'dist',
   server: {
-    androidScheme: 'https'
+    androidScheme: 'https',
+    url: "https://407c2fef-0467-43aa-a79a-c724c3353819.lovableproject.com?forceHideBadge=true",
+    cleartext: true
   },
   android: {
     buildOptions: {

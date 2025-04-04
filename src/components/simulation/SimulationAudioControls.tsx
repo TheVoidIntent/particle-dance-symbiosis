@@ -3,7 +3,9 @@ import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
-import { Volume2, VolumeX, Bell } from "lucide-react";
+import { Volume2, VolumeX, Bell, Smartphone } from "lucide-react";
+import { Link } from 'react-router-dom';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 export interface SimulationAudioControlsProps {
   audioEnabled: boolean;
@@ -22,6 +24,8 @@ const SimulationAudioControls: React.FC<SimulationAudioControlsProps> = ({
   isRunning,
   onTestSound
 }) => {
+  const isMobile = useIsMobile();
+
   return (
     <div className="space-y-4 py-2 border-t border-gray-700">
       <div className="flex justify-between items-center">
@@ -99,6 +103,25 @@ const SimulationAudioControls: React.FC<SimulationAudioControlsProps> = ({
           </div>
         </div>
       )}
+      
+      {/* Mobile Wellness Experience Link */}
+      <div className="pt-3 border-t border-gray-700/50">
+        <Link to="/mobile-wellness">
+          <Button 
+            variant="outline" 
+            size="sm"
+            className="w-full"
+          >
+            <Smartphone className="h-4 w-4 mr-2" />
+            Intent Audio Wellness Experience
+          </Button>
+        </Link>
+        {isMobile && (
+          <p className="text-xs text-gray-400 mt-2">
+            Experience the wellness benefits of intent field audio on your mobile device
+          </p>
+        )}
+      </div>
     </div>
   );
 };

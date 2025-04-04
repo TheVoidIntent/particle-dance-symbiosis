@@ -1,356 +1,390 @@
 
-/**
- * Mother Simulation - The core simulation engine that runs in the background
- */
+import { createCanvas, loadImage } from 'canvas';
 
-// Simulation state
-let isRunning = false;
-let simulationInterval: number | null = null;
-let particleCount = 0;
-let interactionCount = 0;
-
-// Simple particle interface
-export interface Particle {
-  id: number;
+// Particle interface
+interface Particle {
+  id: string;
   x: number;
   y: number;
-  charge: number; // -1 to 1 (negative to positive)
-  intent: number; // 0 to 1 (low to high intent to interact)
-  knowledge: number; // 0 to 1 (amount of information gathered)
-  color: string;
+  vx: number;
+  vy: number;
+  charge: 'positive' | 'negative' | 'neutral';
   size: number;
-  velocity: { x: number; y: number };
-  // Add missing properties required by simulation.ts Particle interface
-  z?: number;
-  vx?: number;
-  vy?: number;
-  vz?: number;
-  radius?: number;
-  mass?: number;
-  interactionTendency?: number;
-  lastInteraction?: number;
-  interactionCount?: number;
-  age?: number;
-  interactions?: number;
-  intentDecayRate?: number;
-  created?: number;
-  scale?: number;
-  adaptiveScore?: number;
-  energyCapacity?: number;
-  creationTime?: number;
-  isPostInflation?: boolean;
-  energy?: number;
-  complexity?: number;
-  type?: string;
+  color: string;
+  knowledge: number;
+  intent: number;
+  age: number;
+  type: string;
 }
 
-// Simulation data
-const particles: Particle[] = [];
-const canvas = document.createElement('canvas');
-const ctx = canvas.getContext('2d');
+// Simulation state
+let particles: Particle[] = [];
+let isRunning = false;
+let canvas: HTMLCanvasElement | null = null;
+let ctx: CanvasRenderingContext2D | null = null;
+const maxParticles = 150;
+const fieldSize = 500;
+let animationFrameId: number | null = null;
+let intentField: number[][] = [];
+let interactionsCount = 0;
+let frameCount = 0;
+let emergenceIndex = 0;
+let intentFieldComplexity = 0;
+
+// Create and initialize a particle with random properties
+function createParticle(): Particle {
+  // Determine the charge based on intent field fluctuations
+  const fluctuationValue = Math.random() - 0.5;
+  let charge: 'positive' | 'negative' | 'neutral';
+  
+  if (fluctuationValue > 0.2) {
+    charge = 'positive';
+  } else if (fluctuationValue < -0.2) {
+    charge = 'negative';
+  } else {
+    charge = 'neutral';
+  }
+  
+  // Determine color based on charge
+  const color = 
+    charge === 'positive' ? 'rgba(64, 196, 255, 0.8)' : 
+    charge === 'negative' ? 'rgba(255, 64, 129, 0.8)' :
+    'rgba(241, 196, 15, 0.8)';
+  
+  // Set initial velocity based on charge (more active particles have higher values)
+  const speedFactor = 
+    charge === 'positive' ? 0.4 : 
+    charge === 'negative' ? 0.2 :
+    0.3;
+  
+  // Create the particle object with properties determined by charge and intent
+  return {
+    id: Math.random().toString(36).substring(2, 9),
+    x: Math.random() * fieldSize,
+    y: Math.random() * fieldSize,
+    vx: (Math.random() - 0.5) * speedFactor,
+    vy: (Math.random() - 0.5) * speedFactor,
+    charge: charge,
+    size: 3 + Math.random() * 2,
+    color: color,
+    knowledge: 0.1 + Math.random() * 0.2,
+    intent: 
+      charge === 'positive' ? 0.7 + Math.random() * 0.3 : 
+      charge === 'negative' ? 0.1 + Math.random() * 0.2 :
+      0.4 + Math.random() * 0.3,
+    age: 0,
+    type: 'standard'
+  };
+}
+
+// Initialize the intent field with random fluctuations
+function initializeIntentField() {
+  intentField = Array(Math.ceil(fieldSize / 10))
+    .fill(0)
+    .map(() => Array(Math.ceil(fieldSize / 10)).fill(0));
+  
+  // Create some initial random fluctuations in the field
+  for (let i = 0; i < intentField.length; i++) {
+    for (let j = 0; j < intentField[i].length; j++) {
+      intentField[i][j] = Math.random() * 0.2 - 0.1;
+    }
+  }
+}
 
 // Initialize the simulation
-export function initializeMotherSimulation() {
-  // Reset simulation data
-  particles.length = 0;
-  particleCount = 0;
-  interactionCount = 0;
+function initializeMotherSimulation(canvasElement?: HTMLCanvasElement) {
+  if (canvasElement) {
+    canvas = canvasElement;
+    ctx = canvas.getContext('2d');
+  } else if (typeof document !== 'undefined') {
+    canvas = document.getElementById('simulation-canvas') as HTMLCanvasElement;
+    ctx = canvas?.getContext('2d');
+  }
   
-  // Create initial particles
+  if (canvas) {
+    canvas.width = window.innerWidth || fieldSize;
+    canvas.height = window.innerHeight || fieldSize;
+  }
+  
+  // Initialize with some particles
+  particles = [];
   for (let i = 0; i < 50; i++) {
-    createParticle();
+    particles.push(createParticle());
   }
   
-  console.log("Mother simulation initialized with 50 particles");
+  // Initialize the intent field
+  initializeIntentField();
+  
+  console.info("Mother simulation initialized with", particles.length, "particles");
 }
 
-// Create a new particle
-function createParticle(): Particle {
-  // Determine charge from intent field fluctuations
-  const intentFluctuation = Math.random() * 2 - 1; // -1 to 1
-  const charge = intentFluctuation;
-  
-  // Particles with positive charge have higher intent to interact
-  const intent = charge > 0 ? 0.5 + (charge * 0.5) : 0.5 - (Math.abs(charge) * 0.3);
-  
-  // Determine color based on charge (negative=red, neutral=green, positive=blue)
-  let color;
-  if (charge < -0.3) {
-    color = `rgba(255, ${Math.floor(100 + (charge+1) * 155)}, ${Math.floor(100 + (charge+1) * 155)}, 0.8)`;
-  } else if (charge > 0.3) {
-    color = `rgba(${Math.floor(100 + (1-charge) * 155)}, ${Math.floor(100 + (1-charge) * 155)}, 255, 0.8)`;
-  } else {
-    color = `rgba(${Math.floor(150 + charge * 105)}, 255, ${Math.floor(150 + charge * 105)}, 0.8)`;
+// Add a new particle to the simulation if below maximum
+function addParticle() {
+  if (particles.length < maxParticles) {
+    particles.push(createParticle());
   }
-  
-  // Create the particle
-  const particle: Particle = {
-    id: particleCount++,
-    x: Math.random() * canvas.width,
-    y: Math.random() * canvas.height,
-    charge,
-    intent,
-    knowledge: 0,
-    color,
-    size: 3 + Math.random() * 5,
-    velocity: {
-      x: (Math.random() * 2 - 1) * 2,
-      y: (Math.random() * 2 - 1) * 2
-    },
-    // Add more properties required by the simulation.ts interface
-    z: 0,
-    vx: (Math.random() * 2 - 1) * 2,
-    vy: (Math.random() * 2 - 1) * 2,
-    vz: 0,
-    radius: 3 + Math.random() * 5,
-    mass: 1,
-    interactionTendency: intent,
-    lastInteraction: 0,
-    interactionCount: 0,
-    age: 0,
-    interactions: 0,
-    intentDecayRate: 0.001,
-    created: Date.now(),
-    scale: 1,
-    adaptiveScore: 0,
-    energy: 10,
-    complexity: 1,
-    creationTime: Date.now(),
-    isPostInflation: false,
-    type: charge > 0.3 ? 'positive' : charge < -0.3 ? 'negative' : 'neutral',
-    energyCapacity: 15
-  };
-  
-  particles.push(particle);
-  return particle;
 }
 
-// Update the simulation for one step
-function updateSimulation() {
-  if (!isRunning) return;
+// Update a single particle's position and properties
+function updateParticle(particle: Particle) {
+  // Update position based on velocity
+  particle.x += particle.vx;
+  particle.y += particle.vy;
   
-  // Update canvas dimensions if needed
-  const simulationCanvas = document.getElementById('simulation-canvas') as HTMLCanvasElement;
-  if (simulationCanvas) {
-    canvas.width = simulationCanvas.width;
-    canvas.height = simulationCanvas.height;
+  // Wrap around screen boundaries
+  if (particle.x < 0) particle.x = canvas?.width || fieldSize;
+  if (particle.x > (canvas?.width || fieldSize)) particle.x = 0;
+  if (particle.y < 0) particle.y = canvas?.height || fieldSize;
+  if (particle.y > (canvas?.height || fieldSize)) particle.y = 0;
+  
+  // Field influence - get the field cell this particle is in
+  const fieldX = Math.floor(particle.x / 10);
+  const fieldY = Math.floor(particle.y / 10);
+  
+  // Apply field influence if within bounds
+  if (fieldX >= 0 && fieldX < intentField.length && fieldY >= 0 && fieldY < intentField[0].length) {
+    // Field influences velocity slightly
+    particle.vx += intentField[fieldX][fieldY] * 0.01;
+    particle.vy += intentField[fieldX][fieldY] * 0.01;
+    
+    // Limit maximum velocity
+    const maxSpeed = 0.7;
+    const speed = Math.sqrt(particle.vx * particle.vx + particle.vy * particle.vy);
+    if (speed > maxSpeed) {
+      particle.vx = (particle.vx / speed) * maxSpeed;
+      particle.vy = (particle.vy / speed) * maxSpeed;
+    }
+    
+    // Particle also affects the field slightly based on its charge and intent
+    const fieldInfluence = 
+      particle.charge === 'positive' ? 0.005 : 
+      particle.charge === 'negative' ? -0.005 :
+      0.002;
+    intentField[fieldX][fieldY] += fieldInfluence * particle.intent;
   }
   
-  // Move particles
-  for (const particle of particles) {
-    // Apply intent-based behavior
-    
-    // Update position
-    particle.x += particle.velocity.x;
-    particle.y += particle.velocity.y;
-    
-    // Bounce off edges
-    if (particle.x < 0 || particle.x > canvas.width) {
-      particle.velocity.x *= -1;
-    }
-    if (particle.y < 0 || particle.y > canvas.height) {
-      particle.velocity.y *= -1;
-    }
-    
-    // Update vx and vy to match velocity
-    if (particle.vx !== undefined && particle.vy !== undefined) {
-      particle.vx = particle.velocity.x;
-      particle.vy = particle.velocity.y;
-    }
-  }
+  // Increase age
+  particle.age += 1;
   
-  // Process interactions
-  for (let i = 0; i < particles.length; i++) {
-    for (let j = i + 1; j < particles.length; j++) {
-      const p1 = particles[i];
-      const p2 = particles[j];
-      
-      // Calculate distance
-      const dx = p2.x - p1.x;
-      const dy = p2.y - p1.y;
+  // Check for interactions with other particles
+  particles.forEach(other => {
+    if (other.id !== particle.id) {
+      const dx = other.x - particle.x;
+      const dy = other.y - particle.y;
       const distance = Math.sqrt(dx * dx + dy * dy);
       
-      // If particles are close enough to interact
-      if (distance < p1.size + p2.size + 10) {
-        // Determine if interaction occurs based on intent
-        const interactionProbability = p1.intent * p2.intent;
+      // If particles are close enough, they interact
+      if (distance < 15) {
+        // Count this interaction
+        interactionsCount++;
         
-        if (Math.random() < interactionProbability) {
-          // Interaction occurs
-          interactionCount++;
-          
-          // Exchange knowledge (positive charge particles share more)
-          const p1Share = p1.charge > 0 ? 0.1 : 0.05;
-          const p2Share = p2.charge > 0 ? 0.1 : 0.05;
-          
-          const p1Knowledge = p1.knowledge;
-          const p2Knowledge = p2.knowledge;
-          
-          p1.knowledge = Math.min(1, p1.knowledge + p2Knowledge * p2Share);
-          p2.knowledge = Math.min(1, p2.knowledge + p1Knowledge * p1Share);
-          
-          // Knowledge affects size (growth)
-          p1.size = 3 + (p1.knowledge * 5);
-          p2.size = 3 + (p2.knowledge * 5);
-          
-          // Update interactions counters
-          if (p1.interactions !== undefined) p1.interactions++;
-          if (p2.interactions !== undefined) p2.interactions++;
-          if (p1.interactionCount !== undefined) p1.interactionCount++;
-          if (p2.interactionCount !== undefined) p2.interactionCount++;
+        // Knowledge/information exchange based on particle properties
+        const knowledgeTransferRate = 
+          particle.charge === 'positive' ? 0.05 : 
+          particle.charge === 'negative' ? 0.01 :
+          0.03;
+        
+        // Bidirectional knowledge transfer
+        if (particle.knowledge > other.knowledge) {
+          const transferAmount = (particle.knowledge - other.knowledge) * knowledgeTransferRate;
+          particle.knowledge -= transferAmount * 0.5;
+          other.knowledge += transferAmount;
+        } else {
+          const transferAmount = (other.knowledge - particle.knowledge) * knowledgeTransferRate;
+          other.knowledge -= transferAmount * 0.5;
+          particle.knowledge += transferAmount;
         }
+        
+        // Slight repulsion/attraction based on charges
+        const forceFactor = 
+          (particle.charge === 'positive' && other.charge === 'positive') ? -0.002 :
+          (particle.charge === 'negative' && other.charge === 'negative') ? -0.003 :
+          (particle.charge === 'positive' && other.charge === 'negative') ? 0.002 :
+          0.001;
+        
+        particle.vx += dx * forceFactor;
+        particle.vy += dy * forceFactor;
       }
     }
-  }
-  
-  // Occasionally create new particles 
-  if (Math.random() < 0.03 && particles.length < 100) {
-    createParticle();
-  }
-  
-  // Render to the actual canvas
-  renderSimulation();
+  });
 }
 
-// Render the simulation to the canvas with enhanced network effect
-function renderSimulation() {
-  const simulationCanvas = document.getElementById('simulation-canvas') as HTMLCanvasElement;
-  if (!simulationCanvas || !ctx) return;
-  
-  // Get the actual canvas context
-  const actualCtx = simulationCanvas.getContext('2d');
-  if (!actualCtx) return;
-  
-  // Adjust canvas size
-  if (simulationCanvas.width !== window.innerWidth || simulationCanvas.height !== window.innerHeight) {
-    simulationCanvas.width = window.innerWidth;
-    simulationCanvas.height = window.innerHeight;
-  }
-  
-  // Clear canvas with semi-transparent black for trail effect
-  actualCtx.fillStyle = 'rgba(0, 0, 0, 0.1)';
-  actualCtx.fillRect(0, 0, simulationCanvas.width, simulationCanvas.height);
-  
-  // Draw network connections first (so they appear behind particles)
-  for (const particle of particles) {
-    // Draw connection lines between ALL particles within threshold distance
-    for (const otherParticle of particles) {
-      if (particle.id !== otherParticle.id) {
-        const dx = otherParticle.x - particle.x;
-        const dy = otherParticle.y - particle.y;
-        const distance = Math.sqrt(dx * dx + dy * dy);
-        
-        // Draw connection line if close enough (increased from 100 to 150 for more connections)
-        if (distance < 150) {
-          const opacity = (1 - distance / 150) * 0.5;
-          
-          // Choose connection color based on particle charges
-          let connectionColor;
-          if (particle.charge > 0 && otherParticle.charge > 0) {
-            connectionColor = `rgba(180, 220, 255, ${opacity})`; // Blue for positive-positive
-          } else if (particle.charge < 0 && otherParticle.charge < 0) {
-            connectionColor = `rgba(255, 180, 180, ${opacity})`; // Red for negative-negative
-          } else if (Math.abs(particle.charge) < 0.3 && Math.abs(otherParticle.charge) < 0.3) {
-            connectionColor = `rgba(180, 255, 180, ${opacity})`; // Green for neutral-neutral
-          } else {
-            connectionColor = `rgba(220, 220, 255, ${opacity})`; // White-ish for mixed
-          }
-          
-          actualCtx.beginPath();
-          actualCtx.moveTo(particle.x, particle.y);
-          actualCtx.lineTo(otherParticle.x, otherParticle.y);
-          actualCtx.strokeStyle = connectionColor;
-          actualCtx.lineWidth = opacity * 2; // Make lines thicker based on proximity
-          actualCtx.stroke();
-        }
+// Update the intent field
+function updateIntentField() {
+  // Field naturally decays/stabilizes slightly each frame
+  for (let i = 0; i < intentField.length; i++) {
+    for (let j = 0; j < intentField[i].length; j++) {
+      // Decay factor - field tends toward equilibrium
+      intentField[i][j] *= 0.99;
+      
+      // Occasionally add random fluctuations
+      if (Math.random() < 0.01) {
+        intentField[i][j] += (Math.random() - 0.5) * 0.05;
       }
     }
   }
   
-  // Now draw particles
-  for (const particle of particles) {
-    // Draw the particle glow
-    const gradient = actualCtx.createRadialGradient(
-      particle.x, particle.y, 0,
-      particle.x, particle.y, particle.size * 3
-    );
-    gradient.addColorStop(0, particle.color);
-    gradient.addColorStop(1, 'transparent');
-    
-    actualCtx.beginPath();
-    actualCtx.arc(particle.x, particle.y, particle.size * 3, 0, Math.PI * 2);
-    actualCtx.fillStyle = gradient;
-    actualCtx.fill();
-    
-    // Draw the particle core
-    actualCtx.beginPath();
-    actualCtx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
-    actualCtx.fillStyle = particle.color;
-    actualCtx.fill();
-    
-    // Draw knowledge glow for particles with knowledge
-    if (particle.knowledge > 0.2) {
-      actualCtx.beginPath();
-      actualCtx.arc(particle.x, particle.y, particle.size + 5, 0, Math.PI * 2);
-      actualCtx.fillStyle = `rgba(255, 255, 255, ${particle.knowledge * 0.3})`;
-      actualCtx.fill();
+  // Calculate field complexity (a simple measure based on gradients)
+  let complexitySum = 0;
+  let gradientCount = 0;
+  
+  for (let i = 1; i < intentField.length - 1; i++) {
+    for (let j = 1; j < intentField[i].length - 1; j++) {
+      const gradX = Math.abs(intentField[i+1][j] - intentField[i-1][j]);
+      const gradY = Math.abs(intentField[i][j+1] - intentField[i][j-1]);
+      complexitySum += gradX + gradY;
+      gradientCount += 2;
     }
   }
+  
+  intentFieldComplexity = gradientCount > 0 ? complexitySum / gradientCount : 0;
+}
+
+// Calculate emergence index (a measure of system complexity)
+function calculateEmergenceIndex() {
+  // Simple measure based on particle diversity and interaction rate
+  const knowledgeVariance = calculateVariance(particles.map(p => p.knowledge));
+  const intentVariance = calculateVariance(particles.map(p => p.intent));
+  
+  // More variance and more interactions indicate higher emergence
+  emergenceIndex = (knowledgeVariance + intentVariance) * interactionsCount / 1000;
+  
+  // Limit to a reasonable range
+  emergenceIndex = Math.min(1, emergenceIndex);
+}
+
+// Helper function to calculate variance of an array
+function calculateVariance(array: number[]): number {
+  if (array.length === 0) return 0;
+  
+  const mean = array.reduce((sum, val) => sum + val, 0) / array.length;
+  const squareDiffs = array.map(val => {
+    const diff = val - mean;
+    return diff * diff;
+  });
+  
+  return squareDiffs.reduce((sum, val) => sum + val, 0) / array.length;
+}
+
+// Main animation/simulation loop
+function animateMotherSimulation() {
+  if (!isRunning) return;
+  
+  // Clear the canvas
+  if (ctx && canvas) {
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // Draw intent field as subtle background gradient
+    for (let i = 0; i < intentField.length; i++) {
+      for (let j = 0; j < intentField[i].length; j++) {
+        const fieldValue = intentField[i][j];
+        // Only draw significant field values
+        if (Math.abs(fieldValue) > 0.05) {
+          const x = i * 10;
+          const y = j * 10;
+          
+          // Field color based on value
+          const fieldColor = 
+            fieldValue > 0 ? `rgba(64, 196, 255, ${Math.min(0.1, Math.abs(fieldValue))})` :
+            fieldValue < 0 ? `rgba(255, 64, 129, ${Math.min(0.1, Math.abs(fieldValue))})` :
+            'rgba(241, 196, 15, 0.05)';
+          
+          ctx.fillStyle = fieldColor;
+          ctx.fillRect(x, y, 10, 10);
+        }
+      }
+    }
+    
+    // Update and draw particles
+    particles.forEach(particle => {
+      updateParticle(particle);
+      
+      // Draw particle
+      ctx!.beginPath();
+      ctx!.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+      ctx!.fillStyle = particle.color;
+      ctx!.fill();
+      
+      // Optional - draw a glow effect for particles with high knowledge
+      if (particle.knowledge > 0.5) {
+        const glowSize = particle.size * (1 + particle.knowledge);
+        const gradient = ctx!.createRadialGradient(
+          particle.x, particle.y, particle.size,
+          particle.x, particle.y, glowSize
+        );
+        gradient.addColorStop(0, particle.color);
+        gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+        
+        ctx!.beginPath();
+        ctx!.arc(particle.x, particle.y, glowSize, 0, Math.PI * 2);
+        ctx!.fillStyle = gradient;
+        ctx!.fill();
+      }
+    });
+  }
+  
+  // Occasionally add new particles (about 1 every 2 seconds)
+  if (Math.random() < 0.01 && particles.length < maxParticles) {
+    addParticle();
+  }
+  
+  // Update intent field
+  updateIntentField();
+  
+  // Increment frame counter
+  frameCount++;
+  
+  // Calculate emergence metrics occasionally
+  if (frameCount % 30 === 0) {
+    calculateEmergenceIndex();
+  }
+  
+  // Schedule next frame
+  animationFrameId = requestAnimationFrame(animateMotherSimulation);
 }
 
 // Start the simulation
-export function startMotherSimulation(): void {
-  if (isRunning) return;
-  
-  console.log("Starting mother simulation");
-  isRunning = true;
-  
-  // Initialize
-  initializeMotherSimulation();
-  
-  // Start update loop
-  simulationInterval = window.setInterval(updateSimulation, 1000 / 30); // 30 FPS
+export function startMotherSimulation(canvasElement?: HTMLCanvasElement) {
+  if (!isRunning) {
+    console.info("Starting mother simulation");
+    initializeMotherSimulation(canvasElement);
+    isRunning = true;
+    animateMotherSimulation();
+  }
 }
 
 // Stop the simulation
-export function stopMotherSimulation(): void {
-  if (!isRunning) return;
-  
-  console.log("Stopping mother simulation");
+export function stopMotherSimulation() {
   isRunning = false;
-  
-  // Clear interval
-  if (simulationInterval !== null) {
-    clearInterval(simulationInterval);
-    simulationInterval = null;
+  if (animationFrameId !== null) {
+    cancelAnimationFrame(animationFrameId);
+    animationFrameId = null;
   }
 }
 
-// Check if the simulation is running
-export function isMotherSimulationRunning(): boolean {
+// Check if simulation is running
+export function isMotherSimulationRunning() {
   return isRunning;
 }
 
-// Get simulation metrics
-export function getSimulationStats(): {
-  particleCount: number;
-  interactionCount: number;
-  knowledgeAverage: number;
-} {
-  let totalKnowledge = 0;
-  
-  for (const particle of particles) {
-    totalKnowledge += particle.knowledge;
-  }
-  
-  return {
-    particleCount: particles.length,
-    interactionCount,
-    knowledgeAverage: particles.length > 0 ? totalKnowledge / particles.length : 0
-  };
+// Get array of particles (for external use)
+export function getParticles() {
+  return [...particles]; // Return a copy to avoid external modifications
 }
 
-// Export the particles array for other components to use
-export function getParticles(): Particle[] {
-  return [...particles];
+// Get current simulation statistics
+export function getSimulationStats() {
+  return {
+    particles: [...particles],
+    intentField: [...intentField],
+    interactionsCount,
+    frameCount,
+    emergenceIndex,
+    particleCount: particles.length,
+    positiveParticles: particles.filter(p => p.charge === 'positive').length,
+    negativeParticles: particles.filter(p => p.charge === 'negative').length,
+    neutralParticles: particles.filter(p => p.charge === 'neutral').length,
+    intentFieldComplexity
+  };
 }

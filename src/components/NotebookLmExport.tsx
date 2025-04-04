@@ -65,7 +65,7 @@ const NotebookLmExport: React.FC = () => {
         playSound('cosmicBell', { informationDensity: 0.8, weight: 0.7 });
         break;
       case 'gravitationalWave':
-        playSound('gravitationalWave', { strength: 0.7, complexity: 0.6 });
+        playSound('gravitationalWave', { intensity: 0.7, complexity: 0.6 });
         break;
     }
   };

@@ -8,6 +8,11 @@ interface SoundOptions {
   duration?: number;
   weight?: number;
   informationDensity?: number;
+  // Add missing properties needed by components
+  strength?: number;
+  charge?: string;
+  particle1?: any;
+  particle2?: any;
 }
 
 interface AmbientSoundOptions {
@@ -19,6 +24,7 @@ interface AmbientSoundOptions {
 export function useSimpleAudio(autoInit = true, initialVolume = 0.5) {
   const [initialized, setInitialized] = useState(false);
   const [volume, setVolume] = useState(initialVolume);
+  const [isEnabled, setIsEnabled] = useState(true);
   
   const audioContext = useRef<AudioContext | null>(null);
   const masterGain = useRef<GainNode | null>(null);
@@ -60,6 +66,18 @@ export function useSimpleAudio(autoInit = true, initialVolume = 0.5) {
     setVolume(newVolume);
     masterGain.current.gain.value = newVolume;
   }, [initialized]);
+  
+  // Toggle audio on/off
+  const toggleAudio = useCallback(() => {
+    const newState = !isEnabled;
+    setIsEnabled(newState);
+    
+    if (!newState && initialized) {
+      stopAllSounds();
+    }
+    
+    return newState;
+  }, [isEnabled, initialized]);
   
   // Stop all sounds
   const stopAllSounds = useCallback(() => {
@@ -123,6 +141,79 @@ export function useSimpleAudio(autoInit = true, initialVolume = 0.5) {
           gainNode.connect(masterGain.current);
           oscillator.start();
           oscillator.stop(currentTime + 0.3);
+          break;
+          
+        case 'creation':
+          // Particle creation sound - vary based on charge
+          oscillator.type = 'sine';
+          const charge = options.charge || 'neutral';
+          const baseFreq = charge === 'positive' ? 440 : charge === 'negative' ? 330 : 385;
+          oscillator.frequency.value = baseFreq;
+          
+          // Creation envelope
+          gainNode.gain.setValueAtTime(0, currentTime);
+          gainNode.gain.linearRampToValueAtTime(0.15 * volume, currentTime + 0.05);
+          gainNode.gain.exponentialRampToValueAtTime(0.001, currentTime + 0.4);
+          
+          // Connect and play
+          oscillator.connect(gainNode);
+          gainNode.connect(masterGain.current);
+          oscillator.start();
+          oscillator.stop(currentTime + 0.5);
+          break;
+          
+        case 'interaction':
+          // Interaction sound when particles meet
+          if (options.particle1 && options.particle2) {
+            oscillator.type = 'triangle';
+            oscillator.frequency.value = 300 + Math.random() * 200;
+            
+            // Interaction envelope
+            gainNode.gain.setValueAtTime(0, currentTime);
+            gainNode.gain.linearRampToValueAtTime(0.07 * volume, currentTime + 0.01);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, currentTime + 0.2);
+            
+            // Connect and play
+            oscillator.connect(gainNode);
+            gainNode.connect(masterGain.current);
+            oscillator.start();
+            oscillator.stop(currentTime + 0.25);
+          }
+          break;
+          
+        case 'gravitationalWave':
+          // Gravity wave simulation
+          oscillator.type = 'sine';
+          oscillator.frequency.value = 80 + (options.strength || 0.5) * 40;
+          
+          // Gravity wave envelope - slow attack, slow decay
+          gainNode.gain.setValueAtTime(0, currentTime);
+          gainNode.gain.linearRampToValueAtTime(0.2 * volume, currentTime + 0.5);
+          gainNode.gain.exponentialRampToValueAtTime(0.001, currentTime + 2.0);
+          
+          // Connect and play
+          oscillator.connect(gainNode);
+          gainNode.connect(masterGain.current);
+          oscillator.start();
+          oscillator.stop(currentTime + 2.5);
+          break;
+          
+        case 'emergence':
+          // Complex emergence patterns
+          oscillator.type = 'sine';
+          const complexity = options.complexity || 0.5;
+          oscillator.frequency.value = 220 + complexity * 440;
+          
+          // Emergence envelope
+          gainNode.gain.setValueAtTime(0, currentTime);
+          gainNode.gain.linearRampToValueAtTime(0.15 * volume, currentTime + 0.2);
+          gainNode.gain.exponentialRampToValueAtTime(0.001, currentTime + 1.0 + complexity);
+          
+          // Connect and play
+          oscillator.connect(gainNode);
+          gainNode.connect(masterGain.current);
+          oscillator.start();
+          oscillator.stop(currentTime + 1.5 + complexity);
           break;
           
         default:
@@ -289,6 +380,8 @@ export function useSimpleAudio(autoInit = true, initialVolume = 0.5) {
     playCelestialEvent,
     playAmbientSound,
     stopAllSounds,
-    exportAudioData
+    exportAudioData,
+    toggleAudio,
+    isEnabled
   };
 }

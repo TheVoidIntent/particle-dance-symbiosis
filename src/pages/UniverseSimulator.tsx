@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Helmet } from 'react-helmet';
 import SimulationCanvas from '@/components/simulation/SimulationCanvas';
@@ -134,7 +135,7 @@ const UniverseSimulator: React.FC = () => {
         const newParticle = simulation.createParticle();
         
         if (audioEnabled) {
-          simpleAudio.playSound('creation', { charge: newParticle.charge });
+          simpleAudio.playSound('creation', { intensity: 0.5 });
         }
       }
     }, 1000 / particleCreationRate);
@@ -144,15 +145,26 @@ const UniverseSimulator: React.FC = () => {
   
   // Handle audio toggle
   const handleToggleAudio = () => {
-    const newState = simpleAudio.toggleAudio();
-    setAudioEnabled(newState);
-    
-    toast({
-      title: newState ? "Simulation Audio Enabled" : "Simulation Audio Disabled",
-      description: newState 
-        ? "You can now hear particles interacting and field fluctuations." 
-        : "Simulation will run silently.",
-    });
+    if (simpleAudio.toggleAudio) {
+      const newState = simpleAudio.toggleAudio();
+      setAudioEnabled(newState);
+      
+      toast({
+        title: newState ? "Simulation Audio Enabled" : "Simulation Audio Disabled",
+        description: newState 
+          ? "You can now hear particles interacting and field fluctuations." 
+          : "Simulation will run silently.",
+      });
+    } else {
+      // Fallback if toggleAudio is not available
+      setAudioEnabled(!audioEnabled);
+      toast({
+        title: !audioEnabled ? "Simulation Audio Enabled" : "Simulation Audio Disabled",
+        description: !audioEnabled 
+          ? "You can now hear particles interacting and field fluctuations." 
+          : "Simulation will run silently.",
+      });
+    }
   };
   
   // Handle volume change
@@ -164,7 +176,7 @@ const UniverseSimulator: React.FC = () => {
   // Handle interactions for audio (this would be connected to the canvas)
   const handleParticleInteraction = (particle1: any, particle2: any) => {
     if (audioEnabled) {
-      simpleAudio.playSound('interaction', { particle1, particle2 });
+      simpleAudio.playSound('interaction', { intensity: 0.5 });
     }
   };
   

@@ -1,280 +1,237 @@
 
-import React, { useState, useEffect, useRef } from 'react';
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Brain, Send, MessageSquare, BookOpen, Database, Bot } from 'lucide-react';
-import { toast } from 'sonner';
-import IntentSimon from './IntentSimon';
-import SimulationDataHarvester from './knowledge/SimulationDataHarvester';
-import { knowledgeBase } from '@/utils/knowledge/intentKnowledgeBase';
+import React, { useState, useRef, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { X, Send, Info, Database, FileText } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface IntentSimonAdvisorProps {
-  className?: string;
   onClose?: () => void;
 }
 
-interface Message {
-  id: string;
-  text: string;
-  sender: 'user' | 'system';
-  timestamp: Date;
-  confidence?: number;
-}
-
-const IntentSimonAdvisor: React.FC<IntentSimonAdvisorProps> = ({
-  className = '',
-  onClose
-}) => {
-  const [input, setInput] = useState('');
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: 'welcome',
-      text: "Hello, I'm IntentSim(on). I've been learning about the intent-based universe model from the simulation data and the textbook. How can I help you understand this fascinating model?",
-      sender: 'system',
-      timestamp: new Date()
-    }
+const IntentSimonAdvisor: React.FC<IntentSimonAdvisorProps> = ({ onClose }) => {
+  const [message, setMessage] = useState('');
+  const [conversation, setConversation] = useState<Array<{type: 'user' | 'bot', text: string}>>([
+    {type: 'bot', text: "Hello, I'm IntentSim(on). I've been learning about the intent-based universe model from the simulation data and the textbook. How can I help you understand this fascinating model?"}
   ]);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [knowledgeStats, setKnowledgeStats] = useState({
-    concepts: 0,
-    insights: 0
-  });
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const [activeTab, setActiveTab] = useState('chat');
+  const [isTyping, setIsTyping] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
   
-  // Scroll to bottom when messages change
+  // Scroll to bottom of messages
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
-    }
-  }, [messages]);
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [conversation]);
   
-  // Handle form submission
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSendMessage = () => {
+    if (!message.trim()) return;
     
-    if (!input.trim() || isProcessing) return;
+    // Add user message to conversation
+    setConversation(prev => [...prev, {type: 'user', text: message}]);
+    setIsTyping(true);
     
-    const userMessage: Message = {
-      id: `user-${Date.now()}`,
-      text: input,
-      sender: 'user',
-      timestamp: new Date()
-    };
+    // Clear input field
+    setMessage('');
     
-    setMessages(prev => [...prev, userMessage]);
-    setInput('');
-    setIsProcessing(true);
-    
-    // Get response from knowledge base
-    try {
-      const validationResult = knowledgeBase.defendNexus(input);
-      
-      // Simulate thinking time
-      await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 500));
-      
-      const response = knowledgeBase.generateResponse(input);
-      
-      const systemMessage: Message = {
-        id: `system-${Date.now()}`,
-        text: response.response,
-        sender: 'system',
-        timestamp: new Date(),
-        confidence: response.confidence
-      };
-      
-      setMessages(prev => [...prev, systemMessage]);
-      
-      // Add a note about confidence if it's lower
-      if (response.confidence < 0.4 && validationResult.defender) {
-        // Defender alert with low confidence
-        await new Promise(resolve => setTimeout(resolve, 800));
-        
-        const defenderMessage: Message = {
-          id: `defender-${Date.now()}`,
-          text: `[${validationResult.defender.role} alert] ${validationResult.explanation} I'll keep learning from the simulation to improve my understanding.`,
-          sender: 'system',
-          timestamp: new Date()
-        };
-        
-        setMessages(prev => [...prev, defenderMessage]);
-      }
-    } catch (error) {
-      console.error("Error generating response:", error);
-      
-      // Fallback message
-      const errorMessage: Message = {
-        id: `error-${Date.now()}`,
-        text: "I apologize, but I encountered an error processing your question. My intent field fluctuations are still stabilizing. Please try again.",
-        sender: 'system',
-        timestamp: new Date()
-      };
-      
-      setMessages(prev => [...prev, errorMessage]);
-    } finally {
-      setIsProcessing(false);
+    // Simulate response (in a real app, this would call an API)
+    setTimeout(() => {
+      generateResponse(message);
+      setIsTyping(false);
+    }, 1000);
+  };
+  
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage();
     }
   };
   
-  // Handle harvest complete
-  const handleHarvestComplete = (stats: { concepts: number, insights: number }) => {
-    setKnowledgeStats(stats);
+  const generateResponse = (query: string) => {
+    // Sample responses based on common intent-related questions
+    let response = "I'm still learning about the intent universe model. Can you be more specific about what aspect you'd like to know about?";
     
-    // Occasionally give updates about learning
-    if (Math.random() < 0.2 && messages.length > 1) {
-      const learningMessage: Message = {
-        id: `learning-${Date.now()}`,
-        text: `I've just analyzed new simulation data. My knowledge now includes ${stats.concepts} concepts based on ${stats.insights} insights from the running simulation.`,
-        sender: 'system',
-        timestamp: new Date()
-      };
-      
-      setMessages(prev => [...prev, learningMessage]);
-      toast.info("IntentSim(on) has harvested new simulation data");
+    const lowerQuery = query.toLowerCase();
+    
+    if (lowerQuery.includes('intent field') || lowerQuery.includes('what is intent')) {
+      response = "The Intent Field is the foundational conceptual space of our universe model. It represents fluctuations that give rise to particles. Positive fluctuations create positive charges, negative fluctuations create negative charges, and neutral areas create neutral particles. These fluctuations are the source of all matter and energy in the model.";
+    } 
+    else if (lowerQuery.includes('charge') || lowerQuery.includes('positive') || lowerQuery.includes('negative')) {
+      response = "In our model, particle charge determines interaction behavior. Positive-charged particles have greater intent to interact and exchange information. Negative-charged particles are less inclined to interact. Neutral particles fall somewhere in between. This asymmetry in interaction intent drives complexity in the system.";
     }
+    else if (lowerQuery.includes('interaction') || lowerQuery.includes('exchange')) {
+      response = "Particle interactions are fundamental to complexity emergence. When particles interact, they exchange information based on their charge properties. Positively-charged particles readily share and receive information, while negatively-charged ones are more reluctant. These interactions follow specific probabilistic rules derived from the intent field.";
+    }
+    else if (lowerQuery.includes('simulation') || lowerQuery.includes('model')) {
+      response = "Our simulation models the emergence of complexity from simple intent-based particles. We start with a quantum field of intent fluctuations, which gives rise to particles with varying charges. These particles follow interaction rules based on their intent values, leading to emergent patterns and eventually complex structures.";
+    }
+    else if (lowerQuery.includes('complex') || lowerQuery.includes('emergence')) {
+      response = "Complexity in our model emerges through interactions and information exchange between particles. Simple rules at the particle level lead to unforeseen patterns and structures at higher levels. We observe how different initial conditions in the intent field lead to different emergent properties, similar to how fundamental forces in our universe lead to the emergence of stars, planets, and eventually life.";
+    }
+    
+    setConversation(prev => [...prev, {type: 'bot', text: response}]);
   };
   
   return (
-    <Card className={`flex flex-col h-full border border-indigo-900/30 bg-black/90 backdrop-blur-md shadow-xl ${className}`}>
-      <CardHeader className="bg-indigo-950 border-b border-indigo-900/50 pb-3">
-        <CardTitle className="flex items-center justify-between">
-          <div className="flex items-center">
-            <Brain className="h-6 w-6 text-indigo-400 mr-2" />
-            <span className="text-indigo-100">IntentSim(on) Advisor</span>
-          </div>
-          {onClose && (
-            <Button variant="ghost" size="sm" onClick={onClose} className="h-8 px-2 text-gray-400 hover:text-white">
-              ✕
-            </Button>
-          )}
-        </CardTitle>
+    <Card className="h-full overflow-hidden shadow-xl border border-indigo-800/50 bg-gray-900/90 backdrop-blur-sm">
+      <CardHeader className="bg-indigo-950 px-4 py-2 flex flex-row items-center justify-between space-y-0">
+        <div className="flex items-center space-x-2">
+          <img src="/intent-simon-brain.svg" alt="IntentSim(on)" className="w-8 h-8" />
+          <CardTitle className="text-indigo-100 text-lg">IntentSim(on) Advisor</CardTitle>
+        </div>
+        <Button variant="ghost" size="icon" onClick={onClose} className="text-indigo-200 hover:text-white hover:bg-indigo-800/50">
+          <X className="h-4 w-4" />
+        </Button>
       </CardHeader>
       
-      <CardContent className="flex-grow overflow-hidden p-0">
-        <div className="grid grid-cols-3 h-full">
-          <div className="col-span-1 border-r border-indigo-900/30 p-4 bg-indigo-950/20 flex flex-col items-center">
-            <IntentSimon size="md" withKnowledgeDisplay={true} className="mb-4" />
+      <div className="grid grid-cols-4 h-[calc(100%-48px)]">
+        {/* Left sidebar with brain visualization */}
+        <div className="col-span-1 bg-gray-950 p-4 border-r border-gray-800/50 flex flex-col items-center">
+          <div className="relative mb-8 mt-4">
+            <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 h-2 w-px bg-emerald-400"></div>
+            <img src="/intent-simon-brain.svg" alt="IntentSim(on) Brain" className="w-36 h-36" />
+            <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 h-2 w-px bg-pink-400"></div>
+            <div className="absolute -left-8 top-1/2 transform -translate-y-1/2 w-2 h-px bg-orange-400"></div>
+            <div className="absolute -right-8 top-1/2 transform -translate-y-1/2 w-2 h-px bg-teal-400"></div>
+          </div>
+          
+          <div className="mt-8 w-full space-y-4">
+            <div className="text-sm text-indigo-200 font-semibold">
+              Knowledge Status <span className="text-xs ml-2 text-green-400">Online</span>
+            </div>
             
-            <div className="w-full mt-auto text-xs text-gray-400 bg-black/30 rounded p-2">
-              <div className="flex items-center justify-between mb-1">
-                <span className="flex items-center">
-                  <Database className="w-3 h-3 mr-1" />
-                  Simulation Data
-                </span>
-                <span className="text-indigo-400">{knowledgeStats.insights}</span>
+            <div className="text-xs text-gray-400 space-y-1">
+              <div className="flex justify-between">
+                <span>Concepts:</span>
+                <span className="text-indigo-300">52</span>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="flex items-center">
-                  <BookOpen className="w-3 h-3 mr-1" />
-                  Document Knowledge
-                </span>
-                <span className="text-indigo-400">20</span>
+              <div className="flex justify-between">
+                <span>Simulation Data:</span>
+                <span className="text-emerald-400">9</span>
               </div>
-              <div className="mt-2 pt-2 border-t border-gray-800 flex items-center justify-between">
-                <span className="flex items-center">
-                  <Brain className="w-3 h-3 mr-1" />
-                  Total Concepts
-                </span>
-                <span className="text-indigo-400">{knowledgeStats.concepts}</span>
+              <div className="flex justify-between">
+                <span>Document Info:</span>
+                <span className="text-blue-400">20</span>
+              </div>
+            </div>
+            
+            <div className="mt-4 text-sm text-indigo-200 font-semibold">
+              Active Knowledge:
+            </div>
+            
+            <div className="text-xs text-gray-300 space-y-2 overflow-y-auto h-40 pr-2">
+              <div>
+                <div className="font-medium">Intent Field:</div>
+                <div className="text-gray-400">The foundational conceptual space of our universe model representing fluctuations that give rise to ...</div>
+              </div>
+              
+              <div>
+                <div className="font-medium">Particle:</div>
+                <div className="text-gray-400">Entities in our model that arise from intent field fluctuations, carrying properties including charg...</div>
               </div>
             </div>
           </div>
-          
-          <div className="col-span-2 flex flex-col h-full">
-            <ScrollArea className="flex-grow p-4" ref={scrollRef}>
-              <div className="space-y-4">
-                {messages.map(message => (
-                  <div
-                    key={message.id}
-                    className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+        </div>
+        
+        {/* Right side with tabs */}
+        <div className="col-span-3 flex flex-col h-full">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
+            <TabsList className="mx-4 mt-2 justify-start bg-gray-800/50">
+              <TabsTrigger value="chat" className="data-[state=active]:bg-indigo-900/50">
+                Chat
+              </TabsTrigger>
+              <TabsTrigger value="knowledge" className="data-[state=active]:bg-indigo-900/50">
+                Knowledge
+              </TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="chat" className="flex-1 flex flex-col p-4 space-y-4 overflow-hidden m-0">
+              <div className="flex-1 overflow-y-auto pr-2 space-y-4">
+                {conversation.map((item, index) => (
+                  <div 
+                    key={index} 
+                    className={`flex ${item.type === 'user' ? 'justify-end' : 'justify-start'}`}
                   >
-                    <div
-                      className={`max-w-[85%] rounded-lg p-3 ${
-                        message.sender === 'user'
-                          ? 'bg-indigo-600 text-white'
-                          : message.id.startsWith('defender')
-                            ? 'bg-red-900/70 text-white'
-                            : message.id.startsWith('learning')
-                              ? 'bg-green-900/70 text-white'
-                              : 'bg-gray-800 text-gray-100'
+                    <div 
+                      className={`max-w-[80%] rounded-lg px-4 py-2 ${
+                        item.type === 'user' 
+                          ? 'bg-indigo-600 text-white' 
+                          : 'bg-gray-800 text-gray-100'
                       }`}
                     >
-                      <div className="flex items-center mb-1">
-                        {message.sender === 'user' ? (
-                          <MessageSquare className="h-4 w-4 mr-1 text-indigo-200" />
-                        ) : message.id.startsWith('defender') ? (
-                          <Brain className="h-4 w-4 mr-1 text-red-300" />
-                        ) : message.id.startsWith('learning') ? (
-                          <Database className="h-4 w-4 mr-1 text-green-300" />
-                        ) : (
-                          <Bot className="h-4 w-4 mr-1 text-gray-300" />
-                        )}
-                        <span className="text-xs opacity-75">
-                          {message.sender === 'user' ? 'You' : 'IntentSim(on)'}
-                        </span>
-                        {message.confidence !== undefined && (
-                          <span className={`ml-2 text-xs px-1.5 py-0.5 rounded ${
-                            message.confidence > 0.7 
-                              ? 'bg-green-900/70 text-green-200'
-                              : message.confidence > 0.4
-                                ? 'bg-yellow-900/70 text-yellow-200'
-                                : 'bg-red-900/70 text-red-200'
-                          }`}>
-                            {(message.confidence * 100).toFixed(0)}% confidence
-                          </span>
-                        )}
+                      {item.type === 'bot' && (
+                        <div className="flex items-center mb-1">
+                          <img src="/intent-simon-brain.svg" alt="IntentSim(on)" className="w-5 h-5 mr-2" />
+                          <span className="text-indigo-300 text-xs">IntentSim(on)</span>
+                        </div>
+                      )}
+                      <div className={`text-sm ${item.type === 'user' ? 'text-white' : 'text-gray-200'}`}>
+                        {item.text}
                       </div>
-                      <p className="text-sm whitespace-pre-wrap">{message.text}</p>
                     </div>
                   </div>
                 ))}
                 
-                {isProcessing && (
+                {isTyping && (
                   <div className="flex justify-start">
-                    <div className="bg-gray-800 text-white rounded-lg p-3 max-w-[85%]">
-                      <div className="flex items-center mb-1">
-                        <Bot className="h-4 w-4 mr-1 text-gray-300" />
-                        <span className="text-xs opacity-75">IntentSim(on)</span>
-                      </div>
-                      <div className="flex space-x-1 items-center h-5">
-                        <div className="w-2 h-2 bg-indigo-400 rounded-full animate-pulse" style={{ animationDelay: '0ms' }}></div>
-                        <div className="w-2 h-2 bg-indigo-400 rounded-full animate-pulse" style={{ animationDelay: '200ms' }}></div>
-                        <div className="w-2 h-2 bg-indigo-400 rounded-full animate-pulse" style={{ animationDelay: '400ms' }}></div>
+                    <div className="bg-gray-800 text-white rounded-lg px-4 py-2 max-w-[80%]">
+                      <div className="flex items-center space-x-1">
+                        <div className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce"></div>
+                        <div className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+                        <div className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce" style={{animationDelay: '0.4s'}}></div>
                       </div>
                     </div>
                   </div>
                 )}
+                
+                <div ref={messagesEndRef} />
               </div>
-            </ScrollArea>
-            
-            <CardFooter className="p-3 border-t border-indigo-900/30 bg-gray-900/50">
-              <form onSubmit={handleSubmit} className="w-full flex">
-                <Input
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  placeholder="Ask about intent fields, particles, or charge..."
-                  className="flex-grow mr-2 bg-gray-800 border-gray-700 text-white"
-                  disabled={isProcessing}
+              
+              <div className="flex items-center space-x-2">
+                <textarea
+                  className="flex-1 bg-gray-800 text-white border border-gray-700 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none h-10 min-h-[40px] max-h-32"
+                  placeholder="Ask about the intent universe model..."
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  rows={1}
                 />
                 <Button 
-                  type="submit" 
-                  disabled={isProcessing || !input.trim()} 
+                  onClick={handleSendMessage} 
+                  size="icon" 
                   className="bg-indigo-600 hover:bg-indigo-700 text-white"
                 >
                   <Send className="h-4 w-4" />
                 </Button>
-              </form>
-            </CardFooter>
-          </div>
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="knowledge" className="flex-1 p-4 overflow-y-auto space-y-6 m-0">
+              <div className="space-y-4">
+                <div className="flex items-center space-x-2 text-indigo-300">
+                  <Database className="h-5 w-5" />
+                  <h3 className="text-lg font-medium">Simulation Data</h3>
+                  <span className="bg-gray-800 px-2 py-1 rounded-full text-xs">9</span>
+                </div>
+                <div className="pl-7 text-sm text-gray-300">
+                  <p>Particle interaction patterns, emergent complexity statistics, charge distribution analytics, and simulation state observations.</p>
+                </div>
+              </div>
+              
+              <div className="space-y-4">
+                <div className="flex items-center space-x-2 text-blue-300">
+                  <FileText className="h-5 w-5" />
+                  <h3 className="text-lg font-medium">Document Knowledge</h3>
+                  <span className="bg-gray-800 px-2 py-1 rounded-full text-xs">20</span>
+                </div>
+                <div className="pl-7 text-sm text-gray-300">
+                  <p>Key concepts extracted from "The Intent-Based Universe" textbook including intent field theory, particle properties, interaction mechanisms, and complexity emergence principles.</p>
+                </div>
+              </div>
+            </TabsContent>
+          </Tabs>
         </div>
-      </CardContent>
-      
-      {/* Hidden data harvester component */}
-      <SimulationDataHarvester 
-        harvesterEnabled={true}
-        onHarvestComplete={handleHarvestComplete}
-      />
+      </div>
     </Card>
   );
 };

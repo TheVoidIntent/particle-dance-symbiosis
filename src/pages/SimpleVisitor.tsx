@@ -2,8 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { startMotherSimulation, isMotherSimulationRunning } from '@/utils/simulation/motherSimulation';
 import { startAudioPlaylist, stopAudioPlaylist } from '@/utils/audio/audioPlaylist';
-import { Link } from 'react-router-dom';
-import { Brain, Github, Twitter } from 'lucide-react';
+import { Github, Twitter, Brain } from 'lucide-react';
 import IntentSimonAdvisor from '@/components/IntentSimonAdvisor';
 
 /**
@@ -11,7 +10,6 @@ import IntentSimonAdvisor from '@/components/IntentSimonAdvisor';
  * All internal data processing happens in the background
  */
 const SimpleVisitor: React.FC = () => {
-  const [audioLoaded, setAudioLoaded] = useState(false);
   const [simulationStarted, setSimulationStarted] = useState(false);
   const [showAdvisor, setShowAdvisor] = useState(false);
   
@@ -34,19 +32,16 @@ const SimpleVisitor: React.FC = () => {
     }
   }, [simulationStarted]);
   
-  // Set up audio
+  // Set up audio to play the entire playlist continuously
   useEffect(() => {
-    if (!audioLoaded) {
-      // Start playing background audio playlist at 40% volume
-      startAudioPlaylist(0.4);
-      setAudioLoaded(true);
-      
-      return () => {
-        // Clean up audio when component unmounts
-        stopAudioPlaylist();
-      };
-    }
-  }, [audioLoaded]);
+    // Start playing background audio playlist
+    startAudioPlaylist(0.5);
+    
+    return () => {
+      // Clean up audio when component unmounts
+      stopAudioPlaylist();
+    };
+  }, []);
   
   // Toggle advisor panel
   const toggleAdvisor = () => {

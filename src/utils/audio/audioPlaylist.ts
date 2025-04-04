@@ -42,11 +42,11 @@ let audioElement: HTMLAudioElement | null = null;
 /**
  * Start playing the audio playlist in loop
  */
-export function startAudioPlaylist(initialVolume: number = 0.5): void {
+export function startAudioPlaylist(volume: number = 0.5): void {
   if (!audioElement) {
     audioElement = new Audio();
     audioElement.id = 'audio-playlist';
-    audioElement.volume = initialVolume;
+    audioElement.volume = volume;
     
     // When one audio track ends, play the next one
     audioElement.addEventListener('ended', playNextTrack);

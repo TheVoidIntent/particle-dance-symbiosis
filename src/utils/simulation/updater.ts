@@ -26,9 +26,9 @@ export function updateSimulation(): void {
         particle.y += particle.vy;
       }
       
-      // Boundary handling - use dimensions from state or default values
-      const containerWidth = simulationState.dimensions?.width || 800;
-      const containerHeight = simulationState.dimensions?.height || 600;
+      // Boundary handling - use default values since dimensions isn't available on SimulationState
+      const containerWidth = 800;
+      const containerHeight = 600;
       
       if (particle.x !== undefined) {
         if (particle.x < 0 || particle.x > containerWidth) {

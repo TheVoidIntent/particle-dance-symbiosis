@@ -21,7 +21,7 @@ const DataAnalysis: React.FC = () => {
   const [timeSeriesData, setTimeSeriesData] = useState<any[]>([]);
   const [stats, setStats] = useState({
     particleCount: 0,
-    interactionCount: 0,
+    interactionCount: 0, // This state property uses interactionCount
     knowledgeAverage: 0,
     isRunning: false,
     frameCount: 0
@@ -36,7 +36,7 @@ const DataAnalysis: React.FC = () => {
         
         setStats({
           particleCount: currentStats.particleCount,
-          interactionCount: currentStats.interactionsCount || 0,
+          interactionCount: currentStats.interactionsCount || 0, // Map interactionsCount to interactionCount
           knowledgeAverage: currentStats.knowledgeAverage || 0,
           isRunning: isMotherSimulationRunning(),
           frameCount: currentStats.frameCount || 0
@@ -51,7 +51,7 @@ const DataAnalysis: React.FC = () => {
     const stats = getSimulationStats();
     setStats({
       particleCount: stats.particleCount,
-      interactionCount: stats.interactionsCount || 0,
+      interactionCount: stats.interactionsCount || 0, // Map interactionsCount to interactionCount
       knowledgeAverage: stats.knowledgeAverage || 0,
       isRunning: isMotherSimulationRunning(),
       frameCount: stats.frameCount || 0

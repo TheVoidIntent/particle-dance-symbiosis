@@ -224,78 +224,87 @@ export function playFluctuationSound(intensity: number): void {
   if (!isAudioEnabled) return;
   
   // Create a cosmic shimmer effect reflecting the intent field
-  // Base frequency varies with intensity - higher intensity = higher pitch
-  const baseFreq = 150 + (intensity * 250);
+  // Based on intensity (0-1), create different frequencies and patterns
+  const baseFreq = 220 + (intensity * 220); // 220-440 Hz range
   
-  // Play a series of harmonically related tones creating a celestial shimmer
-  const harmonics = [1, 1.5, 2, 2.5, 3];
-  harmonics.forEach((harmonic, index) => {
+  // Multiple shimmering tones with varying durations
+  const toneCount = 4 + Math.floor(intensity * 4); // 4-8 tones
+  
+  for (let i = 0; i < toneCount; i++) {
+    // Stagger the tones for a flowing, ethereal effect
     setTimeout(() => {
-      generateCelestialTone(
-        baseFreq * harmonic, 
-        1.8 - (index * 0.15), 
-        0.025 * (1 - (index * 0.15)),
-        1 + (intensity * 0.5)
-      );
-    }, index * 100);
-  });
+      // Each tone has a slightly different frequency
+      const freqOffset = (Math.random() * 40) - 20; // +/- 20 Hz
+      const freq = baseFreq + freqOffset;
+      
+      // Intensity affects duration and volume
+      const duration = 0.5 + (intensity * 1.5) + (Math.random() * 0.5);
+      const volume = 0.02 + (intensity * 0.05);
+      
+      // Generate the tone with a harmonic ratio based on position in the sequence
+      const harmonic = 1 + (i / toneCount);
+      generateCelestialTone(freq, duration, volume, harmonic);
+    }, i * 80); // Stagger timing
+  }
 }
 
 /**
- * Play an emergence sound representing new complex structures forming
- * @param complexity Level of complexity (0-1)
+ * Play emergence sound for complex events like cluster formation
+ * @param complexity The complexity level (0-1)
  */
 export function playEmergenceSound(complexity: number): void {
   if (!isAudioEnabled) return;
   
-  // Create an ascending celestial sequence representing emergence
-  // Higher complexity = more complex, complete scale (information richness)
-  const baseNote = 190 + (complexity * 120);
+  // Emergence is represented by a complex, evolving sound with multiple layers
+  // Higher complexity means more layers, longer duration, and richer harmonics
   
-  // Higher complexity = more notes in the scale
-  const scaleLength = 3 + Math.floor(complexity * 5);
+  // Base tone - a deep, resonant frequency
+  const baseFreq = 130 + (complexity * 50); // Low C to low G range
   
-  // Pentatonic scale for more harmonious cosmic sound (works well in any combination)
-  const pentatonicRatios = [1, 9/8, 5/4, 3/2, 5/3, 2];
+  // Primary chord structure based on complexity
+  // More complex = more dissonant/interesting intervals
+  const intervals = complexity > 0.7 
+    ? [1, 1.5, 1.87, 2.5, 3.14] // Complex intervals for high complexity
+    : [1, 1.5, 2, 2.5, 3];      // Simpler intervals for lower complexity
   
-  // Play ascending scale notes in sequence - representing emergent order
-  for (let i = 0; i < Math.min(scaleLength, pentatonicRatios.length); i++) {
+  // Duration grows with complexity
+  const baseDuration = 2 + (complexity * 3); // 2-5 seconds
+  
+  // Generate the primary emergence tone
+  generateCelestialTone(baseFreq, baseDuration, 0.1, 1);
+  
+  // Add overtone layers with delays
+  intervals.forEach((interval, i) => {
     setTimeout(() => {
-      generateCelestialTone(
-        baseNote * pentatonicRatios[i], 
-        0.9 + (i * 0.15), 
-        0.06 - (i * 0.004),
-        1 + (complexity * 0.2)
-      );
-    }, i * 180);
-  }
+      // Each overtone has progressively less volume
+      const overtoneVolume = 0.08 * (1 - (i / intervals.length));
+      
+      // Duration decreases for higher overtones
+      const overtoneDuration = baseDuration * (1 - (i * 0.1));
+      
+      // Generate the overtone
+      generateCelestialTone(baseFreq * interval, overtoneDuration, overtoneVolume, interval);
+    }, i * 300 * complexity); // More complex = more spread out
+  });
   
-  // For higher complexity, add a chord at the end representing the complete structure
-  if (complexity > 0.7) {
+  // For high complexity, add a final "resolution" tone
+  if (complexity > 0.6) {
     setTimeout(() => {
-      // Play final "resolution" chord
-      [0, 2, 4].forEach((idx, i) => {
-        setTimeout(() => {
-          const noteIdx = Math.min(idx, pentatonicRatios.length - 1);
-          generateCelestialTone(
-            baseNote * pentatonicRatios[noteIdx], 
-            2.0, 
-            0.08 - (i * 0.01)
-          );
-        }, i * 80);
-      });
-    }, scaleLength * 180 + 100);
+      // Resolution tone is an octave above the base
+      generateCelestialTone(baseFreq * 2, baseDuration * 0.7, 0.06, 1);
+    }, baseDuration * 500); // Near the end of the main sound
   }
 }
 
 /**
- * Clean up audio system
+ * Clean up audio resources
  */
 export function cleanupAudio(): void {
   if (audioContext) {
-    audioContext.close().catch(e => console.error("Error closing audio context:", e));
+    audioContext.close();
     audioContext = null;
-    masterGain = null;
-    reverbNode = null;
   }
+  masterGain = null;
+  reverbNode = null;
+  console.log("Audio system cleaned up");
 }

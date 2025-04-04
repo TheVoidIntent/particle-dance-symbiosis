@@ -77,10 +77,10 @@ const UniverseSimulation: React.FC = () => {
           positiveParticles: motherStats.positiveParticles || 0,
           negativeParticles: motherStats.negativeParticles || 0,
           neutralParticles: motherStats.neutralParticles || 0,
-          highEnergyParticles: motherStats.highEnergyParticles || 0,
-          quantumParticles: motherStats.quantumParticles || 0,
-          compositeParticles: motherStats.compositeParticles || 0,
-          adaptiveParticles: motherStats.adaptiveParticles || 0,
+          highEnergyParticles: 0,
+          quantumParticles: 0,
+          compositeParticles: 0,
+          adaptiveParticles: 0,
           totalInteractions: motherStats.interactionsCount || 0
         }));
       }

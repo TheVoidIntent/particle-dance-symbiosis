@@ -1,3 +1,4 @@
+
 // Change the import to get Particle from types instead of particleUtils
 import { Particle } from '@/types/simulation';
 import { fieldConfig } from './config';
@@ -85,8 +86,14 @@ export function getSimulationStats() {
     positiveParticles: simulationState.particles.filter(p => p.charge === 'positive').length,
     negativeParticles: simulationState.particles.filter(p => p.charge === 'negative').length,
     neutralParticles: simulationState.particles.filter(p => p.charge === 'neutral').length,
-    intentFieldComplexity: 0 // Calculated in motherSimulation
+    intentFieldComplexity: 0, // Calculated in motherSimulation
+    knowledgeAverage: simulationState.particles.length > 0 
+      ? simulationState.particles.reduce((sum, p) => sum + p.knowledge, 0) / simulationState.particles.length 
+      : 0
   };
   
   return stats;
 }
+
+// Export loadState explicitly
+export { loadState };

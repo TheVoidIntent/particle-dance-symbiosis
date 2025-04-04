@@ -318,6 +318,10 @@ export function calculateIntentStrength(intent: string | number): number {
   const intentValue = typeof intent === 'string' ? parseFloat(intent) : intent;
   
   // Now we can safely use comparison operators
+  if (isNaN(intentValue)) {
+    return 0.5; // Default value for invalid input
+  }
+  
   if (intentValue > 0.7) {
     return 1.0;
   } else if (intentValue < 0.3) {

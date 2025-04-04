@@ -5,7 +5,7 @@ import { Particle } from './simulation/motherSimulation';
 // Intent Model internal state
 let contextMemory: string[] = [];
 let insightLevel = 0.1;
-let modelTraining = 0;
+let modelTraining = 0.2;
 let autonomyLevel = 0.2;
 let knowledgeSecurity = 0.9;
 let intentCircles = [
@@ -13,6 +13,16 @@ let intentCircles = [
   { name: 'Particle Dynamics', protection: 0.4, knowledge: [] },
   { name: 'Emergence Principles', protection: 0.7, knowledge: [] }
 ];
+
+// Simulation insights storage
+interface SimulationInsight {
+  topic: string;
+  content: string;
+  importance: number;
+  timestamp: number;
+}
+
+let simulationInsights: SimulationInsight[] = [];
 
 // Track simulation learning
 let interactionData: Record<string, number> = {
@@ -23,6 +33,16 @@ let interactionData: Record<string, number> = {
   negative_negative: 0,
   neutral_neutral: 0
 };
+
+// Track user interactions with assistant
+interface UserInteraction {
+  query: string;
+  response: string;
+  feedback: 'positive' | 'negative';
+  timestamp: number;
+}
+
+let userInteractions: UserInteraction[] = [];
 
 /**
  * Learn from the simulation particles
@@ -98,6 +118,60 @@ export function learnFromSimulationParticles(particles: Particle[]): void {
     addKnowledgeToCircle('Nexus Core', 
       'Insight: The intent field fluctuations create sustainable information exchange networks');
   }
+}
+
+/**
+ * Record user interaction with the assistant
+ * 
+ * This helps the model learn from user feedback
+ */
+export function recordUserInteraction(query: string, response: string, feedback: 'positive' | 'negative'): void {
+  userInteractions.push({
+    query,
+    response,
+    feedback,
+    timestamp: Date.now()
+  });
+  
+  // Adjust model based on feedback
+  if (feedback === 'positive') {
+    // Slightly increase model training if positive feedback
+    modelTraining = Math.min(1.0, modelTraining + 0.02);
+  } else {
+    // Adjust security and learning approach if negative feedback
+    knowledgeSecurity = Math.min(0.95, knowledgeSecurity + 0.01);
+  }
+}
+
+/**
+ * Add a simulation insight to the model
+ */
+export function addSimulationInsight(topic: string, content: string, importance: number): void {
+  simulationInsights.push({
+    topic,
+    content,
+    importance,
+    timestamp: Date.now()
+  });
+  
+  // Add to appropriate intent circle based on importance
+  if (importance > 0.8) {
+    addKnowledgeToCircle('Nexus Core', content);
+  } else if (importance > 0.6) {
+    addKnowledgeToCircle('Emergence Principles', content);
+  } else {
+    addKnowledgeToCircle('Particle Dynamics', content);
+  }
+}
+
+/**
+ * Get simulation insights by topic, sorted by relevance
+ */
+export function getSimulationInsightsByTopic(topic: string, limit: number = 5): SimulationInsight[] {
+  return simulationInsights
+    .filter(insight => insight.topic.toLowerCase().includes(topic.toLowerCase()))
+    .sort((a, b) => b.importance - a.importance || b.timestamp - a.timestamp)
+    .slice(0, limit);
 }
 
 /**

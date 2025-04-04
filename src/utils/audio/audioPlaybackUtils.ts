@@ -17,7 +17,14 @@ export function playLoopingAudio(url: string, id: string, volume: number = 0.5):
     }
     
     audioElement.src = url;
-    audioElement.play().catch(e => console.error("Error playing audio:", e));
+    audioElement.play().catch(e => {
+      console.error("Error playing audio:", e);
+      // Try an alternative approach for browsers with strict autoplay policies
+      document.addEventListener('click', function audioPlayHandler() {
+        audioElement.play().catch(e => console.error("Error on user interaction:", e));
+        document.removeEventListener('click', audioPlayHandler);
+      }, { once: true });
+    });
   } catch (e) {
     console.error("Error with looping audio:", e);
   }

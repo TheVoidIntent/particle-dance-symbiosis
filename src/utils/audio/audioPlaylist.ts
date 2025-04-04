@@ -29,9 +29,6 @@ const audioTracks = [
   "Intent as a Universal Information Filter (1) 1",
   "Intent as a Universal Information Filter (2) (1)-1",
   "Intent as a Universal Information Filter (2) (1)-2",
-  "Intent as a Universal Information Filter (2) copy",
-  "Intent as a Universal Information Filter (5)",
-  "IntentSim_Podcast_Ep01",
   "particle_genesis"
 ];
 
@@ -43,32 +40,40 @@ let audioElement: HTMLAudioElement | null = null;
  * Start playing the audio playlist continuously
  */
 export function startAudioPlaylist(volume: number = 0.5): void {
-  if (!audioElement) {
-    audioElement = new Audio();
-    audioElement.volume = volume;
+  try {
+    if (!audioElement) {
+      audioElement = new Audio();
+      audioElement.volume = volume;
+      
+      // When one audio track ends, play the next one
+      audioElement.addEventListener('ended', playNextTrack);
+      
+      // Handle errors
+      audioElement.addEventListener('error', (e) => {
+        console.error('Audio playback error:', e);
+        // Try the next track if there's an error
+        setTimeout(playNextTrack, 1000);
+      });
+    }
     
-    // When one audio track ends, play the next one
-    audioElement.addEventListener('ended', playNextTrack);
-    
-    // Handle errors
-    audioElement.addEventListener('error', (e) => {
-      console.error('Audio playback error:', e);
-      // Try the next track if there's an error
-      setTimeout(playNextTrack, 1000);
-    });
+    isPlaying = true;
+    playCurrentTrack();
+  } catch (error) {
+    console.error("Error starting audio playlist:", error);
   }
-  
-  isPlaying = true;
-  playCurrentTrack();
 }
 
 /**
  * Stop the audio playlist
  */
 export function stopAudioPlaylist(): void {
-  if (audioElement) {
-    audioElement.pause();
-    isPlaying = false;
+  try {
+    if (audioElement) {
+      audioElement.pause();
+      isPlaying = false;
+    }
+  } catch (error) {
+    console.error("Error stopping audio playlist:", error);
   }
 }
 
@@ -76,8 +81,12 @@ export function stopAudioPlaylist(): void {
  * Set the volume for the audio playlist
  */
 export function setAudioPlaylistVolume(volume: number): void {
-  if (audioElement) {
-    audioElement.volume = Math.min(Math.max(volume, 0), 1);
+  try {
+    if (audioElement) {
+      audioElement.volume = Math.min(Math.max(volume, 0), 1);
+    }
+  } catch (error) {
+    console.error("Error setting audio volume:", error);
   }
 }
 
@@ -85,42 +94,58 @@ export function setAudioPlaylistVolume(volume: number): void {
  * Play the next track in the playlist
  */
 function playNextTrack(): void {
-  if (!isPlaying) return;
-  
-  currentTrackIndex = (currentTrackIndex + 1) % audioTracks.length;
-  playCurrentTrack();
+  try {
+    if (!isPlaying) return;
+    
+    currentTrackIndex = (currentTrackIndex + 1) % audioTracks.length;
+    playCurrentTrack();
+  } catch (error) {
+    console.error("Error playing next track:", error);
+  }
 }
 
 /**
  * Play the current track
  */
 function playCurrentTrack(): void {
-  if (!audioElement || !isPlaying) return;
-  
-  const trackName = audioTracks[currentTrackIndex];
-  // Using the public audio folder path
-  const audioUrl = `/audio/${trackName}.wav`;
-  
-  audioElement.src = audioUrl;
-  audioElement.play().catch(e => {
-    console.error("Error playing track:", trackName, e);
-    // Try the next track if there's an error
-    setTimeout(playNextTrack, 1000);
-  });
-  
-  console.log("Now playing:", trackName);
+  try {
+    if (!audioElement || !isPlaying) return;
+    
+    const trackName = audioTracks[currentTrackIndex];
+    
+    // Using the public audio folder path
+    const audioUrl = `/audio/qfplS_${Math.floor(Math.random() * 100) + 1}.wav`;
+    
+    console.log("Attempting to play:", audioUrl);
+    
+    audioElement.src = audioUrl;
+    audioElement.play().catch(e => {
+      console.error("Error playing track:", trackName, e);
+      // Try the next track if there's an error
+      setTimeout(playNextTrack, 1000);
+    });
+    
+    console.log("Now playing:", trackName);
+  } catch (error) {
+    console.error("Error playing current track:", error);
+  }
 }
 
 /**
  * Toggle play/pause of the audio playlist
  */
 export function toggleAudioPlaylist(): boolean {
-  if (isPlaying) {
-    stopAudioPlaylist();
-  } else {
-    startAudioPlaylist();
+  try {
+    if (isPlaying) {
+      stopAudioPlaylist();
+    } else {
+      startAudioPlaylist();
+    }
+    return isPlaying;
+  } catch (error) {
+    console.error("Error toggling audio playlist:", error);
+    return false;
   }
-  return isPlaying;
 }
 
 /**
@@ -134,5 +159,5 @@ export function isAudioPlaylistPlaying(): boolean {
  * Get the name of the currently playing track
  */
 export function getCurrentTrackName(): string {
-  return audioTracks[currentTrackIndex];
+  return audioTracks[currentTrackIndex] || "Unknown Track";
 }

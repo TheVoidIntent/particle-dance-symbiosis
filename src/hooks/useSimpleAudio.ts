@@ -8,6 +8,9 @@ import {
   playInteractionSound,
   playFluctuationSound,
   playEmergenceSound,
+  playCosmicBellToll,
+  playGravitationalWaveSound,
+  exportAudioDataForNotebookLM,
   cleanupAudio
 } from '@/utils/audio/simpleSoundGenerator';
 
@@ -18,7 +21,9 @@ export function useSimpleAudio(initialEnabled = true, initialVolume = 0.5) {
     creation: 0,
     interaction: 0,
     fluctuation: 0,
-    emergence: 0
+    emergence: 0,
+    cosmicBell: 0,
+    gravitationalWave: 0
   });
   
   // Cooldown times in milliseconds for different sound types
@@ -26,7 +31,9 @@ export function useSimpleAudio(initialEnabled = true, initialVolume = 0.5) {
     creation: 300,
     interaction: 400, 
     fluctuation: 2000,
-    emergence: 8000
+    emergence: 8000,
+    cosmicBell: 10000,
+    gravitationalWave: 15000
   };
 
   // Initialize audio on mount
@@ -57,7 +64,7 @@ export function useSimpleAudio(initialEnabled = true, initialVolume = 0.5) {
   }, []);
 
   // Play sounds with cooldown protection
-  const playSound = useCallback((type: 'creation' | 'interaction' | 'fluctuation' | 'emergence', data?: any) => {
+  const playSound = useCallback((type: 'creation' | 'interaction' | 'fluctuation' | 'emergence' | 'cosmicBell' | 'gravitationalWave', data?: any) => {
     if (!isEnabled) return false;
     
     const now = Date.now();
@@ -91,6 +98,18 @@ export function useSimpleAudio(initialEnabled = true, initialVolume = 0.5) {
         playEmergenceSound(complexity);
         break;
       }
+      case 'cosmicBell': {
+        const informationDensity = data?.informationDensity || 0.5;
+        const weight = data?.weight || 0.5;
+        playCosmicBellToll(informationDensity, weight);
+        break;
+      }
+      case 'gravitationalWave': {
+        const strength = data?.strength || 0.5;
+        const complexity = data?.complexity || 0.5;
+        playGravitationalWaveSound(strength, complexity);
+        break;
+      }
     }
     
     return true;
@@ -98,7 +117,7 @@ export function useSimpleAudio(initialEnabled = true, initialVolume = 0.5) {
 
   // For complex cosmic events, play a sequence of sounds
   const playCelestialEvent = useCallback((
-    type: 'cluster_formation' | 'inflation' | 'knowledge_threshold', 
+    type: 'cluster_formation' | 'inflation' | 'knowledge_threshold' | 'gravity_emergence' | 'intent_field_collapse',
     data?: any
   ) => {
     if (!isEnabled) return;
@@ -137,8 +156,65 @@ export function useSimpleAudio(initialEnabled = true, initialVolume = 0.5) {
         }
         break;
       }
+      case 'gravity_emergence': {
+        // Complex sequence for gravity emergence from information density
+        const informationDensity = data?.informationDensity || 0.8;
+        const weight = data?.weight || 0.7;
+        
+        // Start with a cosmic bell toll representing high information density
+        setTimeout(() => 
+          playSound('cosmicBell', { informationDensity, weight }), 0);
+        
+        // Follow with gravitational wave representing the "weight" of information
+        setTimeout(() => 
+          playSound('gravitationalWave', { 
+            strength: weight, 
+            complexity: informationDensity 
+          }), 2000);
+        
+        // Finish with emergence representing new stable structure
+        setTimeout(() => 
+          playSound('emergence', { complexity: 0.8 + (weight * 0.2) }), 5000);
+        break;
+      }
+      case 'intent_field_collapse': {
+        // Dramatic sequence for intent field collapse/restructuring
+        const intensity = data?.intensity || 0.9;
+        
+        // Start with fluctuation representing field instability
+        setTimeout(() => playSound('fluctuation', { intensity }), 0);
+        
+        // Add gravitational wave representing spacetime warping
+        setTimeout(() => 
+          playSound('gravitationalWave', { 
+            strength: intensity * 0.8, 
+            complexity: 0.7 
+          }), 1000);
+        
+        // Cosmic bell toll at peak of collapse
+        setTimeout(() => 
+          playSound('cosmicBell', { 
+            informationDensity: intensity, 
+            weight: intensity * 0.9 
+          }), 3000);
+        
+        // Multiple particle creation sounds as new structure forms
+        for (let i = 0; i < 5; i++) {
+          setTimeout(() => {
+            playSound('creation', { 
+              charge: i % 3 === 0 ? 'positive' : i % 3 === 1 ? 'negative' : 'neutral' 
+            });
+          }, 5000 + (i * 200));
+        }
+        break;
+      }
     }
   }, [isEnabled, playSound]);
+
+  // Export audio analysis data for NotebookLM
+  const exportAudioData = useCallback(() => {
+    return exportAudioDataForNotebookLM();
+  }, []);
 
   return {
     isEnabled,
@@ -146,6 +222,7 @@ export function useSimpleAudio(initialEnabled = true, initialVolume = 0.5) {
     toggleAudio,
     updateVolume,
     playSound,
-    playCelestialEvent
+    playCelestialEvent,
+    exportAudioData
   };
 }

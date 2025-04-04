@@ -3,7 +3,7 @@ import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
-import { Volume2, VolumeX } from "lucide-react";
+import { Volume2, VolumeX, Bell } from "lucide-react";
 
 export interface SimulationAudioControlsProps {
   audioEnabled: boolean;
@@ -55,7 +55,10 @@ const SimulationAudioControls: React.FC<SimulationAudioControlsProps> = ({
       
       {onTestSound && (
         <div className="space-y-2 pt-2">
-          <span className="text-sm text-gray-300">Test Sounds</span>
+          <span className="text-sm text-gray-300 flex items-center">
+            <Bell className="h-3.5 w-3.5 mr-1.5 text-indigo-400" />
+            Cosmic Bell Sounds
+          </span>
           <div className="flex flex-wrap gap-2">
             <Button 
               variant="outline" 
@@ -74,6 +77,24 @@ const SimulationAudioControls: React.FC<SimulationAudioControlsProps> = ({
               className="text-xs"
             >
               Interaction
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => onTestSound('fluctuation')}
+              disabled={!audioEnabled}
+              className="text-xs"
+            >
+              Fluctuation
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => onTestSound('emergence')}
+              disabled={!audioEnabled}
+              className="text-xs"
+            >
+              Cosmic Bell
             </Button>
           </div>
         </div>

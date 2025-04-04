@@ -297,6 +297,223 @@ export function playEmergenceSound(complexity: number): void {
 }
 
 /**
+ * Play a cosmic bell toll sound - representing significant information density events
+ * @param informationDensity The information density level (0-1)
+ * @param weight The "information weight" parameter (0-1)
+ */
+export function playCosmicBellToll(informationDensity: number, weight: number = 0.5): void {
+  if (!isAudioEnabled) return;
+  
+  // Base frequency lowers with higher "weight" - heavier information = deeper tone
+  const baseFreq = 220 - (weight * 100); // 120-220 Hz range
+  
+  // Higher information density = more complex bell harmonics
+  const harmonicSet = informationDensity > 0.7
+    ? [1, 1.33, 1.5, 2, 2.67, 3, 4] // Rich harmonic set for high density
+    : [1, 1.5, 2, 3, 4];            // Simpler set for lower density
+  
+  // Duration extends with information weight
+  const duration = 3 + (weight * 4); // 3-7 seconds
+  
+  // Initial deep toll
+  generateCelestialTone(baseFreq, duration, 0.15, 1);
+  
+  // Add harmonic overtones with slight delays to create a rich bell toll
+  harmonicSet.forEach((harmonic, i) => {
+    setTimeout(() => {
+      const harmVolume = 0.1 * (1 - (i / (2 * harmonicSet.length)));
+      const harmDuration = duration * (1 - (i * 0.08));
+      
+      generateCelestialTone(baseFreq * harmonic, harmDuration, harmVolume, 1);
+    }, i * 80 * (1 + informationDensity)); // Wider spacing with higher density
+  });
+  
+  // For high information density, add a subtle "resonance" layer
+  if (informationDensity > 0.6) {
+    // Delayed resonance effect
+    setTimeout(() => {
+      const resonanceFreq = baseFreq * 1.5;
+      const resonanceDuration = duration * 0.8;
+      
+      // Create a shimmering resonance with multiple tones
+      for (let j = 0; j < 3; j++) {
+        setTimeout(() => {
+          generateCelestialTone(
+            resonanceFreq + (j * 7), // Slight frequency shift
+            resonanceDuration - (j * 0.2),
+            0.04 - (j * 0.01),
+            1 + (j * 0.05)
+          );
+        }, j * 200);
+      }
+    }, 300);
+  }
+}
+
+/**
+ * Play a gravitational wave sound - representing information with "weight"
+ * @param strength The strength of the gravitational effect (0-1)
+ * @param complexity The complexity of the wave pattern (0-1)
+ */
+export function playGravitationalWaveSound(strength: number, complexity: number = 0.5): void {
+  if (!isAudioEnabled) return;
+  
+  // Base frequency range - deeper for stronger "gravity"
+  const baseFreq = 80 + ((1 - strength) * 100); // 80-180 Hz
+  
+  // Duration based on strength - stronger effects last longer
+  const duration = 2 + (strength * 6); // 2-8 seconds
+  
+  // Create a gravitational wave pattern
+  if (audioContext && masterGain) {
+    try {
+      // Main oscillator for the base wave
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      
+      // LFO for frequency modulation to create wave-like effect
+      const lfo = audioContext.createOscillator();
+      const lfoGain = audioContext.createGain();
+      
+      // Configure the LFO
+      lfo.type = 'sine';
+      lfo.frequency.value = 0.1 + (complexity * 0.3); // 0.1-0.4 Hz modulation
+      lfoGain.gain.value = 10 + (strength * 40);      // Modulation depth
+      
+      // Configure the main oscillator
+      oscillator.type = 'sine';
+      oscillator.frequency.value = baseFreq;
+      
+      // Connect LFO to oscillator frequency
+      lfo.connect(lfoGain);
+      lfoGain.connect(oscillator.frequency);
+      
+      // Configure amplitude envelope
+      gainNode.gain.value = 0;
+      gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+      gainNode.gain.linearRampToValueAtTime(0.12 * strength, audioContext.currentTime + 1.5);
+      gainNode.gain.setValueAtTime(0.12 * strength, audioContext.currentTime + duration - 1.5);
+      gainNode.gain.linearRampToValueAtTime(0.001, audioContext.currentTime + duration);
+      
+      // Connect and start
+      oscillator.connect(gainNode);
+      gainNode.connect(masterGain);
+      
+      lfo.start();
+      oscillator.start();
+      
+      // Add harmonics for more complex waves
+      if (complexity > 0.4) {
+        const harmonics = [2, 3, 5];
+        harmonics.forEach((harmonic, i) => {
+          setTimeout(() => {
+            const harmOsc = audioContext.createOscillator();
+            const harmGain = audioContext.createGain();
+            
+            harmOsc.type = 'sine';
+            harmOsc.frequency.value = baseFreq * harmonic;
+            
+            harmGain.gain.value = 0;
+            harmGain.gain.setValueAtTime(0, audioContext.currentTime);
+            harmGain.gain.linearRampToValueAtTime(
+              0.06 * strength * (1 - (i * 0.2)),
+              audioContext.currentTime + 1
+            );
+            harmGain.gain.setValueAtTime(
+              0.06 * strength * (1 - (i * 0.2)),
+              audioContext.currentTime + duration - 1
+            );
+            harmGain.gain.linearRampToValueAtTime(0.001, audioContext.currentTime + duration);
+            
+            harmOsc.connect(harmGain);
+            harmGain.connect(masterGain);
+            
+            harmOsc.start();
+            harmOsc.stop(audioContext.currentTime + duration + 0.1);
+          }, i * 200);
+        });
+      }
+      
+      // Stop everything
+      lfo.stop(audioContext.currentTime + duration + 0.1);
+      oscillator.stop(audioContext.currentTime + duration + 0.1);
+      
+      // Clean up
+      setTimeout(() => {
+        lfo.disconnect();
+        lfoGain.disconnect();
+        oscillator.disconnect();
+        gainNode.disconnect();
+      }, (duration + 0.2) * 1000);
+    } catch (error) {
+      console.error("Error generating gravitational wave sound:", error);
+    }
+  }
+}
+
+/**
+ * Export sound data to NotebookLM
+ * @returns Object containing audio analysis data for NotebookLM
+ */
+export function exportAudioDataForNotebookLM(): object {
+  // Create a summary of audio activity for export to NotebookLM
+  return {
+    audioSystem: "Cosmic Sonata Sound Generator",
+    timestamp: new Date().toISOString(),
+    soundTypes: [
+      {
+        name: "Particle Creation",
+        description: "Harmonic bell-like tones that represent new information entering the universe",
+        harmonicStructure: "Based on particle charge (positive/negative/neutral)",
+        frequencyRange: "260-590 Hz",
+        duration: "0.8-1.5 seconds"
+      },
+      {
+        name: "Particle Interaction",
+        description: "Call and response pattern representing information exchange between particles",
+        harmonicStructure: "Interval relationships based on particle charges",
+        frequencyRange: "260-590 Hz",
+        duration: "0.8-0.9 seconds per tone"
+      },
+      {
+        name: "Intent Field Fluctuation",
+        description: "Cosmic shimmer effect reflecting the intent field energy",
+        harmonicStructure: "Multiple staggered tones with varying durations",
+        frequencyRange: "200-460 Hz",
+        duration: "0.5-2.0 seconds"
+      },
+      {
+        name: "Emergence",
+        description: "Complex, evolving sound with multiple layers for cluster formation events",
+        harmonicStructure: "Complex intervals for high complexity, simpler for low",
+        frequencyRange: "130-390 Hz",
+        duration: "2.0-5.0 seconds"
+      },
+      {
+        name: "Cosmic Bell Toll",
+        description: "Deep resonant bell tones representing information density events",
+        harmonicStructure: "Rich harmonic series with extended duration",
+        frequencyRange: "120-880 Hz",
+        duration: "3.0-7.0 seconds"
+      },
+      {
+        name: "Gravitational Wave",
+        description: "Low frequency modulated wave patterns representing information with weight",
+        harmonicStructure: "Frequency modulated sine waves with harmonics",
+        frequencyRange: "80-180 Hz (fundamental)",
+        duration: "2.0-8.0 seconds"
+      }
+    ],
+    soundTheory: {
+      framework: "Information-Intent Nexus",
+      primaryConcept: "Sound as representation of information density and intent",
+      harmonicMapping: "Particle charges and types map to specific harmonic structures",
+      informationWeight: "Lower frequencies represent greater information weight/gravity"
+    }
+  };
+}
+
+/**
  * Clean up audio resources
  */
 export function cleanupAudio(): void {

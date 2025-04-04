@@ -3,29 +3,17 @@ import { playLoopingAudio, stopLoopingAudio, setLoopingAudioVolume } from './aud
 
 // Audio tracks playlist - focused on LM audio tracks only
 const audioTracks = [
-  "Intent as a Universal Information Filter",
-  "The Intentional Universe",
-  "Particle Genesis",
-  "The Map",
   "The Nexus",
   "From The Heart",
   "In Deep Waters",
-  "The Why",
-  "The Composer",
   "The Source"
 ];
 
-// Map track names to actual file numbers that exist in the public/audio folder
+// Map track names to actual file numbers that exist and work in the public/audio folder
 const trackFileMap: Record<string, number> = {
-  "Intent as a Universal Information Filter": 3,
-  "The Intentional Universe": 138,
-  "Particle Genesis": 297,
-  "The Map": 242,
   "The Nexus": 5,
   "From The Heart": 283,
   "In Deep Waters": 87,
-  "The Why": 153,
-  "The Composer": 305,
   "The Source": 283
 };
 
@@ -125,8 +113,7 @@ function playCurrentTrack(): void {
     const trackName = audioTracks[currentTrackIndex];
     
     // Get the correct file number from our mapping
-    // Use actual file numbers that exist in the public/audio folder
-    const fileNumber = trackFileMap[trackName] || 3; // Default to file 3 if mapping not found
+    const fileNumber = trackFileMap[trackName] || 5; // Default to file 5 (The Nexus) if mapping not found
     const audioUrl = `/audio/qfplS_${fileNumber}.wav`;
     
     console.log("Attempting to play:", trackName, "from", audioUrl);

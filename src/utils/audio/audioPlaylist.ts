@@ -1,42 +1,25 @@
 
 import { playLoopingAudio, stopLoopingAudio, setLoopingAudioVolume } from './audioPlaybackUtils';
 
-// Audio tracks playlist
+// Audio tracks playlist - focused on LM audio tracks only
 const audioTracks = [
-  "Are you a Skeptic",
-  "The Composer",
-  "Deeper And Deeper",
-  "El Nutrino Chismoso",
-  "Fast way Down and Far",
-  "Filtrando Otra Vez",
-  "From THe Heart",
-  "Get to know ME",
-  "Git Yours",
-  "How Fast Can You Go",
-  "I go It From You",
-  "In Deep waters",
+  "Intent as a Universal Information Filter",
   "The Intentional Universe",
-  "Is Your AI Really Learning",
-  "The Map",
-  "The Missing Peice",
-  "The Nexus",
   "Particle Genesis",
-  "So Neat",
-  "The Sourse Bawl",
-  "Who Am I",
+  "The Map",
+  "The Nexus",
+  "From The Heart",
+  "In Deep Waters",
   "The Why",
-  "cosmos",
-  "Intent as a Universal Information Filter (1) 1",
-  "Intent as a Universal Information Filter (2) (1)-1",
-  "Intent as a Universal Information Filter (2) (1)-2",
-  "particle_genesis"
+  "The Composer",
+  "The Source"
 ];
 
 let currentTrackIndex = 0;
 let isPlaying = false;
 let audioElement: HTMLAudioElement | null = null;
 let lastPlayAttemptTime = 0;
-const MIN_PLAY_INTERVAL_MS = 2000; // Minimum time between play attempts
+const MIN_PLAY_INTERVAL_MS = 5000; // Increased minimum time between play attempts to 5 seconds
 
 /**
  * Start playing the audio playlist continuously
@@ -53,8 +36,8 @@ export function startAudioPlaylist(volume: number = 0.5): void {
       // Handle errors
       audioElement.addEventListener('error', (e) => {
         console.error('Audio playback error:', e);
-        // Try the next track if there's an error, but with a delay
-        setTimeout(playNextTrack, 2000);
+        // Try the next track if there's an error, but with a longer delay
+        setTimeout(playNextTrack, 3000);
       });
     }
     
@@ -101,10 +84,10 @@ function playNextTrack(): void {
     
     currentTrackIndex = (currentTrackIndex + 1) % audioTracks.length;
     
-    // Add a small delay before playing the next track to prevent rapid switching
+    // Add a delay before playing the next track to prevent rapid switching
     setTimeout(() => {
       playCurrentTrack();
-    }, 500);
+    }, 1000);
   } catch (error) {
     console.error("Error playing next track:", error);
   }
@@ -119,7 +102,7 @@ function playCurrentTrack(): void {
     
     const now = Date.now();
     if (now - lastPlayAttemptTime < MIN_PLAY_INTERVAL_MS) {
-      // If we tried to play a track too recently, delay this attempt
+      // If we tried to play a track too recently, delay this attempt significantly
       setTimeout(playCurrentTrack, MIN_PLAY_INTERVAL_MS);
       return;
     }
@@ -127,9 +110,9 @@ function playCurrentTrack(): void {
     lastPlayAttemptTime = now;
     const trackName = audioTracks[currentTrackIndex];
     
-    // Find an available audio file from the public folder
-    // Use a specific file instead of random to ensure consistent playback
-    const fileIndex = currentTrackIndex % 20 + 1; // Use modulo to keep within range of available files
+    // Use a consistent file naming pattern for LM audio files
+    // We'll use files from qfplS_1.wav to qfplS_20.wav
+    const fileIndex = (currentTrackIndex % 20) + 1;
     const audioUrl = `/audio/qfplS_${fileIndex}.wav`;
     
     console.log("Attempting to play:", trackName, "from", audioUrl);
@@ -144,13 +127,13 @@ function playCurrentTrack(): void {
       console.log("Now playing:", trackName);
     }).catch(e => {
       console.error("Error playing track:", trackName, e);
-      // Try the next track if there's an error, with a delay
-      setTimeout(playNextTrack, 2000);
+      // Try the next track if there's an error, with a longer delay
+      setTimeout(playNextTrack, 3000);
     });
   } catch (error) {
     console.error("Error playing current track:", error);
-    // Attempt recovery by trying the next track
-    setTimeout(playNextTrack, 2000);
+    // Attempt recovery by trying the next track after a longer delay
+    setTimeout(playNextTrack, 3000);
   }
 }
 

@@ -1,14 +1,13 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { startMotherSimulation, isMotherSimulationRunning } from '@/utils/simulation/motherSimulation';
-import { playSimulationBackgroundLoop } from '@/utils/audio/simulationAudioUtils';
+import { startAudioPlaylist, stopAudioPlaylist } from '@/utils/audio/audioPlaylist';
 
 /**
  * SimpleVisitor - A simplified simulation page with continuous background audio
  * All internal data processing happens in the background
  */
 const SimpleVisitor: React.FC = () => {
-  const audioRef = useRef<HTMLAudioElement | null>(null);
   const [audioLoaded, setAudioLoaded] = useState(false);
   const [simulationStarted, setSimulationStarted] = useState(false);
   
@@ -34,35 +33,13 @@ const SimpleVisitor: React.FC = () => {
   // Set up audio
   useEffect(() => {
     if (!audioLoaded) {
-      // Background music URL - replace with actual URL
-      const backgroundMusicUrl = '/audio/simulation_background.mp3';
-      
-      // Start playing background audio
-      audioRef.current = playSimulationBackgroundLoop(backgroundMusicUrl, 0.4);
+      // Start playing background audio playlist at 40% volume
+      startAudioPlaylist(0.4);
       setAudioLoaded(true);
       
-      // Handle browser requiring user interaction for audio
-      const handleUserInteraction = () => {
-        if (audioRef.current) {
-          audioRef.current.play().catch(e => {
-            console.warn("Could not play audio automatically:", e);
-          });
-        }
-      };
-      
-      // Add interaction listener
-      document.addEventListener('click', handleUserInteraction);
-      document.addEventListener('touchstart', handleUserInteraction);
-      
       return () => {
-        document.removeEventListener('click', handleUserInteraction);
-        document.removeEventListener('touchstart', handleUserInteraction);
-        
-        // Clean up audio
-        if (audioRef.current) {
-          audioRef.current.pause();
-          audioRef.current = null;
-        }
+        // Clean up audio when component unmounts
+        stopAudioPlaylist();
       };
     }
   }, [audioLoaded]);

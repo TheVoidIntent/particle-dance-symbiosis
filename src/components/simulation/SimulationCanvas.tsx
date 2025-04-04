@@ -1,3 +1,4 @@
+
 import React, { useRef, useEffect, useState } from 'react';
 import { useSimulationState } from '@/hooks/simulation';
 import { Particle, SimulationStats } from '@/types/simulation';
@@ -50,7 +51,7 @@ const SimulationCanvas: React.FC<SimulationCanvasProps> = ({
   onRobotEvolution = () => {},
   onParticleInteraction = () => {},
   onFieldFluctuation = () => {},
-  onEmergenceEvent = () {}
+  onEmergenceEvent = () => {}
 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [simulationStats, setSimulationStats] = useState<SimulationStats>({

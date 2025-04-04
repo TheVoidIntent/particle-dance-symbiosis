@@ -34,7 +34,7 @@ export {
   initSimulationAudio,
   setSimulationVolume,
   stopSimulationAudio,
-  // Remove duplicate export of isSimulationAudioPlaying
+  // Removed duplicate export of isSimulationAudioPlaying
   playInteractionSound,
   playIntentFluctuationSound,
   startParticleSoundscape,

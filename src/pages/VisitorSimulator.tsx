@@ -1,19 +1,11 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Helmet } from 'react-helmet';
-import { Card, CardContent } from "@/components/ui/card";
-import { Slider } from "@/components/ui/slider";
-import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
-import { Play, Pause, Download, Info, Music2 } from "lucide-react";
+import { Slider } from "@/components/ui/slider";
+import { Music2, VolumeX, Volume2 } from "lucide-react";
 import { toast } from "sonner";
-import AudioOptionsSection from '@/components/simulation/AudioOptionsSection';
-import { 
-  playLoopingAudio, 
-  stopLoopingAudio, 
-  setLoopingAudioVolume 
-} from '@/utils/audio/audioPlaybackUtils';
-import { getAvailableAudioFiles } from '@/utils/audio/audioFileUtils';
-import { initAudioContext } from '@/utils/audio/simulationAudioUtils';
+import { startAudioPlaylist, stopAudioPlaylist, setAudioPlaylistVolume, isAudioPlaylistPlaying, getCurrentTrackName } from '@/utils/audio/audioPlaylist';
 
 interface Particle {
   x: number;
@@ -27,22 +19,17 @@ interface Particle {
 
 const VisitorSimulator: React.FC = () => {
   const [intentFluctuationRate, setIntentFluctuationRate] = useState(0.015);
-  const [maxParticles, setMaxParticles] = useState(80);
   const [running, setRunning] = useState(true);
-  const [showIntro, setShowIntro] = useState(true);
-  const [positiveParticles, setPositiveParticles] = useState(0);
-  const [negativeParticles, setNegativeParticles] = useState(0);
-  const [neutralParticles, setNeutralParticles] = useState(0);
-  const [audioFiles, setAudioFiles] = useState<string[]>([]);
-  const [backgroundAudioActive, setBackgroundAudioActive] = useState(true);
-  const [audioVolume, setAudioVolume] = useState(70);
-  const audioPlayerRef = useRef<HTMLAudioElement | null>(null);
-
+  const [audioActive, setAudioActive] = useState(true);
+  const [audioVolume, setAudioVolume] = useState(30);
+  const [currentTrack, setCurrentTrack] = useState("");
+  
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationRef = useRef<number | null>(null);
   const particlesRef = useRef<Particle[]>([]);
   const intentFieldRef = useRef<number[][]>([]);
 
+  // Initialize canvas and audio on component mount
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -72,77 +59,42 @@ const VisitorSimulator: React.FC = () => {
       }
     };
     
-    const loadAudioFiles = async () => {
-      try {
-        const files = await getAvailableAudioFiles('/audio');
-        setAudioFiles(files);
-        console.log("Loaded audio files:", files);
-        
-        if (!audioPlayerRef.current) {
-          initAudioContext();
-          
-          audioPlayerRef.current = new Audio();
-          audioPlayerRef.current.volume = 0.2;
-          audioPlayerRef.current.onended = () => {
-            if (backgroundAudioActive) {
-              playRandomBackgroundAudio();
-            }
-          };
-        }
-      } catch (error) {
-        console.error("Error loading audio files:", error);
-      }
-    };
+    // Initialize audio
+    startAudioPlaylist(audioVolume / 100);
+    setCurrentTrack(getCurrentTrackName());
+    
+    const trackUpdateInterval = setInterval(() => {
+      setCurrentTrack(getCurrentTrackName());
+    }, 1000);
     
     window.addEventListener('resize', resizeCanvas);
     resizeCanvas();
     
     initializeParticles();
     
-    loadAudioFiles();
-    
     return () => {
       window.removeEventListener('resize', resizeCanvas);
       if (animationRef.current) {
         cancelAnimationFrame(animationRef.current);
       }
-      if (audioPlayerRef.current) {
-        audioPlayerRef.current.pause();
-      }
+      stopAudioPlaylist();
+      clearInterval(trackUpdateInterval);
     };
-  }, []);
+  }, [audioVolume]);
 
-  const playRandomBackgroundAudio = () => {
-    if (!audioFiles.length || !audioPlayerRef.current) return;
-    
-    const randomIndex = Math.floor(Math.random() * audioFiles.length);
-    const randomAudioFile = audioFiles[randomIndex];
-    
-    audioPlayerRef.current.src = `/audio/${randomAudioFile}`;
-    audioPlayerRef.current.play().catch(error => {
-      console.error("Error playing audio:", error);
-      if (backgroundAudioActive) {
-        setTimeout(playRandomBackgroundAudio, 1000);
-      }
-    });
-    
-    console.log("Now playing:", randomAudioFile);
-  };
+  // Handle audio volume changes
+  useEffect(() => {
+    setAudioPlaylistVolume(audioVolume / 100);
+  }, [audioVolume]);
 
-  const toggleBackgroundAudio = () => {
-    const newState = !backgroundAudioActive;
-    setBackgroundAudioActive(newState);
-    
-    if (newState) {
-      initAudioContext();
-      
-      playLoopingAudio('https://notebooklm.google.com/notebook/b2d28cf3-eebe-436c-9cfe-0015c99f99ac/audio', 'background', audioVolume / 100);
-      toast.success("Background audio enabled - Click anywhere if you don't hear sound");
+  // Handle audio toggle
+  useEffect(() => {
+    if (audioActive) {
+      startAudioPlaylist(audioVolume / 100);
     } else {
-      stopLoopingAudio('background');
-      toast.info("Background audio disabled");
+      stopAudioPlaylist();
     }
-  };
+  }, [audioActive, audioVolume]);
 
   const initializeParticles = () => {
     const canvas = canvasRef.current;
@@ -152,7 +104,7 @@ const VisitorSimulator: React.FC = () => {
     const height = canvas.height;
     
     const newParticles: Particle[] = [];
-    const initialCount = Math.min(maxParticles, 30);
+    const initialCount = 50;
     
     for (let i = 0; i < initialCount; i++) {
       const type = Math.random() < 0.33 
@@ -165,8 +117,6 @@ const VisitorSimulator: React.FC = () => {
     }
     
     particlesRef.current = newParticles;
-    
-    updateParticleCounts();
   };
 
   const createParticle = (type: 'positive' | 'negative' | 'neutral', width: number, height: number): Particle => {
@@ -193,6 +143,7 @@ const VisitorSimulator: React.FC = () => {
     };
   };
 
+  // Animation loop
   useEffect(() => {
     if (!running) {
       if (animationRef.current) {
@@ -217,19 +168,13 @@ const VisitorSimulator: React.FC = () => {
       
       if (Math.random() < intentFluctuationRate) {
         updateIntentField();
-        
-        if (Math.random() < 0.05 && backgroundAudioActive) {
-          const shortClip = new Audio('/audio/intentsim_page/field_fluctuation.mp3');
-          shortClip.volume = 0.1;
-          shortClip.play().catch(e => console.error("Error playing fluctuation sound:", e));
-        }
       }
       
       updateParticles(width, height);
       
       drawParticles(context);
       
-      if (Math.random() < 0.05 && particlesRef.current.length < maxParticles) {
+      if (Math.random() < 0.05 && particlesRef.current.length < 150) {
         const positiveChance = 0.3 + intentFluctuationRate * 2;
         const negativeChance = 0.3 - intentFluctuationRate;
         
@@ -240,19 +185,6 @@ const VisitorSimulator: React.FC = () => {
             : 'neutral';
         
         particlesRef.current.push(createParticle(type, width, height));
-        updateParticleCounts();
-        
-        if (Math.random() < 0.2 && backgroundAudioActive) {
-          const soundFile = type === 'positive' 
-            ? '/audio/intentsim_page/positive_particle_birth.mp3'
-            : type === 'negative'
-            ? '/audio/intentsim_page/negative_particle_birth.mp3'
-            : '/audio/intentsim_page/neutral_particle_birth.mp3';
-            
-          const particleSound = new Audio(soundFile);
-          particleSound.volume = 0.15;
-          particleSound.play().catch(e => console.error("Error playing particle sound:", e));
-        }
       }
       
       animationRef.current = requestAnimationFrame(animate);
@@ -265,7 +197,7 @@ const VisitorSimulator: React.FC = () => {
         cancelAnimationFrame(animationRef.current);
       }
     };
-  }, [running, intentFluctuationRate, maxParticles, backgroundAudioActive]);
+  }, [running, intentFluctuationRate]);
 
   const updateIntentField = () => {
     const newField = intentFieldRef.current.map(row => 
@@ -340,260 +272,94 @@ const VisitorSimulator: React.FC = () => {
     });
   };
 
-  const updateParticleCounts = () => {
-    const particles = particlesRef.current;
-    setPositiveParticles(particles.filter(p => p.type === 'positive').length);
-    setNegativeParticles(particles.filter(p => p.type === 'negative').length);
-    setNeutralParticles(particles.filter(p => p.type === 'neutral').length);
+  const toggleAudio = () => {
+    setAudioActive(!audioActive);
+    toast.info(audioActive ? "Audio paused" : "Audio playing");
   };
-
-  const toggleRunning = () => {
-    setRunning(!running);
-    toast.info(running ? "Simulation paused" : "Simulation resumed");
-  };
-
-  const handleDownloadInfo = () => {
-    toast.info("This is a simplified version. For full data exports, log in to the creator version.");
-  };
-
-  const dismissIntro = () => {
-    setShowIntro(false);
-  };
-
-  const floatKeyframes = `
-    @keyframes float {
-      0%, 100% { transform: translate(0, 0); }
-      50% { transform: translate(${Math.random() * 30 - 15}px, ${Math.random() * 30 - 15}px); }
-    }
-  `;
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 text-white p-4 md:p-8">
+    <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black text-white">
       <Helmet>
-        <title>Simulation Explorer | IntentSim</title>
-        <meta name="description" content="Explore how particles emerge from intent field fluctuations in this simplified simulation." />
-        <style>{floatKeyframes}</style>
+        <title>IntentSim Universe | Experience The Intent Field</title>
+        <meta name="description" content="Watch particles emerge from intent field fluctuations in an interactive simulation" />
       </Helmet>
       
-      <h1 className="text-3xl md:text-4xl font-bold text-center mb-6 bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400">
-        IntentSim Explorer
-      </h1>
-      
-      {showIntro && (
-        <Card className="bg-gray-800/50 border-gray-700 mb-8 max-w-3xl mx-auto">
-          <CardContent className="p-6">
-            <h2 className="text-xl font-semibold mb-2">Welcome to IntentSim Explorer</h2>
-            <p className="mb-4 text-gray-300">
-              This is a simplified version of the IntentSim universe simulator. Adjust the parameters to see how particles emerge from intent field fluctuations and interact based on their charge characteristics.
-            </p>
-            <p className="mb-4 text-gray-300">
-              In this model, positive charges seek interaction, negative charges avoid it, and neutral particles follow their own path - all born from the universe's intent to know itself.
-            </p>
-            <div className="flex justify-between items-center">
-              <Button onClick={dismissIntro}>Got it</Button>
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-300">Enable Audio Experience</span>
-                <Switch 
-                  checked={backgroundAudioActive} 
-                  onCheckedChange={toggleBackgroundAudio} 
-                />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-      
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mt-8">
-        <div className="lg:col-span-3">
-          <Card className="bg-gray-800/50 border-gray-700">
-            <CardContent className="p-0 relative">
-              <div className="aspect-video bg-black rounded-t-lg overflow-hidden flex items-center justify-center relative">
-                <canvas 
-                  ref={canvasRef} 
-                  className="absolute inset-0 w-full h-full"
-                />
-                
-                {!running && (
-                  <div className="absolute inset-0 bg-black/70 flex items-center justify-center">
-                    <span className="text-xl font-semibold">Simulation Paused</span>
-                  </div>
-                )}
-              </div>
-              
-              <div className="absolute top-2 right-2 bg-black/50 text-white px-3 py-2 rounded-md text-sm">
-                Particles: {Math.floor(positiveParticles + negativeParticles + neutralParticles)}
-              </div>
-              
-              {backgroundAudioActive && (
-                <div className="absolute top-2 left-2 bg-black/50 text-white px-3 py-2 rounded-md text-sm flex items-center gap-2">
-                  <Music2 className="h-4 w-4 text-indigo-400 animate-pulse" />
-                  <span>Google NotebookLM Audio</span>
-                </div>
-              )}
-              
-              <div className="p-4 border-t border-gray-700 flex justify-between items-center">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={toggleRunning}
-                  className="bg-gray-700/50"
-                >
-                  {running ? <Pause className="h-4 w-4 mr-1" /> : <Play className="h-4 w-4 mr-1" />}
-                  {running ? 'Pause' : 'Resume'}
-                </Button>
-                
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={toggleBackgroundAudio}
-                    className={`bg-gray-700/50 ${backgroundAudioActive ? 'border-indigo-400' : ''}`}
-                  >
-                    <Music2 className={`h-4 w-4 mr-1 ${backgroundAudioActive ? 'text-indigo-400' : ''}`} />
-                    {backgroundAudioActive ? 'Audio On' : 'Audio Off'}
-                  </Button>
-                  
-                  <div className="flex items-center gap-2 ml-2">
-                    <Slider
-                      value={[audioVolume]}
-                      max={100}
-                      step={1}
-                      onValueChange={(value) => setAudioVolume(value[0])}
-                      className="w-24"
-                    />
-                  </div>
-                  
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleDownloadInfo}
-                    className="bg-gray-700/50"
-                  >
-                    <Download className="h-4 w-4 mr-1" />
-                    Export Data
-                  </Button>
-                  
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => toast.info("For detailed information, visit the documentation or log in to the creator version.")}
-                    className="bg-gray-700/50"
-                  >
-                    <Info className="h-4 w-4 mr-1" />
-                    Learn More
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Card className="bg-gray-800/50 border-gray-700">
-              <CardContent className="p-4">
-                <h3 className="text-lg font-medium mb-2 text-blue-400">Positive Intent</h3>
-                <div className="text-3xl font-bold mb-1">{Math.floor(positiveParticles)}</div>
-                <p className="text-sm text-gray-400">Particles actively seeking interaction and knowledge-sharing</p>
-              </CardContent>
-            </Card>
-            
-            <Card className="bg-gray-800/50 border-gray-700">
-              <CardContent className="p-4">
-                <h3 className="text-lg font-medium mb-2 text-red-400">Negative Intent</h3>
-                <div className="text-3xl font-bold mb-1">{Math.floor(negativeParticles)}</div>
-                <p className="text-sm text-gray-400">Particles avoiding interaction, conserving information</p>
-              </CardContent>
-            </Card>
-            
-            <Card className="bg-gray-800/50 border-gray-700">
-              <CardContent className="p-4">
-                <h3 className="text-lg font-medium mb-2 text-green-400">Neutral Intent</h3>
-                <div className="text-3xl font-bold mb-1">{Math.floor(neutralParticles)}</div>
-                <p className="text-sm text-gray-400">Particles with balanced tendencies</p>
-              </CardContent>
-            </Card>
+      <div className="container mx-auto px-4 py-8 flex flex-col h-screen">
+        <div className="bg-black/40 backdrop-blur-sm rounded-lg flex-grow flex flex-col relative overflow-hidden">
+          {/* Canvas fills the main area */}
+          <div className="flex-grow w-full relative">
+            <canvas 
+              ref={canvasRef} 
+              className="absolute inset-0 w-full h-full"
+            />
           </div>
           
-          <div className="mt-6">
-            <AudioOptionsSection 
-              audioEnabled={backgroundAudioActive}
-              onToggleAudio={toggleBackgroundAudio}
-              audioVolume={audioVolume}
-              onVolumeChange={(value) => setAudioVolume(value)}
+          {/* Audio controls overlay */}
+          <div className="absolute top-4 right-4 bg-black/50 backdrop-blur-md p-2 rounded-lg flex items-center gap-3">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={toggleAudio}
+              className="text-white/80 hover:text-white"
+            >
+              {audioActive ? <Volume2 className="h-5 w-5" /> : <VolumeX className="h-5 w-5" />}
+            </Button>
+            
+            <Slider
+              value={[audioVolume]}
+              max={100}
+              step={1}
+              onValueChange={(value) => setAudioVolume(value[0])}
+              className="w-28"
             />
+            
+            <span className="text-xs text-white/70 max-w-40 truncate">
+              {currentTrack.replace('.wav', '')}
+            </span>
           </div>
         </div>
         
-        <div className="space-y-6">
-          <Card className="bg-gray-800/50 border-gray-700">
-            <CardContent className="p-4">
-              <h3 className="font-medium mb-4">Simulation Controls</h3>
-              
-              <div className="space-y-6">
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <label className="text-sm text-gray-300">Intent Fluctuation Rate</label>
-                    <span className="text-sm text-gray-400">{intentFluctuationRate.toFixed(3)}</span>
-                  </div>
-                  <Slider 
-                    value={[intentFluctuationRate]}
-                    min={0.001}
-                    max={0.05}
-                    step={0.001}
-                    onValueChange={(value) => setIntentFluctuationRate(value[0])}
-                  />
-                  <p className="text-xs text-gray-500">Controls how often the intent field fluctuates to create particles</p>
-                </div>
-                
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <label className="text-sm text-gray-300">Maximum Particles</label>
-                    <span className="text-sm text-gray-400">{maxParticles}</span>
-                  </div>
-                  <Slider 
-                    value={[maxParticles]}
-                    min={10}
-                    max={150}
-                    step={5}
-                    onValueChange={(value) => setMaxParticles(value[0])}
-                  />
-                  <p className="text-xs text-gray-500">Limits the total number of particles in the simulation</p>
-                </div>
-                
-                <div className="pt-2 border-t border-gray-700">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-300">Running</span>
-                    <Switch checked={running} onCheckedChange={setRunning} />
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card className="bg-gray-800/50 border-gray-700">
-            <CardContent className="p-4">
-              <h3 className="font-medium mb-2 flex items-center gap-2">
-                <Music2 className="h-4 w-4 text-indigo-400" />
-                Audio Explanations
-              </h3>
-              <p className="text-sm text-gray-400 mb-4">
-                Listen to curated audio explanations about the IntentSim universe:
-              </p>
-              <Button 
-                className="w-full" 
-                onClick={() => toast.success("Audio library is now available in the main section!")}
-              >
-                Browse Audio Library
-              </Button>
-            </CardContent>
-          </Card>
+        {/* Social links footer */}
+        <div className="py-4 flex justify-center space-x-6">
+          <a href="https://facebook.com/intentsim" target="_blank" rel="noopener noreferrer" className="hover:text-indigo-400 transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-facebook">
+              <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" />
+            </svg>
+            <span className="sr-only">Facebook</span>
+          </a>
+          <a href="https://instagram.com/intentsim" target="_blank" rel="noopener noreferrer" className="hover:text-indigo-400 transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-instagram">
+              <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
+              <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+              <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
+            </svg>
+            <span className="sr-only">Instagram</span>
+          </a>
+          <a href="https://threads.net/intentsim" target="_blank" rel="noopener noreferrer" className="hover:text-indigo-400 transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-at-sign">
+              <circle cx="12" cy="12" r="4" />
+              <path d="M16 8v5a3 3 0 0 0 6 0v-1a10 10 0 1 0-4 8" />
+            </svg>
+            <span className="sr-only">Threads</span>
+          </a>
+          <a href="https://discord.gg/intentsim" target="_blank" rel="noopener noreferrer" className="hover:text-indigo-400 transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="9" cy="12" r="1" />
+              <circle cx="15" cy="12" r="1" />
+              <path d="M7.5 7.2a15 15 0 0 1 9 0" />
+              <path d="M7.5 16.8a15 15 0 0 0 9 0" />
+              <path d="M20 6v12c0 1-1 2-2 2H6c-1 0-2-1-2-2V6c0-1 1-2 2-2h12c1 0 2 1 2 2Z" />
+            </svg>
+            <span className="sr-only">Discord</span>
+          </a>
+          <a href="https://github.com/intentsim/simulation" target="_blank" rel="noopener noreferrer" className="hover:text-indigo-400 transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-github">
+              <path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4" />
+              <path d="M9 18c-4.51 2-5-2-7-2" />
+            </svg>
+            <span className="sr-only">GitHub</span>
+          </a>
         </div>
-      </div>
-      
-      <div className="mt-12 text-center">
-        <p className="text-gray-400 mb-3">Want to access the full version with all features?</p>
-        <Button variant="outline" onClick={() => window.location.href = '/auth'}>
-          Log in as Creator
-        </Button>
       </div>
     </div>
   );

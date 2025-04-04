@@ -1,20 +1,22 @@
-
 import { playLoopingAudio, stopLoopingAudio, setLoopingAudioVolume } from './audioPlaybackUtils';
 
-// Audio tracks playlist - focused on LM audio tracks only
+// Audio tracks playlist - focused on verified working audio tracks only
 const audioTracks = [
   "The Nexus",
   "From The Heart",
-  "In Deep Waters",
-  "The Source"
+  "In Deep Waters", 
+  "The Source",
+  "Intent Field Fluctuations"
 ];
 
 // Map track names to actual file numbers that exist and work in the public/audio folder
+// Based on console logs, these files are confirmed to work well
 const trackFileMap: Record<string, number> = {
   "The Nexus": 5,
   "From The Heart": 283,
   "In Deep Waters": 87,
-  "The Source": 283
+  "The Source": 283,
+  "Intent Field Fluctuations": 101
 };
 
 let currentTrackIndex = 0;

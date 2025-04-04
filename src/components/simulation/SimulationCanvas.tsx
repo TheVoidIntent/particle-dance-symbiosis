@@ -1,4 +1,3 @@
-
 import React, { useRef, useEffect, useState } from 'react';
 import { useSimulationState } from '@/hooks/simulation';
 import { Particle, SimulationStats } from '@/types/simulation';
@@ -190,13 +189,12 @@ const SimulationCanvas: React.FC<SimulationCanvasProps> = ({
       robotCount: robots.length,
       clusterCount: narratives.length > 0 ? [...new Set(narratives.map(n => n.clusterId))].length : 0,
       timestamp: Date.now(),
-      interactions: interactionEvents,
-      fluctuationEvents: fluctuationEvents
+      interactions: interactionEvents
     };
     
     setSimulationStats(stats);
     onStatsUpdate(stats);
-  }, [activeParticles, robots, narratives, onStatsUpdate, interactionEvents, fluctuationEvents]);
+  }, [activeParticles, robots, narratives, onStatsUpdate, interactionEvents]);
   
   return (
     <div className="relative">

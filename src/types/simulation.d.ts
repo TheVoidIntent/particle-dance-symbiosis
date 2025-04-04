@@ -1,4 +1,3 @@
-
 /**
  * Particle interface for the simulation
  */
@@ -58,6 +57,8 @@ export interface SimulationStats {
   time?: number;
   interactions?: number;
   robotCount?: number;
+  // Add this if you need it elsewhere
+  // fluctuationEvents?: number;
 }
 
 /**

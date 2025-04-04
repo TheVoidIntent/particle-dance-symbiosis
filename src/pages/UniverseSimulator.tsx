@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useParticleSimulation } from '@/hooks/simulation';
 import { useSimulationAudio } from '@/hooks/useSimulationAudio';
-import { SimulationStats as StatsType } from '@/types/simulation';
+import { SimulationStats as StatsType, Particle } from '@/types/simulation';
 
 const UniverseSimulator: React.FC = () => {
   // Simulation parameters
@@ -154,19 +154,38 @@ const UniverseSimulator: React.FC = () => {
   useEffect(() => {
     if (running && audioEnabled && simulation.particles.length > 0) {
       const convertedParticles = simulation.particles.map(p => ({
-        ...p,
+        id: p.id,
+        x: p.x,
+        y: p.y,
+        z: p.z || 0,
+        vx: p.vx,
+        vy: p.vy,
+        vz: p.vz || 0,
+        radius: p.radius,
         mass: p.mass || 1,
+        charge: p.charge,
+        color: p.color,
+        intent: p.intent,
+        energy: p.energy || 100,
+        knowledge: p.knowledge || 0,
+        complexity: p.complexity || 1, 
+        interactionTendency: p.interactionTendency,
+        lastInteraction: p.lastInteraction || Date.now(),
+        interactionCount: p.interactionCount || 0,
+        interactions: p.interactions || 0,
+        intentDecayRate: p.intentDecayRate || 0.001,
         created: p.creationTime || Date.now(),
         scale: p.scale || 1,
-        vz: p.vz || 0,
-        intentDecayRate: p.intentDecayRate || 0.001,
         adaptiveScore: p.adaptiveScore || 0,
         energyCapacity: p.energyCapacity || (p.energy || 100) * 1.2,
         age: p.age || 0,
-        isPostInflation: p.isPostInflation || false
+        isPostInflation: p.isPostInflation || false,
+        creationTime: p.creationTime
       }));
       
-      simAudio.startSoundscape(convertedParticles);
+      if (simAudio.startSoundscape) {
+        simAudio.startSoundscape(convertedParticles as Particle[]);
+      }
     }
     
     return () => {

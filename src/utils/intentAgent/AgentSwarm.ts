@@ -1,4 +1,3 @@
-
 import { IntentAgent } from './IntentAgent';
 
 export interface AudioFeed {
@@ -41,7 +40,7 @@ export class AgentSwarm {
     this.evaluateFieldConsensus();
   }
   
-  evaluateFieldConsensus(): void {
+  evaluateFieldConsensus(): string {
     console.log("\n[Field Consensus Evaluation Starting]");
     const globalTally: Record<string, number> = { 'Pass': 0, 'Neutral': 0, 'Fail': 0 };
     
@@ -86,4 +85,3 @@ export class AgentSwarm {
     return this.agents.map(agent => agent.getVisualizationData());
   }
 }
-

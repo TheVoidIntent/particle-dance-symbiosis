@@ -1,5 +1,5 @@
 
-import { Particle } from '@/types/simulation';
+import { Particle, ParticleType } from '@/types/simulation';
 import { v4 as uuidv4 } from 'uuid';
 
 /**
@@ -10,7 +10,7 @@ export function createParticle(
   y: number,
   options: {
     charge?: 'positive' | 'negative' | 'neutral';
-    type?: 'standard' | 'high-energy' | 'quantum' | 'composite' | 'adaptive';
+    type?: ParticleType;
     radius?: number;
     vx?: number;
     vy?: number;
@@ -25,7 +25,7 @@ export function createParticle(
 ): Particle {
   const {
     charge = Math.random() > 0.66 ? 'positive' : Math.random() > 0.5 ? 'negative' : 'neutral',
-    type = 'standard',
+    type = 'standard' as ParticleType,
     radius = Math.random() * 3 + 2,
     vx = (Math.random() - 0.5) * 2,
     vy = (Math.random() - 0.5) * 2,
@@ -61,4 +61,3 @@ export function createParticle(
     age: 0
   };
 }
-

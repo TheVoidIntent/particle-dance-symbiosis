@@ -49,11 +49,13 @@ export const useIntentAgentSwarm = (initialClusterCount: number = 3) => {
       const entropy = calculateSystemEntropy(particles);
       const positions = particles.map(p => [p.x, p.y] as [number, number]);
       
+      const clusterCount = particles.filter(p => p.clusterID !== null).length;
+      
       simSnapshotsRef.current.push({
         entropy,
         positions,
         tick: cycleCountRef.current,
-        cluster_count: particles.filter(p => p.clusterID !== null).length
+        cluster_count: clusterCount
       });
       
       // Cap the array length to prevent memory issues
@@ -96,4 +98,3 @@ export const useIntentAgentSwarm = (initialClusterCount: number = 3) => {
 };
 
 export default useIntentAgentSwarm;
-

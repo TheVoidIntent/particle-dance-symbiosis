@@ -1,37 +1,38 @@
-export type ParticleCharge = 'positive' | 'negative' | 'neutral';
-export type ParticleType = 'regular' | 'high-energy' | 'quantum' | 'composite' | 'adaptive';
+
+export type ParticleType = 'regular' | 'high-energy' | 'quantum' | 'composite' | 'adaptive' | 'standard';
 
 export interface Particle {
   id: string;
   x: number;
   y: number;
-  z?: number;
+  z: number;
   vx: number;
   vy: number;
-  vz?: number;
-  charge: ParticleCharge;
+  vz: number;
   radius: number;
-  size?: number;
   mass: number;
-  color: string;
-  type?: ParticleType;
+  charge: 'positive' | 'negative' | 'neutral';
+  type: ParticleType;
+  color?: string;
+  size?: number;
+  interactionTendency: number;
+  knowledge: number;
+  complexity: number;
+  intentValue?: number;
   intent?: number;
-  energy?: number;
-  knowledge?: number;
-  complexity?: number;
-  adaptability?: number;
-  lastInteraction?: number;
-  interactionCount?: number;
-  age?: number;
-  intentDecayRate?: number;
-  created?: number;
+  energy: number;
+  interactions: number;
+  lastInteraction: number;
+  clusterID: string | null;
+  age: number;
   scale?: number;
-  isPostInflation?: boolean;
-  creationTime?: number;
-  interactions?: number;
-  interactionTendency?: number;
   adaptiveScore?: number;
+  creationTime?: number;
+  isPostInflation?: boolean;
+  interactionCount?: number;
+  intentDecayRate?: number;
   energyCapacity?: number;
+  created?: number;
 }
 
 export interface SimulationStats {
@@ -39,87 +40,9 @@ export interface SimulationStats {
   positiveParticles: number;
   negativeParticles: number;
   neutralParticles: number;
-  interactionRate?: number;
-  averageKnowledge?: number;
-  complexityIndex?: number;
-  systemEntropy?: number;
   totalInteractions: number;
-  emergenceIndex?: number;
-  intentFieldComplexity?: number;
-  interactionEfficiency?: number;
-  frame?: number;
-  time?: number;
-  timestamp?: number;
-  interactions?: number;
+  timestamp: number;
   robotCount?: number;
   clusterCount?: number;
-  // Additional properties needed for EntropyAnalysisTab
-  shannonEntropy?: number;
-  spatialEntropy?: number;
-  fieldOrderParameter?: number;
-  kolmogorovComplexity?: number;
-  averageClusterSize?: number;
-  informationDensity?: number;
-  clusterLifetime?: number;
-  clusterEntropyDelta?: number;
-  // Additional properties needed for particle types
-  highEnergyParticles?: number;
-  quantumParticles?: number;
-  compositeParticles?: number;
-  adaptiveParticles?: number;
-  maxComplexity?: number;
-}
-
-export interface IntentField {
-  resolution: number;
-  data: number[][][];
-  dimensions: {
-    width: number;
-    height: number;
-    depth: number;
-  };
-}
-
-export interface InteractionEvent {
-  particle1Id: string;
-  particle2Id: string;
-  timestamp: number;
-  energyExchanged: number;
-  knowledgeExchanged: number;
-  position: { x: number, y: number, z?: number };
-}
-
-export interface InflationEvent {
-  timestamp: number;
-  particleCount: number;
-  energyLevel: number;
-  description: string;
-}
-
-export interface Cluster {
-  id: string;
-  particles: Particle[];
-  centroidX: number;
-  centroidY: number;
-  charge: ParticleCharge;
-  size: number;
-  complexity: number;
-  knowledge: number;
-  energy: number;
-  formationTime: number;
-  narratives?: Array<{ text: string, timestamp: number }>;
-  intelligenceScore?: number;
-}
-
-export interface SimulationConfig {
-  initialParticleCount: number;
-  maxParticles: number;
-  fieldResolution: number;
-  intentFluctuationRate: number;
-  interactionRadius: number;
-  boundaryCondition: 'wrap' | 'bounce' | 'disappear';
-  particleLifetime: number | null;
-  inflationEnabled: boolean;
-  inflationThreshold: number;
-  inflationMultiplier: number;
+  interactions?: number;
 }

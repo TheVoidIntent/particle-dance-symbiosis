@@ -1,4 +1,3 @@
-
 import { Particle } from '@/types/simulation';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -198,8 +197,8 @@ export class IntentAgent {
     }
     
     const last = this.knowledge_base[this.knowledge_base.length - 1];
-    const nexus_notes = this.nexus_principles.length ? this.nexus_principles[this.nexus_principles.length - 1] : {};
-    const last_test = this.test_results.length ? this.test_results[this.test_results.length - 1] : {};
+    const nexus_notes = this.nexus_principles.length ? this.nexus_principles[this.nexus_principles.length - 1] : { inferred_rule: 'None', belief_strength: 0 };
+    const last_test = this.test_results.length ? this.test_results[this.test_results.length - 1] : { outcome: 'N/A' };
     
     return `At tick ${last.tick}, entropy was ${last.entropy.toFixed(2)}. ` +
            `Memory score: ${this.memory_score.toFixed(2)}. Energy: ${this.energy.toFixed(2)}. ` +
@@ -241,7 +240,6 @@ export class IntentAgent {
     return output;
   }
 
-  // Generate data for visualization
   getVisualizationData() {
     return {
       id: this.agent_id,
@@ -255,4 +253,3 @@ export class IntentAgent {
     };
   }
 }
-

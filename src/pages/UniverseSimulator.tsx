@@ -48,7 +48,7 @@ const UniverseSimulator: React.FC = () => {
     totalInteractions: 0,
     complexityIndex: 0,
     averageKnowledge: 0,
-    maxComplexity: 0,
+    maxComplexity: 0, // This is now properly defined in the type
     clusterCount: 0,
     averageClusterSize: 0,
     systemEntropy: 0,
@@ -105,7 +105,7 @@ const UniverseSimulator: React.FC = () => {
           totalInteractions: simulation.interactionsCount,
           complexityIndex: simulation.emergenceIndex,
           averageKnowledge,
-          maxComplexity: 1,
+          maxComplexity: 1, // This is now properly defined in the type
           clusterCount: 0,
           averageClusterSize: 0,
           systemEntropy: 0,

@@ -114,6 +114,7 @@ export function useParticleCreation(
       adaptiveScore: 0,
       creationTime: Date.now(),
       vz: (Math.random() - 0.5) * 0.5,
+      clusterID: null // Adding the required clusterID property
     } as Particle;
   };
   

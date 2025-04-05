@@ -68,4 +68,5 @@ export interface SimulationStats {
   clusterLifetime?: number;
   clusterEntropyDelta?: number;
   intentFieldComplexity?: number;
+  maxComplexity?: number; // Added this property to fix the errors
 }

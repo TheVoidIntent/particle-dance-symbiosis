@@ -100,7 +100,8 @@ export function useParticleCreation(
       isPostInflation,
       scale: 1,
       adaptiveScore: 0,
-      creationTime: Date.now()
+      creationTime: Date.now(),
+      clusterID: null // Adding the required clusterID property
     };
   };
   

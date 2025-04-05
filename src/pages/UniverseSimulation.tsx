@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet';
 import ParticleCanvas from '@/components/ParticleCanvas';
@@ -29,7 +30,7 @@ const initialStats: StatsType = {
   totalInteractions: 0,
   complexityIndex: 0,
   averageKnowledge: 0,
-  maxComplexity: 0,
+  maxComplexity: 0, // This is now properly defined in the type
   clusterCount: 0,
   averageClusterSize: 0,
   systemEntropy: 0,

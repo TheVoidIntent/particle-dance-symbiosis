@@ -2,74 +2,113 @@
 import { Particle } from '@/types/simulation';
 
 /**
- * Calculates interaction between two particles
+ * Calculates the interaction between two particles
+ * 
+ * @param particle1 First particle
+ * @param particle2 Second particle
+ * @param interactionRadius Maximum distance for interaction
+ * @returns Boolean indicating if interaction occurred
  */
 export function calculateParticleInteraction(
-  p1: Particle,
-  p2: Particle,
-  learningRate: number = 0.1,
-  viewMode: '2d' | '3d' = '2d'
-): [Particle, Particle, boolean] {
-  const dx = p2.x - p1.x;
-  const dy = p2.y - p1.y;
-  const dz = viewMode === '3d' ? p2.z - p1.z : 0;
+  particle1: Particle,
+  particle2: Particle,
+  interactionRadius: number
+): boolean {
+  // Calculate distance between particles
+  const dx = particle2.x - particle1.x;
+  const dy = particle2.y - particle1.y;
+  const dz = (particle2.z || 0) - (particle1.z || 0);
   
   const distanceSquared = dx * dx + dy * dy + dz * dz;
-  const interactionRadius = (p1.radius + p2.radius) + 5;
   
+  // Check if particles are close enough to interact
   if (distanceSquared > interactionRadius * interactionRadius) {
-    return [p1, p2, false];
+    return false;
   }
   
-  const interactionProbability = p1.interactionTendency * p2.interactionTendency * 0.2;
-  
-  if (Math.random() > interactionProbability) {
-    return [p1, p2, false];
-  }
-  
-  const p1Knowledge = p1.knowledge || 0;
-  const p2Knowledge = p2.knowledge || 0;
-  
-  const knowledgeDiff = Math.abs(p1Knowledge - p2Knowledge);
-  const transferAmount = knowledgeDiff * learningRate;
-  
-  let newP1Knowledge = p1Knowledge;
-  let newP2Knowledge = p2Knowledge;
-  
-  if (p1Knowledge > p2Knowledge) {
-    newP1Knowledge -= transferAmount * 0.5;
-    newP2Knowledge += transferAmount;
-  } else {
-    newP1Knowledge += transferAmount;
-    newP2Knowledge -= transferAmount * 0.5;
-  }
-  
+  // Calculate interaction based on charge
+  const interactionFactor = calculateInteractionFactor(particle1, particle2);
   const distance = Math.sqrt(distanceSquared);
-  const strength = 0.1;
   
-  const forceX = dx / distance * strength;
-  const forceY = dy / distance * strength;
-  const forceZ = dz / distance * strength;
+  // Apply interaction effects
+  applyInteractionEffects(particle1, particle2, distance, interactionFactor);
   
-  const updatedP1: Particle = {
-    ...p1,
-    vx: p1.vx - forceX,
-    vy: p1.vy - forceY,
-    vz: p1.vz - forceZ,
-    knowledge: newP1Knowledge,
-    interactions: (p1.interactions || 0) + 1,
-    lastInteraction: Date.now()
-  };
+  // Mark particles as having interacted
+  particle1.interactionCount = (particle1.interactionCount || 0) + 1;
+  particle2.interactionCount = (particle2.interactionCount || 0) + 1;
+  particle1.lastInteraction = Date.now();
+  particle2.lastInteraction = Date.now();
+  particle1.interactions += 1;
+  particle2.interactions += 1;
   
-  const updatedP2: Particle = {
-    ...p2,
-    vx: p2.vx + forceX,
-    vy: p2.vy + forceY,
-    vz: p2.vz + forceZ,
-    knowledge: newP2Knowledge,
-    interactions: (p2.interactions || 0) + 1,
-    lastInteraction: Date.now()
-  };
+  // Knowledge exchange based on interaction
+  const knowledgeTransfer = Math.min(particle1.knowledge || 0, particle2.knowledge || 0) * 0.1;
+  particle1.knowledge = (particle1.knowledge || 0) + knowledgeTransfer;
+  particle2.knowledge = (particle2.knowledge || 0) + knowledgeTransfer;
   
-  return [updatedP1, updatedP2, true];
+  // Complexity may increase with interactions
+  particle1.complexity = Math.min(10, (particle1.complexity || 1) * 1.01);
+  particle2.complexity = Math.min(10, (particle2.complexity || 1) * 1.01);
+  
+  return true;
+}
+
+/**
+ * Calculate interaction factor based on particle charges
+ */
+function calculateInteractionFactor(particle1: Particle, particle2: Particle): number {
+  if (particle1.charge === 'positive' && particle2.charge === 'positive') {
+    return 0.5; // Positive-positive: moderate attraction
+  } else if (particle1.charge === 'negative' && particle2.charge === 'negative') {
+    return -0.3; // Negative-negative: weak repulsion
+  } else if (
+    (particle1.charge === 'positive' && particle2.charge === 'negative') ||
+    (particle1.charge === 'negative' && particle2.charge === 'positive')
+  ) {
+    return 1.0; // Positive-negative: strong attraction
+  } else if (particle1.charge === 'neutral' || particle2.charge === 'neutral') {
+    return 0.1; // Any interaction with neutral: very weak attraction
+  }
+  
+  return 0.2; // Default: weak attraction
+}
+
+/**
+ * Apply interaction effects to particles
+ */
+function applyInteractionEffects(
+  particle1: Particle,
+  particle2: Particle,
+  distance: number,
+  interactionFactor: number
+): void {
+  // Prevent divide by zero
+  if (distance < 0.1) distance = 0.1;
+  
+  // Calculate force magnitude (inverse square law)
+  const forceMagnitude = interactionFactor / (distance * distance);
+  
+  // Calculate force components
+  const dx = particle2.x - particle1.x;
+  const dy = particle2.y - particle1.y;
+  const dz = (particle2.z || 0) - (particle1.z || 0);
+  
+  // Normalize direction
+  const forceX = (dx / distance) * forceMagnitude;
+  const forceY = (dy / distance) * forceMagnitude;
+  const forceZ = (dz / distance) * forceMagnitude;
+  
+  // Apply forces (action-reaction principle)
+  particle1.vx += forceX * (1 / particle1.mass);
+  particle1.vy += forceY * (1 / particle1.mass);
+  particle1.vz = (particle1.vz || 0) + forceZ * (1 / particle1.mass);
+  
+  particle2.vx -= forceX * (1 / particle2.mass);
+  particle2.vy -= forceY * (1 / particle2.mass);
+  particle2.vz = (particle2.vz || 0) - forceZ * (1 / particle2.mass);
+  
+  // Apply energy exchanges
+  const energyExchange = (particle1.energy - particle2.energy) * 0.05;
+  particle1.energy -= energyExchange;
+  particle2.energy += energyExchange;
 }

@@ -39,14 +39,27 @@ export function createParticleFromField(
   const vy = (Math.random() - 0.5) * velocityFactor;
   const vz = (Math.random() - 0.5) * velocityFactor * 0.5;
   
-  // Set color based on charge
+  // Create beautiful, vibrant colors based on charge and field value intensity
   let color = '#FFFFFF'; // default: white
+  
   if (charge === 'positive') {
-    color = '#4ECDC4'; // teal for positive
+    // Vibrant, bright colors for positive charges
+    const hue = 180 + Math.floor(fieldValue * 60); // cyan to blue range
+    const saturation = 80 + Math.floor(Math.random() * 20); // high saturation
+    const lightness = 50 + Math.floor(Math.random() * 20); // medium to high brightness
+    color = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
   } else if (charge === 'negative') {
-    color = '#FF6B6B'; // red for negative
+    // Warm colors for negative charges
+    const hue = 0 + Math.floor(Math.random() * 60); // red to orange range
+    const saturation = 80 + Math.floor(Math.random() * 20); // high saturation
+    const lightness = 50 + Math.floor(Math.random() * 20); // medium to high brightness
+    color = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
   } else {
-    color = '#5E60CE'; // purple for neutral
+    // Purple/violet range for neutral charges
+    const hue = 260 + Math.floor(Math.random() * 40); // purple violet range
+    const saturation = 70 + Math.floor(Math.random() * 20); // medium-high saturation
+    const lightness = 50 + Math.floor(Math.random() * 20); // medium to high brightness
+    color = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
   }
   
   // Calculate intent based on field value and charge
@@ -65,13 +78,13 @@ export function createParticleFromField(
     interactionTendency *= 0.5; // negative charges less likely to interact
   }
   
-  // Calculate energy based on field fluctuation intensity
-  const energy = 1 + Math.abs(fieldValue) * Math.random() * 2;
+  // Calculate energy based on field fluctuation intensity with some randomness
+  const energy = 1 + Math.abs(fieldValue) * Math.random() * 3;
   
-  // Calculate radius based on energy
-  const radius = 3 + energy * 0.5;
+  // Calculate radius based on energy - bigger particles have more energy
+  const radius = 2 + energy * 0.7;
   
-  // Create the particle
+  // Create the particle with all required properties
   return {
     id: uuidv4(),
     x,
@@ -94,7 +107,7 @@ export function createParticleFromField(
     age: 0,
     interactionCount: 0,
     intentDecayRate: 0.001 + Math.random() * 0.005,
-    energyCapacity: energy * 1.2,
+    energyCapacity: energy * 1.5,
     created: timestamp,
     isPostInflation: false,
     scale: 1,

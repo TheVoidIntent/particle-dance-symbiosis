@@ -1,4 +1,3 @@
-
 import { MutableRefObject } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { Particle, ParticleType } from '@/types/simulation';
@@ -40,11 +39,23 @@ export function useParticleCreation(
     // Set color based on charge
     let color = '#FFFFFF'; // default: white
     if (charge === 'positive') {
-      color = '#FF5555'; // red
+      // Use vibrant cyan-blue for positive
+      const hue = 180 + Math.floor(Math.random() * 60);
+      const saturation = 80 + Math.floor(Math.random() * 20);
+      const lightness = 50 + Math.floor(Math.random() * 20);
+      color = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
     } else if (charge === 'negative') {
-      color = '#5555FF'; // blue
+      // Use warm red-orange for negative
+      const hue = 0 + Math.floor(Math.random() * 60);
+      const saturation = 80 + Math.floor(Math.random() * 20);
+      const lightness = 50 + Math.floor(Math.random() * 20);
+      color = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
     } else {
-      color = '#55FF55'; // green for neutral
+      // Use purple for neutral
+      const hue = 260 + Math.floor(Math.random() * 40);
+      const saturation = 70 + Math.floor(Math.random() * 20);
+      const lightness = 50 + Math.floor(Math.random() * 20);
+      color = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
     }
     
     // Calculate intent based on charge

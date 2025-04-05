@@ -35,14 +35,37 @@ export interface Particle {
   created?: number;
 }
 
+/**
+ * Simulation statistics interface with all required properties
+ */
 export interface SimulationStats {
   particleCount: number;
   positiveParticles: number;
   negativeParticles: number;
   neutralParticles: number;
   totalInteractions: number;
-  timestamp: number;
+  timestamp?: number;
+  frame?: number;
+  time?: number;
+  interactions?: number;
   robotCount?: number;
   clusterCount?: number;
-  interactions?: number;
+  
+  // Additional properties that were causing errors
+  highEnergyParticles?: number;
+  quantumParticles?: number;
+  compositeParticles?: number;
+  adaptiveParticles?: number;
+  averageKnowledge?: number;
+  complexityIndex?: number;
+  systemEntropy?: number;
+  shannonEntropy?: number;
+  spatialEntropy?: number;
+  fieldOrderParameter?: number;
+  kolmogorovComplexity?: number;
+  averageClusterSize?: number;
+  informationDensity?: number;
+  clusterLifetime?: number;
+  clusterEntropyDelta?: number;
+  intentFieldComplexity?: number;
 }

@@ -81,7 +81,7 @@ export const useIntentAgentSwarm = (initialClusterCount: number = 3) => {
   
   // Function to create a standalone agent for experimentation
   const createStandaloneAgent = (id?: string) => {
-    return new IntentAgent(id, { particle_count: 1 });
+    return new IntentAgent(id || `agent_${Date.now()}`, { particle_count: 1 });
   };
   
   return {

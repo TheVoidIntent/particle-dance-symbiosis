@@ -72,6 +72,7 @@ const ParticleCanvas: React.FC<ParticleCanvasProps> = ({
       neutralParticles,
       interactions: interactions,
       totalInteractions: interactions,
+      timestamp: Date.now(),
       frame: frameCount,
       time: simulationTime,
     };

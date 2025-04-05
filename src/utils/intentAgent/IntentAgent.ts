@@ -200,12 +200,18 @@ export class IntentAgent {
     const nexus_notes = this.nexus_principles.length ? this.nexus_principles[this.nexus_principles.length - 1] : { inferred_rule: 'None', belief_strength: 0 };
     const last_test = this.test_results.length ? this.test_results[this.test_results.length - 1] : { outcome: 'N/A' };
     
-    return `At tick ${last.tick}, entropy was ${last.entropy.toFixed(2)}. ` +
+    const entropy = last.entropy?.toFixed(2) || "0.00";
+    const tick = last.tick || 0;
+    const inferred_rule = nexus_notes?.inferred_rule || 'None';
+    const belief_strength = (nexus_notes?.belief_strength || 0).toFixed(3);
+    const outcome = last_test?.outcome || 'N/A';
+    
+    return `At tick ${tick}, entropy was ${entropy}. ` +
            `Memory score: ${this.memory_score.toFixed(2)}. Energy: ${this.energy.toFixed(2)}. ` +
            `Intent Mass: ${this.intent_mass.toFixed(2)}. Particles: ${this.particle_count}. ` +
-           `Nexus Insight: ${nexus_notes.inferred_rule || 'None'}, ` +
-           `Belief Strength: ${(nexus_notes.belief_strength || 0).toFixed(3)}. ` +
-           `Validation Outcome: ${last_test.outcome || 'N/A'}. ` +
+           `Nexus Insight: ${inferred_rule}, ` +
+           `Belief Strength: ${belief_strength}. ` +
+           `Validation Outcome: ${outcome}. ` +
            `Peer Consensus: ${this.peer_consensus || 'Pending'}`;
   }
 

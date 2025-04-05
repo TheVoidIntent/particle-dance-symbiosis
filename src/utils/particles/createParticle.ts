@@ -57,7 +57,7 @@ export function createParticle(
     energy,
     interactions: 0,
     lastInteraction: 0,
-    clusterID: null,
+    clusterID: null,  // This was missing and causing the error
     age: 0
   };
 }
